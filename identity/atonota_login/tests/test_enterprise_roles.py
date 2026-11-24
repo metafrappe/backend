@@ -42,6 +42,8 @@ FORMER = "c3d2e1f0-a9b8-4c7d-8e6f-5a4b3c2d1e0f"
 B_MEMBER = "9e8d7c6b-5a49-4382-a1b0-c9d8e7f6a5b4"
 ORG_A = "1a2b3c4d-0000-4000-8000-00000000000a"
 ORG_B = "1a2b3c4d-0000-4000-8000-00000000000b"
+# The fake Keycloak never checks the admin sign-in.
+UNUSED_BOOTSTRAP_VALUE = "not-used"
 
 
 class FakeUsers:
@@ -334,7 +336,7 @@ class RoleCommandTest(unittest.TestCase):
 
     def run_command(self, keycloak, *arguments):
         local = {"KC_PUBLIC_URL": "http://identity.localhost:5280", "KC_BOOTSTRAP_ADMIN_USERNAME": "admin",
-                 "KC_BOOTSTRAP_ADMIN_PASSWORD": "not-used"}
+                 "KC_BOOTSTRAP_ADMIN_PASSWORD": UNUSED_BOOTSTRAP_VALUE}
         loopback = [(2, 1, 6, "", ("127.0.0.1", 0))]
         output, errors = io.StringIO(), io.StringIO()
         caller = mock.Mock(return_value=keycloak)

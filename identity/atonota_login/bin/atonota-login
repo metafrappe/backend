@@ -8,9 +8,12 @@
   atonota-login apply --from-env --enterprise-exceptions <file>
                                         also accept corporate providers that have an approved
                                         exception record (G-160); the sync step writes the file
-  atonota-login apply --from-env --realm-roles <file>
-                                        also give and take the enterprise-sso-required role from
-                                        the membership roles file (G-160); the sync step writes it
+  atonota-login apply --from-env --realm-roles <file> --organization <id>
+                                        also give the enterprise-sso-required role from the
+                                        membership roles file and take it back only inside the
+                                        file's source organisations (G-160, AJA-391); each
+                                        --organization is a Keycloak organisation id of the
+                                        tenant's Press team, and the file may name no other
   atonota-login --allow-local-http apply --from-env
                                         development only: records may use http to a local name
   atonota-login redirects --env alpha   print each platform's return address for an environment
@@ -76,7 +79,14 @@ def apply(arguments, registry):
         exceptions = keycloak_apply.read_exceptions(arguments.enterprise_exceptions)
     # Without the file the realm roles stay as they are. The file is read before Keycloak is reached.
     roles = None
+    if arguments.organization and not arguments.realm_roles:
+        print("--organization works only with --realm-roles.", file=sys.stderr)
+        return 2
     if arguments.realm_roles:
+        # The expected organisations come from the operator, not from the tenant's file (AJA-391).
+        if not arguments.organization:
+            print("--realm-roles needs at least one --organization.", file=sys.stderr)
+            return 2
         roles = keycloak_apply.read_realm_roles(arguments.realm_roles)
     call = keycloak_apply.admin_caller(
         url, environment["KC_BOOTSTRAP_ADMIN_USERNAME"], environment["KC_BOOTSTRAP_ADMIN_PASSWORD"]
@@ -86,7 +96,7 @@ def apply(arguments, registry):
         action = f"{line['action']} {line['exception']}" if "exception" in line else line["action"]
         print(f"{line['alias']}: {action}, {state}")
     if roles is not None:
-        for line in keycloak_apply.apply_realm_roles(call, roles):
+        for line in keycloak_apply.apply_realm_roles(call, roles, arguments.organization):
             print(f"role {line['role']}: {line['added']} added, {line['removed']} removed, {line['kept']} kept")
     return 0
 
@@ -137,7 +147,11 @@ def main(argv=None):
     apply_parser.add_argument("--enterprise-exceptions", type=Path,
                               help="JSON file of approved corporate provider exceptions (G-160).")
     apply_parser.add_argument("--realm-roles", type=Path,
-                              help="JSON file of membership realm roles by Keycloak user id (G-160).")
+                              help="JSON file of membership realm roles by Keycloak user id, with its source "
+                                   "Keycloak organisation ids (G-160, AJA-391).")
+    apply_parser.add_argument("--organization", action="append", default=[],
+                              help="Expected Keycloak organisation id of the tenant's Press team "
+                                   "(Team.keycloak_org_id). Repeat for each. Needed with --realm-roles.")
     redirect_parser = commands.add_parser("redirects", help="Print the return address of each platform.")
     target = redirect_parser.add_mutually_exclusive_group(required=True)
     target.add_argument("--env", choices=ENVIRONMENT_CHOICES, help="alpha, beta, rc, prod or all")

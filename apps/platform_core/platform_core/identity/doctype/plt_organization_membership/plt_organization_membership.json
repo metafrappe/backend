@@ -13,7 +13,7 @@
  ],
  "fields": [
   {
-   "description": "Organisation identifier, the same value as the organization field of PLT Enterprise IdP Exception. There is no organisation record yet.",
+   "description": "Keycloak organisation id of the organisation (the id in the platform realm, not its alias or name). It is the same value as the Keycloak Organization ID of the Press team (Team.custom_ptr_keycloak_org_id). The same value as the organization field of PLT Enterprise IdP Exception. There is no organisation record yet.",
    "fieldname": "organization",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -56,7 +56,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-24 18:00:00.000000",
+ "modified": "2026-11-24 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Identity",
  "name": "PLT Organization Membership",

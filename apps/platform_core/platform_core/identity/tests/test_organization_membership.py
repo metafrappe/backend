@@ -9,6 +9,8 @@ Expected rules, from the G-160 design:
   to an organisation that requires corporate sign-in. Otherwise it returns no role.
 - Frappe never writes Keycloak. The sync step writes a file for `atonota-login apply`. The file
   names the Keycloak user by the identity link subject, never by the e-mail.
+- The file names the site's source organisations: every organisation of a policy or a membership
+  record. `atonota-login apply` takes the role back only inside them (AJA-368, AJA-391).
 """
 
 import json
@@ -64,7 +66,13 @@ class TestOrganizationMembership(IntegrationTestCase):
 		frappe.set_user(ADMIN)
 		try:
 			return frappe.get_doc(
-				{"doctype": MEMBERSHIP, "organization": organization, "user": user, "status": status, **changes}
+				{
+					"doctype": MEMBERSHIP,
+					"organization": organization,
+					"user": user,
+					"status": status,
+					**changes,
+				}
 			).insert()
 		finally:
 			frappe.set_user("Administrator")
@@ -155,10 +163,35 @@ class TestOrganizationMembership(IntegrationTestCase):
 			finally:
 				frappe.set_user("Administrator")
 		with open(path, encoding="utf-8") as handle:
-			entries = json.load(handle)
-		self.assertEqual(entries, [{"subject": "sub-uyelik-uye", "realm_roles": [ROLE]}])
-		self.assertNotIn(MEMBER, json.dumps(entries))
+			document = json.load(handle)
+		self.assertEqual(document["entries"], [{"subject": "sub-uyelik-uye", "realm_roles": [ROLE]}])
+		self.assertNotIn(MEMBER, json.dumps(document))
 		self.assertEqual(os.stat(path).st_mode & 0o077, 0)
+
+	def test_sync_export_names_the_source_organisations(self):
+		# One realm serves every tenant. The file names this site's organisations, so the apply step
+		# takes the role back only from their members (AJA-391).
+		self.member("test-org-no-policy", user=OTHER, status="ended")
+		self.assertEqual(
+			[o for o in enterprise_sync.source_organizations() if o.startswith("test-org-")],
+			["test-org-free", "test-org-no-policy", "test-org-required"],
+		)
+		folder = tempfile.TemporaryDirectory()
+		self.addCleanup(folder.cleanup)
+		path = os.path.join(folder.name, "roles.json")
+		with h.SiteSettings():
+			frappe.set_user(ADMIN)
+			try:
+				enterprise_sync.export_realm_roles(path)
+			finally:
+				frappe.set_user("Administrator")
+		with open(path, encoding="utf-8") as handle:
+			document = json.load(handle)
+		self.assertEqual(set(document), {"organizations", "entries"})
+		self.assertEqual(
+			[o for o in document["organizations"] if o.startswith("test-org-")],
+			["test-org-free", "test-org-no-policy", "test-org-required"],
+		)
 
 	def test_sync_export_needs_the_approver_role(self):
 		frappe.set_user(MEMBER)

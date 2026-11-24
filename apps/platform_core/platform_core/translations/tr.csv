@@ -874,6 +874,9 @@ The provider {0} already has an exception for another organisation.,{0} sağlay�
 Only the approval endpoint fills the approval fields.,Onay alanlarını yalnız onay ucu doldurur.,platform_core.identity
 "An approved exception record cannot change. Open a new record that supersedes it.",Onaylı istisna kaydı değişmez. Bu kaydın yerine geçen yeni bir kayıt açın.,platform_core.identity
 An exception record cannot be deleted. Open a revocation record instead.,İstisna kaydı silinmez. Bunun yerine bir kapanış kaydı açın.,platform_core.identity
+You cannot open this exception record.,Bu istisna kaydını açamazsınız.,platform_core.identity
+Only the system writes the Added By field.,Ekleyen alanını yalnız sistem yazar.,platform_core.identity
+"The user already has an active membership in this organisation: {0}.",Kullanıcının bu kuruluşta etkin bir üyeliği zaten var: {0}.,platform_core.identity
 Only a grant record waiting for approval can be approved.,Yalnız onay bekleyen izin kaydı onaylanabilir.,platform_core.identity
 This action needs a human session.,Bu işlem için insan oturumu gerekir.,platform_core.identity
 You cannot open this exception record.,Bu istisna kaydını açamazsınız.,platform_core.identity

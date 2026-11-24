@@ -24,6 +24,9 @@ REGISTRY_DIR = PRODUCT_DIR / "platforms"
 REALM = "platform"
 FIRST_BROKER_FLOW = "atonota-first-broker-login"
 POST_BROKER_FLOW = "atonota-post-broker"
+# The post-broker flow refuses a social sign-in of a user who holds this realm role (G-160).
+# The membership layer in Frappe decides who needs it; `atonota-login apply` writes it.
+ENTERPRISE_SSO_ROLE = "enterprise-sso-required"
 LOGIN_HOST_PREFIX = "api.login."
 
 ALIAS = re.compile(r"[a-z](?:[a-z0-9-]{0,30}[a-z0-9])?")

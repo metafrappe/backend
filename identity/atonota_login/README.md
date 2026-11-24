@@ -78,6 +78,13 @@ Parolası olmayan kullanıcı bu yolla bağ kuramaz. Örneğin yalnız sihirli b
 
 Kuruluş kurumsal girişi zorunlu kılabilir. Bu durumda üyelik katmanı kullanıcıya `enterprise-sso-required` rolünü verir. Rolü olan kullanıcı sosyal platformla giremez.
 
+Üyelik katmanı Frappe'dedir. Kuruluş üyeliği `PLT Organization Membership` kaydında durur. Kuruluşun giriş kuralı `PLT Organization Sign-in Policy` kaydında durur. Frappe Keycloak'a yazmaz. Rolü DevOps sorumlusu şu iki adımla taşır:
+
+1. `bench --site <site> execute platform_core.identity.enterprise_sync.export_realm_roles --kwargs '{"path": "<dosya>"}'` komutu rol dosyasını yazar.
+2. `bin/atonota-login apply --from-env --realm-roles <dosya>` komutu rolü dosyadaki kullanıcılara verir.
+
+Komut rolü dosyada olmayan kullanıcılardan geri alır. Örneğin üyeliği biten kullanıcı rolü kaybeder. Dosya kullanıcıyı yalnız Keycloak kullanıcı numarasıyla anar. Dosyada e-posta yoktur. Bu yüzden aynı e-postalı ikinci hesap rol almaz. Dosya başka bir rol taşıyamaz. Dosya sır taşımaz ve Git'e girmez.
+
 Kurumsal sağlayıcılar kayıtta yoktur. `apply` komutu onları değiştirmez. Komut her kurumsal sağlayıcıyı şu sırayla denetler (G-160):
 
 1. `trustEmail` açıksa komut hata verir.

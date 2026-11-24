@@ -12,6 +12,9 @@ that step and can run again:
   ``trustEmail`` must be off, the broker flows must be the fixed ones, and the provider must require
   the ``email_verified`` claim. A provider without the claim needs a valid exception record from
   the exceptions file. Otherwise the command stops with an error. It does not close the provider.
+- With a membership roles file, the command gives the ``enterprise-sso-required`` realm role to
+  the users the file names and takes it back from every other holder (G-160). Users are found by
+  their Keycloak user id only. The file may carry no other role.
 - Nothing is deleted. No secret is printed.
 
 By default only a local development Keycloak is accepted. A remote Keycloak needs https and an
@@ -43,6 +46,10 @@ RULES_PATH = BACKEND_DIR / "apps" / "platform_core" / "platform_core" / "identit
 # Generic provider types. Every other type in the registry is a social platform type.
 GENERIC_PROVIDER_IDS = frozenset({"oidc", "keycloak-oidc", "saml"})
 EXCEPTION_ACTION = "not-in-registry-exception"
+# Realm roles that the membership file may give or take (G-160). Every other role stays as it is.
+MANAGED_REALM_ROLES = frozenset({platforms.ENTERPRISE_SSO_ROLE})
+ROLE_ENTRY_FIELDS = frozenset({"subject", "realm_roles"})
+ROLE_PAGE = 100
 
 
 class ApplyError(RuntimeError):
@@ -85,6 +92,83 @@ def read_exceptions(path: Path) -> list[dict]:
             raise ApplyError("The exceptions file must name each provider once: duplicate_provider.",
                              "duplicate_provider")
     return value
+
+
+def read_realm_roles(path: Path) -> list[dict]:
+    """Read the membership roles file that the sync step writes. One entry per Keycloak user id.
+
+    The file names a user only by the Keycloak user id (the token's ``sub``). It holds no e-mail.
+    """
+    try:
+        value = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        raise ApplyError("The realm roles file cannot be read as JSON.", "invalid_roles_file") from None
+    if not isinstance(value, list):
+        raise ApplyError("The realm roles file must hold a list of entries.", "invalid_roles_file")
+    seen = set()
+    for item in value:
+        if (not isinstance(item, dict) or set(item) != ROLE_ENTRY_FIELDS
+                or not isinstance(item["subject"], str) or not item["subject"]
+                or not isinstance(item["realm_roles"], list)
+                or not all(isinstance(role, str) for role in item["realm_roles"])):
+            raise ApplyError("Each realm roles entry holds only a subject and a list of roles.", "invalid_roles_file")
+        if item["subject"] in seen:
+            raise ApplyError("The realm roles file must name each user once: duplicate_user.", "duplicate_user")
+        seen.add(item["subject"])
+    return value
+
+
+def _role_holders(call: Callable, role: str) -> set[str]:
+    holders: set[str] = set()
+    first = 0
+    while True:
+        status, page = call("GET", f"/roles/{_quoted(role)}/users?first={first}&max={ROLE_PAGE}")
+        if status != 200 or not isinstance(page, list):
+            raise ApplyError(f"Reading the holders of role {role} failed. HTTP {status}.")
+        holders.update(user["id"] for user in page)
+        if len(page) < ROLE_PAGE:
+            return holders
+        first += ROLE_PAGE
+
+
+def apply_realm_roles(call: Callable, entries: Sequence[Mapping]) -> list[dict]:
+    """Make the holders of every managed realm role equal to the users the file names (G-160).
+
+    A user named in the file gets the role. A user who holds the role but is no longer named loses
+    it: the membership ended. Users are found by their Keycloak user id only, never by e-mail, so a
+    second account with the same e-mail gets nothing. Every check runs before the first write.
+    Returns one report line per role with counts; no user id is printed.
+    """
+    wanted: dict[str, set[str]] = {role: set() for role in sorted(MANAGED_REALM_ROLES)}
+    for entry in entries:
+        for role in entry["realm_roles"]:
+            if role not in MANAGED_REALM_ROLES:
+                raise ApplyError("The realm roles file names a role that membership does not own.",
+                                 "role_not_managed")
+            wanted[role].add(entry["subject"])
+    representations = {}
+    for role in wanted:
+        status, representation = call("GET", f"/roles/{_quoted(role)}")
+        if status != 200 or not representation:
+            raise ApplyError(f"The realm role {role} is missing: role_missing.", "role_missing")
+        representations[role] = representation
+    for subject in sorted(set().union(*wanted.values())):
+        status, _ = call("GET", f"/users/{_quoted(subject)}")
+        if status != 200:
+            raise ApplyError(f"A user in the realm roles file is not in Keycloak. HTTP {status}.", "unknown_user")
+    plans = []
+    for role, subjects in wanted.items():
+        holders = _role_holders(call, role)
+        plans.append((role, sorted(subjects - holders), sorted(holders - subjects), len(subjects & holders)))
+    report = []
+    for role, added, removed, kept in plans:
+        for method, users in (("POST", added), ("DELETE", removed)):
+            for subject in users:
+                status, _ = call(method, f"/users/{_quoted(subject)}/role-mappings/realm", [representations[role]])
+                if status not in (200, 204):
+                    raise ApplyError(f"Writing role {role} failed. HTTP {status}.")
+        report.append({"role": role, "added": len(added), "removed": len(removed), "kept": kept})
+    return report
 
 
 def social_names(registry: Sequence[Platform], rules: ModuleType | None = None) -> tuple[set[str], set[str]]:
@@ -274,8 +358,10 @@ __all__ = [
     "ApplyError",
     "RegistryError",
     "admin_caller",
+    "apply_realm_roles",
     "apply_registry",
     "checked_keycloak_url",
     "load_enterprise_rules",
     "read_exceptions",
+    "read_realm_roles",
 ]

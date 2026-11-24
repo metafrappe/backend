@@ -11,7 +11,17 @@ The file holds only the record fields and no secret. It is written with mode 060
 committed to Git. The file is not signed: the apply command checks the rules again, but it cannot
 prove from the file alone that the approval was given. Only the DevOps owner carries the file.
 
-No scheduled job runs this export.
+The membership roles travel the same way (G-160, design AJA-361):
+
+1. `bench --site <site> execute platform_core.identity.enterprise_sync.export_realm_roles
+   --kwargs '{"path": "<file>"}'` writes the realm roles that active memberships need.
+2. `bin/atonota-login apply --from-env --realm-roles <file>` gives the roles and takes them back
+   from users who no longer need them.
+
+The roles file names a user only by the subject of the identity link of the platform realm. It holds
+no e-mail. A member without such a link has no Keycloak account yet and is not in the file.
+
+No scheduled job runs these exports.
 """
 
 from __future__ import annotations
@@ -21,7 +31,9 @@ import os
 
 import frappe
 
-from platform_core.identity import enterprise_membership, enterprise_rules
+from platform_core.identity import enterprise_membership, enterprise_rules, site_settings
+
+LINK = "PLT Identity Link"
 
 
 def current_grants() -> list[dict]:
@@ -43,13 +55,46 @@ def current_grants() -> list[dict]:
 	return records
 
 
+def _write_private(path: str, value) -> None:
+	descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+	with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+		os.fchmod(handle.fileno(), 0o600)
+		json.dump(value, handle, indent=2, sort_keys=True)
+		handle.write("\n")
+
+
 def export_exceptions(path: str) -> int:
 	"""Write the current grants to `path` with mode 0600. Returns the number of records."""
 	frappe.only_for(enterprise_membership.APPROVER_ROLE)
 	records = current_grants()
-	descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-	with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
-		os.fchmod(handle.fileno(), 0o600)
-		json.dump(records, handle, indent=2, sort_keys=True)
-		handle.write("\n")
+	_write_private(path, records)
 	return len(records)
+
+
+def realm_role_entries() -> list[dict]:
+	"""One entry per linked member who needs a realm role, keyed by the platform realm subject."""
+	issuer = site_settings.issuer()
+	users = frappe.get_all(
+		enterprise_membership.MEMBERSHIP_DOCTYPE,
+		filters={"status": enterprise_membership.ACTIVE},
+		pluck="user",
+		distinct=True,
+		order_by="user asc",
+	)
+	entries = []
+	for user in users:
+		roles = enterprise_membership.required_realm_roles(user)
+		if not roles:
+			continue
+		subject = frappe.db.get_value(LINK, {"user": user, "issuer": issuer}, "subject")
+		if subject:
+			entries.append({"subject": subject, "realm_roles": roles})
+	return sorted(entries, key=lambda entry: entry["subject"])
+
+
+def export_realm_roles(path: str) -> int:
+	"""Write the membership realm roles to `path` with mode 0600. Returns the number of entries."""
+	frappe.only_for(enterprise_membership.APPROVER_ROLE)
+	entries = realm_role_entries()
+	_write_private(path, entries)
+	return len(entries)

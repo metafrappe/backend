@@ -29,8 +29,14 @@ ALIAS = "test-acme-entra"
 CSRF = "csrf-test-token"
 
 
+@contextlib.contextmanager
 def request_headers(headers):
-	return mock.patch.object(frappe, "get_request_header", side_effect=lambda key, default=None: headers.get(key))
+	"""An HTTP request with these headers. Outside a request there is never a human session."""
+	with (
+		mock.patch.object(frappe.local, "request", object(), create=True),
+		mock.patch.object(frappe, "get_request_header", side_effect=lambda key, default=None: headers.get(key)),
+	):
+		yield
 
 
 @contextlib.contextmanager
@@ -228,13 +234,15 @@ class TestApprovalPrincipal(IntegrationTestCase):
 	"""Only a cookie session with a checked CSRF token approves. An agent token never does."""
 
 	def principal(self, headers, session_csrf="csrf-1"):
-		with (
-			mock.patch.object(
-				frappe, "get_request_header", side_effect=lambda key, default=None: headers.get(key)
-			),
-			mock.patch.dict(frappe.session.data, {"csrf_token": session_csrf}),
-		):
+		with request_headers(headers), mock.patch.dict(frappe.session.data, {"csrf_token": session_csrf}):
 			return enterprise_membership.request_principal()
+
+	def test_call_outside_a_request_is_not_human(self):
+		# bench execute, a background job or a console has no HTTP request (AJA-363).
+		frappe.set_user(SECURITY)
+		self.addCleanup(frappe.set_user, "Administrator")
+		with mock.patch.dict(frappe.session.data, {"csrf_token": CSRF}):
+			self.assertEqual(enterprise_membership.request_principal(), "other")
 
 	def test_cookie_session_with_csrf_is_human(self):
 		frappe.set_user(SECURITY)

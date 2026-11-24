@@ -52,6 +52,8 @@ class TestOrganizationMembership(IntegrationTestCase):
 		frappe.db.delete(MEMBERSHIP, {"organization": ("like", "test-org-%")})
 		frappe.db.delete(POLICY, {"organization": ("like", "test-org-%")})
 		frappe.db.delete("PLT Identity Link", {"user": ("in", [MEMBER, OTHER])})
+		# `make_link` commits. The cleanup commits too, so no link stays for other test modules.
+		h.refresh()
 
 	def policy(self, organization, required):
 		return frappe.get_doc(

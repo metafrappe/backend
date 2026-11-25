@@ -83,9 +83,10 @@ EXPECTED = {
     "platform_core.api.identity.set_enabled": SERVICE,
     "platform_core.api.identity.change_email": SERVICE,
     "platform_core.api.identity.anonymize_user": SERVICE,
-    # The tenant admin panel invites users and assigns Role Profiles (G-98, AJA-791).
+    # The tenant admin panel invites users, reads and assigns Role Profiles (G-98, AJA-791, AJA-913).
     "platform_core.api.identity.invite_user": PANEL,
     "platform_core.api.identity.set_user_role_profiles": PANEL,
+    "platform_core.api.identity.get_user_role_profiles": PANEL,
     # Reseller endpoints (G-169, G-170). The reseller panel lists, reads and requests customers.
     "platform_core.api.reseller.list_customers": PANEL,
     "platform_core.api.reseller.customer_status": PANEL,

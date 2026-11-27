@@ -45,8 +45,8 @@ class GateRepo:
         self.git("config", "core.hooksPath", "/dev/null")
 
     def git(self, *args: str) -> str:
-        done = subprocess.run(["git", "-C", str(self.root), *args], check=True, capture_output=True, text=True)
-        return done.stdout
+        command = ["git", "-C", str(self.root), *args]
+        return subprocess.run(command, check=True, capture_output=True, text=True).stdout
 
     def write(self, path: str, text: str) -> None:
         full = self.root / path
@@ -175,6 +175,15 @@ class BaselineTests(unittest.TestCase):
         code, output = self.repo.run("--check", "--base-ref", "main")
         self.assertEqual(code, 1, output)
         self.assertIn("baseline grew", output)
+
+    def test_first_baseline_against_base_ref_without_one_passes(self):
+        self.repo.write("apps/core/reader.py", ENGLISH_COMMENT)
+        self.repo.commit()
+        self.repo.write("apps/core/reader.py", TURKISH_COMMENT)
+        self.repo.baseline({"apps/core/reader.py": 1})
+        code, output = self.repo.run("--check", "--base-ref", "main")
+        self.assertEqual(code, 0, output)
+        self.assertIn("first baseline", output)
 
     def test_lower_baseline_against_base_ref_passes(self):
         self.repo.write("apps/core/reader.py", TURKISH_COMMENT)

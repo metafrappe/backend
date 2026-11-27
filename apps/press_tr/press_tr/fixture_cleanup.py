@@ -1,0 +1,161 @@
+"""G-8: close Frappe Cloud defaults after Press imports its fixtures.
+
+Frappe runs ``sync_fixtures`` before ``after_migrate``. A Press fixture with a newer ``modified``
+stamp overwrites local edits, so every step here runs again on every migrate. Writes use
+``update_modified=False`` so Press document events do not run and the import stamp stays.
+
+Team Tier table: ``DEFAULT_TEAM_TIERS`` below is the orchestrator decision of 24 November 2026,
+with the conditions corrected on 25 November 2026 to the rules Press tests. The product owner may
+change it. The ``press_tr_team_tiers`` site setting replaces the whole
+table when it is set. Press tiers in ``CLOSED_TEAM_TIERS`` that the table does not list are
+deleted again after every migrate, because the Press fixture brings them back.
+
+``press_tr_enabled_clusters`` (the Cluster names in use) is an infrastructure decision and comes
+from site config only. When it is missing, its step changes nothing.
+
+When a value is wrong, the step throws before it writes, and ``bench migrate`` stops. This is on
+purpose: a wrong price or region table must not reach Press records. A new Press Team Tier also
+stops migrate until the table lists it or ``CLOSED_TEAM_TIERS`` names it.
+
+Known gaps against Press v0.154.1 rules (documented, not patched here):
+
+- A new team gets a 100 USD limit from ``Team.create_new``, not the Beginner amount. A tier change
+  reads ``amount or 100``, so a Beginner amount of 0 also becomes 100. Both still block every paid
+  plan, because the cheapest paid plan costs 400 USD.
+- ``Invoice.update_team_tier`` needs 3 paid invoices and compares only ``last_invoice_amount``.
+  No Press rule reads ``paying_user_since``. The table writes 0 there: the Press fixture brings
+  other values back on every migrate, and the Press billing API shows the field to customers as
+  a condition that is never tested.
+- Beginner and Growth both have ``last_invoice_amount`` 0. Press orders by that field only, so
+  ``update_team_tier`` may pick Beginner for a team that pays less than 400 USD.
+"""
+
+import json
+from pathlib import Path
+
+import frappe
+
+LEGACY_SIGNUP_METHOD = "press.signup_e2e.run_signup_e2e"
+TEAM_TIERS_KEY = "press_tr_team_tiers"
+ENABLED_CLUSTERS_KEY = "press_tr_enabled_clusters"
+TEAM_TIER_FIELDS = ("amount", "last_invoice_amount")
+TEAM_TIER_OPTIONAL_FIELDS = ("paying_user_since",)
+# Values are USD: Press compares the tier amount with plan price_usd.
+DEFAULT_TEAM_TIERS = {
+	"Beginner": {"amount": 0.0, "last_invoice_amount": 0.0, "paying_user_since": 0},
+	"Growth": {"amount": 1000.0, "last_invoice_amount": 0.0, "paying_user_since": 0},
+	"Intermediate": {"amount": 2500.0, "last_invoice_amount": 400.0, "paying_user_since": 0},
+	"Advance": {"amount": 10000.0, "last_invoice_amount": 750.0, "paying_user_since": 0},
+}
+# Enterprise limits are written by hand on the Team record, not through a tier.
+CLOSED_TEAM_TIERS = ("Power", "Elite")
+
+
+def disable_cloud_defaults():
+	disable_press_site_plans()
+	stop_legacy_signup_job()
+	apply_team_tiers()
+	close_unused_clusters()
+
+
+def disable_press_site_plans():
+	fixture = Path(frappe.get_app_path("press", "fixtures", "site_plan.json"))
+	plans = [row["name"] for row in json.loads(fixture.read_text(encoding="utf-8"))]
+	# Plans that are not in the Press fixture are ours (G-9) and stay enabled.
+	if plans:
+		frappe.db.set_value(
+			"Site Plan",
+			{"name": ["in", plans], "enabled": 1},
+			"enabled",
+			0,
+			update_modified=False,
+		)
+
+
+def stop_legacy_signup_job():
+	# The OTP signup flow does not run under Keycloak sign-in.
+	jobs = frappe.get_all(
+		"Scheduled Job Type",
+		filters=[["Scheduled Job Type", "method", "=", LEGACY_SIGNUP_METHOD]],
+		pluck="name",
+	)
+	if jobs:
+		frappe.db.set_value(
+			"Scheduled Job Type",
+			{"name": ["in", jobs], "stopped": 0},
+			"stopped",
+			1,
+			update_modified=False,
+		)
+
+
+def apply_team_tiers():
+	table = frappe.conf.get(TEAM_TIERS_KEY) or DEFAULT_TEAM_TIERS
+	tiers = frappe.get_all("Team Tier", pluck="name")
+	rows = _validated_team_tiers(table, tiers)
+	closed = sorted(set(tiers) - set(rows))
+	if closed and frappe.get_all("Team", filters=[["Team", "tier", "in", closed]], pluck="name"):
+		frappe.throw(frappe._("A Team still uses a closed Team Tier. Move the Team to another tier first."))
+	for tier, values in rows.items():
+		frappe.db.set_value("Team Tier", tier, values, update_modified=False)
+	if closed:
+		frappe.db.delete("Team Tier", {"name": ["in", closed]})
+
+
+def _validated_team_tiers(table, tiers):
+	"""Check the whole table first, so a bad table changes no tier."""
+	if not isinstance(table, dict) or not set(table) <= set(tiers):
+		frappe.throw(frappe._("The Team Tier table lists a tier that Press does not have."))
+	if set(tiers) - set(table) - set(CLOSED_TEAM_TIERS):
+		frappe.throw(frappe._("The Team Tier table must list every open Press Team Tier."))
+	rows = {}
+	for tier, values in table.items():
+		if not isinstance(values, dict) or not set(TEAM_TIER_FIELDS) <= set(values):
+			frappe.throw(frappe._("Every Team Tier row needs amount and last_invoice_amount."))
+		allowed = set(TEAM_TIER_FIELDS) | set(TEAM_TIER_OPTIONAL_FIELDS)
+		if set(values) - allowed:
+			frappe.throw(frappe._("The Team Tier table has an unknown field."))
+		for field, value in values.items():
+			if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
+				frappe.throw(frappe._("Team Tier values must be numbers that are zero or more."))
+			# paying_user_since is an Int field; Frappe would cut 1.5 to 1 without a warning.
+			if field in TEAM_TIER_OPTIONAL_FIELDS and not isinstance(value, int):
+				frappe.throw(frappe._("paying_user_since must be a whole number."))
+		rows[tier] = dict(values)
+	return rows
+
+
+def close_unused_clusters():
+	"""Hide unused Clusters and disable their Server Plans.
+
+	Cloud Region has no enabled field, so the region record is kept as it is. A Server Plan
+	without a Cluster is not tied to a region and stays unchanged. This step only closes records:
+	removing a name from the list later does not reopen its Cluster or plans.
+	"""
+	enabled = frappe.conf.get(ENABLED_CLUSTERS_KEY)
+	if not enabled:
+		return
+	if not isinstance(enabled, list) or not all(isinstance(name, str) and name for name in enabled):
+		frappe.throw(frappe._("The enabled Cluster list must be a list of Cluster names."))
+	# A wrong name would match every Cluster with "not in" and close them all.
+	if not all(frappe.db.exists("Cluster", name) for name in enabled):
+		frappe.throw(frappe._("The enabled Cluster list has a name that is not a Cluster."))
+
+	clusters = frappe.get_all("Cluster", filters=[["Cluster", "name", "not in", enabled]], pluck="name")
+	if clusters:
+		frappe.db.set_value(
+			"Cluster", {"name": ["in", clusters], "public": 1}, "public", 0, update_modified=False
+		)
+
+	plans = frappe.get_all(
+		"Server Plan",
+		filters=[
+			["Server Plan", "cluster", "is", "set"],
+			["Server Plan", "cluster", "not in", enabled],
+		],
+		pluck="name",
+	)
+	if plans:
+		frappe.db.set_value(
+			"Server Plan", {"name": ["in", plans], "enabled": 1}, "enabled", 0, update_modified=False
+		)

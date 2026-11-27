@@ -11,8 +11,7 @@ from frappe.tests.test_api import FrappeAPITestCase
 
 from platform_core.identity import provider_setup, session_policy
 from platform_core.identity.tests import helpers as h
-from platform_core.shell.api import BOOTSTRAP_KEY_PREFIX
-from platform_core.shell.bootstrap import get_bootstrap
+from platform_core.shell.api import BOOTSTRAP_KEY_PREFIX, get_bootstrap
 
 BACKCHANNEL = "/api/method/platform_core.api.keycloak_backchannel_logout"
 LOGOUT = "/api/method/platform_core.api.auth.logout"

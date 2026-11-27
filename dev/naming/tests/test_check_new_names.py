@@ -55,7 +55,7 @@ class BaselineGateTests(unittest.TestCase):
             text=True,
             check=True,
         )
-        self.assertIn("1", process.stdout)
+        self.assertIn(f"Wrote {len(findings)} findings", process.stdout)
         return json.loads(target.read_text(encoding="utf-8"))
 
     def test_known_findings_pass_even_when_lines_move(self):

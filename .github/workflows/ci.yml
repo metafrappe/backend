@@ -186,13 +186,13 @@ jobs:
         run: |
           python3.14 -m pip install -r dev/requirements-contract-tests.txt openapi-spec-validator==0.7.2
           python3.14 -B -c 'import jsonschema, referencing, yaml, openapi_spec_validator'
-      - name: press-ai contract check
-        run: python3.14 -I tools/press-ai/server.py check-contract
       - name: OpenAPI tests
         run: |
           python3.14 -B -m unittest discover -s dev/tests -p test_gateway_openapi.py
           python3.14 -B -m unittest discover -s dev/press -p test_openapi_contract.py
           python3.14 -B -m unittest discover -s dev/mobile_test_app/tests -p test_contract_examples.py
+      - name: press-ai contract check
+        run: python3.14 -I tools/press-ai/server.py check-contract
 
   build-and-test:
     name: build-and-test

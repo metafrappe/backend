@@ -243,9 +243,12 @@ class TestRecordLinks(AccessRuleTestCase):
 		second = missing.get_data(as_text=True)
 		self.assertNotIn(self.stored(name, "title"), first)
 		self.assertEqual(first.replace(name, "missing-record"), second)
+		# The card text is fixed source text, translated into the page language only.
+		lang = re.search(r'<html lang="([^"]+)"', first).group(1)
+		context = "shell.record_preview"
 		for prop, expected in (
-			("title", "Record"),
-			("description", "Sign in to open this record."),
+			("title", frappe._("Record", lang=lang, context=context)),
+			("description", frappe._("Sign in to open this record.", lang=lang, context=context)),
 			("image", "/api/method/platform_core.api.shell.record_preview_image"),
 		):
 			pattern = rf'property="og:{prop}" content="([^"]+)"'

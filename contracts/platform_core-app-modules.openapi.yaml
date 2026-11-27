@@ -1,0 +1,140 @@
+openapi: 3.1.0
+info:
+  title: platform_core application module manifest
+  version: 0.1.0
+  summary: Read-only list of the modules installed on the current tenant site.
+  description: |
+    This contract describes the application module manifest of the `platform_core` app (G-103).
+    The rules are in section 12 of the `docs/contracts.md` file.
+    The frontend reads this list after sign-in. It builds its module menu from the list.
+security:
+  - frappeSession: []
+paths:
+  /api/method/platform_core.api.app_modules.get_manifest:
+    get:
+      tags: [modules]
+      operationId: getAppModuleManifest
+      summary: Returns the modules installed on the current site and the user's visible tools.
+      description: |
+        The endpoint needs an open Frappe session. The `sid` cookie must point at the session of the signed-in user.
+        A request without a session cookie gets 403 and `PermissionError`.
+        The server checks the session before it reads any app data.
+        A cookie of an expired or closed session gets 401 and `SessionExpired`.
+
+        The server lists only the apps installed on the site of the request. The site is the tenant.
+        Apps of other sites never appear in the response. The apps are sorted by name.
+        Screens come from the `app_module_screens` hook of each app.
+        Help topics come from the `app_module_help_topics` hook of each app.
+        The server returns only the `id` and `title` of each entry. Other keys in a hook entry are dropped.
+        Tools come from the `ai_tools` registry. The server lists only the tools the user's roles may see.
+        A list is empty when the app declares nothing.
+
+        The response is never cached. It carries `Cache-Control: private, no-store` and `Vary: Cookie, Authorization`.
+        Only GET is accepted. The request has no parameters and no body.
+        The limit is 120 requests per minute per signed-in user. Over the limit the server returns 429.
+        The endpoint does not change data. The endpoint does not do paid work.
+      x-yikici: false
+      security:
+        - frappeSession: []
+      responses:
+        "200":
+          description: The manifest of the current site.
+          headers:
+            Cache-Control:
+              description: Always `private, no-store`.
+              schema: {type: string}
+            Vary:
+              description: Always `Cookie, Authorization`.
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message: {$ref: "#/components/schemas/Manifest"}
+              examples:
+                sample:
+                  value:
+                    message:
+                      version: 1
+                      apps:
+                        - name: sample
+                          screens:
+                            - {id: overview, title: Overview}
+                          help_topics:
+                            - {id: start, title: Getting started}
+                          tools:
+                            - {name: sample_list}
+        "401":
+          description: The session cookie belongs to an expired or closed session. The `exc_type` value is `SessionExpired`.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FrappeError"}
+        "403":
+          description: The request has no session cookie, or the request method is not GET. The `exc_type` value is `PermissionError`.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FrappeError"}
+        "429":
+          description: The signed-in user sent more than 120 requests in 60 seconds.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FrappeError"}
+components:
+  securitySchemes:
+    frappeSession:
+      type: apiKey
+      in: cookie
+      name: sid
+      description: Frappe session cookie of the signed-in user. The API never accepts a target user or site parameter.
+  schemas:
+    Manifest:
+      type: object
+      additionalProperties: false
+      required: [version, apps]
+      properties:
+        version:
+          type: integer
+          const: 1
+          description: Version of the manifest shape.
+        apps:
+          type: array
+          description: Apps installed on the current site, sorted by name.
+          items: {$ref: "#/components/schemas/AppModule"}
+    AppModule:
+      type: object
+      additionalProperties: false
+      required: [name, screens, help_topics, tools]
+      properties:
+        name:
+          type: string
+          description: Installed app name.
+        screens:
+          type: array
+          items: {$ref: "#/components/schemas/Entry"}
+        help_topics:
+          type: array
+          items: {$ref: "#/components/schemas/Entry"}
+        tools:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [name]
+            properties:
+              name: {type: string, minLength: 1}
+    Entry:
+      type: object
+      additionalProperties: false
+      required: [id, title]
+      properties:
+        id: {type: string, minLength: 1}
+        title: {type: string, minLength: 1}
+    FrappeError:
+      type: object
+      description: Native Frappe error envelope.
+      properties:
+        exc_type: {type: string}
+        _server_messages: {type: string}
+      additionalProperties: true

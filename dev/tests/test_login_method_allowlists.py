@@ -126,6 +126,8 @@ EXPECTED = {
     # G-138 help coverage report. `frappe.only_for("System Manager")` guards it, so only an
     # administrator calls it. It stays off the Website User list.
     "platform_core.api.help.get_help_coverage": ADMIN,
+    # G-103 application module manifest. A signed-in panel account reads its installed apps.
+    "platform_core.api.app_modules.get_manifest": PANEL,
 }
 
 # Methods that other open branches add. The test checks them once they are in the tree.

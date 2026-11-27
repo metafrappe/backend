@@ -50,6 +50,7 @@ class AiTool:
 	prepare: Callable[..., Any] | None = None
 	# JSON Schema of a successful result. Published as `outputSchema`.
 	output_schema: dict | None = None
+	app: str | None = None
 	# Level the app declares (R0-R3). `risk.level` keeps the higher of it and the computed level.
 	risk_level: str | None = None
 
@@ -369,6 +370,7 @@ def build_app_tool(app: str, declaration: dict, taken: set[str]) -> AiTool:
 		arguments=arguments,
 		handler=frappe.get_attr(declaration["handler"]),
 		tool_class="app",
+		app=app,
 		kind=kind,
 		preview=frappe.get_attr(preview) if kind == "write" else None,
 		roles=tuple(roles),
@@ -398,6 +400,15 @@ def find(name: str) -> AiTool | None:
 def definitions() -> list[dict]:
 	"""The tool list narrowed by the user's roles (G-84)."""
 	return [tool.definition() for tool in all_tools() if tool.visible()]
+
+
+def app_tool_references() -> dict[str, list[dict[str, str]]]:
+	"""Return visible application tool names grouped by the declaring app."""
+	references = {}
+	for tool in all_tools():
+		if tool.app is not None and tool.visible():
+			references.setdefault(tool.app, []).append({"name": tool.name})
+	return references
 
 
 __all__ = ["AiTool", "ToolArguments", "all_tools", "definitions", "find"]

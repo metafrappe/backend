@@ -6,7 +6,7 @@ The module has no Frappe dependency, so these tests run with plain `unittest`.
 """
 
 import unittest
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from platform_core.time_values import (
 	AmbiguousLocalTimeError,
@@ -52,7 +52,7 @@ class ClosingInstantTests(unittest.TestCase):
 		)
 
 	def test_aware_input_keeps_its_instant(self):
-		aware = datetime(2026, 7, 1, 18, 0, tzinfo=timezone.utc)
+		aware = datetime(2026, 7, 1, 18, 0, tzinfo=UTC)
 		self.assertEqual(closing_instant(aware, ISTANBUL), aware)
 
 	def test_unknown_time_zone_is_rejected(self):
@@ -60,9 +60,7 @@ class ClosingInstantTests(unittest.TestCase):
 			closing_instant(datetime(2026, 7, 1, 18, 0), "Mars/Olympus")
 
 	def test_parse_instant_requires_an_offset(self):
-		self.assertEqual(
-			parse_instant("2026-03-29T03:30:00+03:00").isoformat(), "2026-03-29T00:30:00+00:00"
-		)
+		self.assertEqual(parse_instant("2026-03-29T03:30:00+03:00").isoformat(), "2026-03-29T00:30:00+00:00")
 		with self.assertRaises(ValueError):
 			parse_instant("2026-03-29T03:30:00")
 

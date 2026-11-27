@@ -41,6 +41,49 @@ Oran da ondalık metindir. Oran yüzde olarak yazılır. Örneğin `"12.34"` yü
 
 Bu belgedeki ve şemadaki oranlar kurgusaldır. Ülke kodu da kurgusaldır: `ZZ`. Gerçek oran yazmayın.
 
+## Yuvarlama
+
+Şemadaki `x-rounding` alanı bu kuralı makine için yazar.
+
+### Basamak sayısı
+
+Her tutar tam iki ondalık basamak taşır. Örneğin `"10.00"` doğrudur. `"10"` ve `"10.0"` yanlıştır.
+
+Şema bunu `value` alanının deseniyle denetler. Oran bu kurala girmez. Oran en çok dört ondalık basamak taşır.
+
+### Yöntem
+
+Sunucu vergiyi yarımda çifte yuvarlar. Bu yöntemin adı `ROUND_HALF_EVEN` olur. Türkçe adı "banker yuvarlaması"dır.
+
+Yöntem tam yarımda sonucu çift kuruşa götürür. Örnekler şunlardır:
+
+- `1.025` değeri `1.02` olur.
+- `1.035` değeri `1.04` olur.
+- `1.026` değeri `1.03` olur.
+
+### Yuvarlama yeri
+
+Sunucu vergiyi satırda yuvarlar. Satırın vergisi şöyle bulunur:
+
+1. Sunucu `net` tutarını `tax_rate` oranıyla çarpar.
+2. Sunucu sonucu 100'e böler.
+3. Sunucu sonucu iki ondalık basamağa yuvarlar.
+
+Sunucu toplamları yeniden yuvarlamaz. Toplam vergi, yuvarlanmış satır vergilerinin toplamıdır. Böylece ekran, fatura ve muhasebe aynı kuruşu gösterir.
+
+Şemadaki son örnek bu kuralı gösterir. Örnekte üç satır var. Her satırın net tutarı `10.25`, oranı `10.00` olur.
+
+- Her satırın ham vergisi `1.025` olur. Satır vergisi `1.02` olur.
+- Toplam vergi `3.06` olur.
+- Ham vergiler toplanıp yuvarlansaydı sonuç `3.08` olurdu. Sözleşme bunu yasaklar.
+
+### Kaynak
+
+- Basamak sayısının kaynağı G-41 gereksinimidir. G-41 `currency_precision=2` değerini ister.
+- Yöntemin kaynağı K-8 kararıdır. K-8 `rounding_method` için "Banker's Rounding" önerir.
+- K-8 açık bir karardır. Bu yüzden yöntem için PO onayı istendi.
+- Satırda yuvarlama bu sözleşmenin kararıdır. "Toplamlar" bölümü zaten toplamı satırların toplamı sayar.
+
 ## Satır alanları
 
 Her satır şu alanları taşır:

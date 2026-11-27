@@ -122,8 +122,7 @@ class TaxQuoteTest(unittest.TestCase):
 
 	def test_discount_cents_are_not_lost(self):
 		lines = [
-			{"line_id": str(n), "description": "x", "net": "10.00", "tax_class": "reduced"}
-			for n in range(3)
+			{"line_id": str(n), "description": "x", "net": "10.00", "tax_class": "reduced"} for n in range(3)
 		]
 		result = self.run_quote(lines, discount="10.00")
 		self.assertEqual(sorted(values(result, "net")), ["6.66", "6.67", "6.67"])
@@ -139,7 +138,10 @@ class TaxQuoteTest(unittest.TestCase):
 			"zero_rated": ({"tax_class": "export"}, "ZZ", {}, "TAX_ZERO_RATE_EXPORT"),
 			"exempt": ({"tax_class": "training"}, "ZZ", {}, "TAX_EXEMPT_BY_LAW"),
 			"reverse_charge": (
-				{"tax_class": "b2b"}, "ZZ", {"buyer_tax_id": "ZZ000"}, "TAX_REVERSE_CHARGE_B2B"
+				{"tax_class": "b2b"},
+				"ZZ",
+				{"buyer_tax_id": "ZZ000"},
+				"TAX_REVERSE_CHARGE_B2B",
 			),
 			"not_calculated": ({"tax_class": "reduced"}, "XX", {}, "TAX_UNSUPPORTED_COUNTRY"),
 		}
@@ -168,9 +170,7 @@ class TaxQuoteTest(unittest.TestCase):
 		self.assertEqual(result["lines"][0]["reason_code"], "TAX_MISSING_TAX_ID")
 
 	def test_rule_service_down_is_not_zero(self):
-		result = quote(
-			[LINE_A], billing_country="ZZ", currency="EUR", discount="0", rules=None
-		)
+		result = quote([LINE_A], billing_country="ZZ", currency="EUR", discount="0", rules=None)
 		validate(result, SCHEMA)
 		self.assertEqual(result["lines"][0]["tax_status"], "service_unavailable")
 		self.assertEqual(result["lines"][0]["reason_code"], "TAX_SERVICE_UNAVAILABLE")

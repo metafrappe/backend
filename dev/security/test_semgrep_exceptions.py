@@ -317,10 +317,12 @@ class SemgrepExceptionsTests(unittest.TestCase):
                 path = Path(name)
                 if not any((prefix / path).is_relative_to(target) for target in targets):
                     continue
+                self.assertFalse((repo / path).is_symlink(), f"{name} must not be a symlink.")
                 target = root / prefix / path
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(repo / path, target)
             self.git(root, "init", "-q")
+            self.git(root, "add", "-A", "-f", str(prefix))
             for review in review_scopes(CONFIG):
                 with self.subTest(scope=review["scope"]):
                     self.assertEqual(

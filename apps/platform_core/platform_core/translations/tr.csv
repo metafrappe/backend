@@ -1012,3 +1012,15 @@ Support URL,Destek bağlantısı,PLT Help Topic
 Optional HTTPS URL or same-site relative path. Leave blank when unavailable.,HTTPS adresini veya site içindeki yolu yazın. Bağlantı yoksa alanı boş bırakın.,PLT Help Topic
 Help links must use HTTPS or a same-site relative path.,Yardım bağlantılarında HTTPS adresi veya site içindeki yol kullanılmalıdır.,
 A valid component identifier is required.,Geçerli bir bileşen kimliği yazın.,
+A published terms version cannot be changed.,Yayımlanan koşul sürümü değiştirilemez.,platform_core.identity
+This terms version is already published.,Bu koşul sürümü zaten yayımlandı.,platform_core.identity
+A published terms version cannot be deleted.,Yayımlanan koşul sürümü silinemez.,platform_core.identity
+A terms acceptance cannot be changed.,Koşul kabul kaydı değiştirilemez.,platform_core.identity
+A terms acceptance cannot be deleted.,Koşul kabul kaydı silinemez.,platform_core.identity
+Enter the terms id and the terms version.,Koşulun kimliğini ve sürümünü yazın.,platform_core.identity
+The user who accepted the terms is missing.,Koşulu kabul eden kullanıcı eksik.,platform_core.identity
+The language of the shown terms is not valid.,Gösterilen koşul metninin dili geçerli değil.,platform_core.identity
+The terms are not offered in this language.,Koşul metni bu dilde sunulmuyor.,platform_core.identity
+This terms version is not published.,Bu koşul sürümü yayımlanmadı.,platform_core.identity
+PLT Terms Version,Koşul Sürümü,
+PLT Terms Acceptance,Koşul Kabul Kaydı,

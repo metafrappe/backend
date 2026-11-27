@@ -17,7 +17,7 @@ COPY --chown=frappe:frappe identity/atonota_login /workspace/identity/atonota_lo
 # Colima cannot bind-mount this checkout. The shell tests read their contract from this copy.
 COPY --chown=frappe:frappe contracts/platform_core-shell.openapi.yaml /workspace/contracts/platform_core-shell.openapi.yaml
 COPY --chown=frappe:frappe contracts/platform_core-ai.openapi.yaml contracts/platform_core-identity.openapi.yaml contracts/platform_core-access.openapi.yaml contracts/platform_core-reseller.openapi.yaml contracts/platform_core-help.openapi.yaml /home/frappe/frappe-bench/contracts/
-COPY --chown=frappe:frappe contracts/platform_core-model-gateway.openapi.yaml /home/frappe/frappe-bench/apps/platform_core/contracts/
+COPY --chown=frappe:frappe contracts/platform_core-model-gateway.openapi.yaml contracts/terms_acceptance.schema.json contracts/locales.json /home/frappe/frappe-bench/apps/platform_core/contracts/
 # Ruff matches the version supplied by bench new-app. No Git hooks are installed.
 RUN uv pip install --python env/bin/python --no-deps -e apps/platform_core \
     && uv pip install --python env/bin/python --no-deps /workspace/libs/oidc_verify \

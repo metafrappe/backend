@@ -6,7 +6,7 @@ from urllib.parse import quote, urlencode
 import frappe
 
 from platform_core.shell.test_panel import PanelMetadata
-from platform_core.tests.shell_http_fixture import DOCTYPE, READER, ShellHTTPFixture
+from platform_core.tests.shell_http_fixture import DOCTYPE, PRIVILEGED, READER, ShellHTTPFixture
 
 DESK_WITHOUT_RECORD_ROLE = "shell-desk-without-record-role@example.test"
 SYSTEM_MANAGER = "shell-system-manager@example.test"
@@ -68,6 +68,39 @@ class TestShellEndpointAccess(ShellHTTPFixture):
 		for account, payload in self.check_json_access(BOOTSTRAP, (403, 200, 200, 200)):
 			self.assertEqual(payload["user"]["name"], account)
 
+	def test_bootstrap_revokes_cached_workspace_on_permission_commit(self):
+		workspace_name = "Kabuk Restricted"
+		workspace = frappe.get_doc("Workspace", workspace_name)
+		original_roles = [row.role for row in workspace.roles]
+
+		def bootstrap(sid):
+			status, headers, body = self.request(BOOTSTRAP, sid)
+			self.assertEqual(status, 200)
+			return json.loads(body)["message"], headers["ETag"]
+
+		reader, _unused_etag = bootstrap(self.reader_sid)
+		privileged, etag = bootstrap(self.privileged_sid)
+		self.assertEqual(reader["user"]["name"], READER)
+		self.assertEqual(privileged["user"]["name"], PRIVILEGED)
+		self.assertNotIn(workspace_name, {page["name"] for page in reader["workspaces"]})
+		self.assertIn(workspace_name, {page["name"] for page in privileged["workspaces"]})
+		self.assertEqual(bootstrap(self.privileged_sid), (privileged, etag))
+
+		try:
+			workspace.set("roles", [{"role": "System Manager"}])
+			workspace.save()
+			frappe.db.commit()
+			status, _unused_headers, body = self.request(BOOTSTRAP, self.privileged_sid, headers={"If-None-Match": etag})
+			self.assertEqual(status, 200)
+			changed = json.loads(body)["message"]
+			self.assertNotEqual(changed["perm_version"], privileged["perm_version"])
+			self.assertNotIn(workspace_name, {page["name"] for page in changed["workspaces"]})
+		finally:
+			workspace.reload()
+			workspace.set("roles", [{"role": role} for role in original_roles])
+			workspace.save()
+			frappe.db.commit()
+
 	def test_metadata_requires_read_permission(self):
 		for doctype, statuses in ((DOCTYPE, (403, 200, 403, 403)), ("Role", (403, 403, 403, 200))):
 			route = METADATA + "?" + urlencode({"doctype": doctype})
@@ -77,6 +110,37 @@ class TestShellEndpointAccess(ShellHTTPFixture):
 	def test_mobile_policy_requires_system_manager(self):
 		for _unused_account, payload in self.check_json_access(POLICY_CHECK, (403, 403, 403, 200)):
 			self.assertEqual(payload, {"valid": True, "errors": []})
+
+	def test_panel_session_cookie_has_no_domain_override(self):
+		cookie = self.login_cookie(READER)
+		self.assertEqual(cookie["domain"], "")
+		status, _unused_headers, _unused_body = self.request("/panel", cookie.value)
+		self.assertEqual(status, 200)
+
+	def test_logout_prevents_reuse_of_warm_bootstrap_session(self):
+		sid = self.login(READER)
+		status, _unused_headers, _unused_body = self.request(BOOTSTRAP, sid)
+		self.assertEqual(status, 200)
+
+		status, _unused_headers, body = self.request("/panel", sid)
+		self.assertEqual(status, 200)
+		token = PanelMetadata(body).token
+		self.assertTrue(token)
+		status, _unused_headers, _unused_body = self.request(
+			"/api/method/logout",
+			sid,
+			method="POST",
+			headers={"X-Frappe-CSRF-Token": token},
+		)
+		self.assertEqual(status, 200)
+
+		# The cookie now points at a deleted session. Frappe answers 401 SessionExpired
+		# (frappe/sessions.py), before the bootstrap method runs.
+		status, _unused_headers, body = self.request(BOOTSTRAP, sid)
+		self.assertEqual(status, 401)
+		payload = json.loads(body)
+		self.assertEqual(payload.get("exc_type"), "SessionExpired")
+		self.assertNotIn("message", payload)
 
 	def test_panel_requires_a_session(self):
 		for (account, sid), expected in zip(self.sessions, (302, 200, 200, 200), strict=True):

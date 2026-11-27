@@ -279,6 +279,10 @@ class ShellHTTPFixture(unittest.TestCase):
 
 	@classmethod
 	def login(cls, user):
+		return cls.login_cookie(user).value
+
+	@classmethod
+	def login_cookie(cls, user):
 		cookies = SimpleCookie()
 		connection = http.client.HTTPConnection(
 			"127.0.0.1", int(os.environ.get("PLT_SHELL_TEST_PORT", "8000")), timeout=30
@@ -297,7 +301,7 @@ class ShellHTTPFixture(unittest.TestCase):
 			response.read()
 			if response.status != 200 or "sid" not in cookies:
 				raise RuntimeError("Synthetic session creation failed.")
-			return cookies["sid"].value
+			return cookies["sid"]
 		finally:
 			connection.close()
 

@@ -452,12 +452,12 @@ class GateTests(unittest.TestCase):
         self.write("dev/bin/dev-resources", '#!/usr/bin/env python3\nprint("| Bağlam | Durum |")\n')
         subprocess.run(["git", "-C", str(self.root), "add", "."], check=True)
 
-        result = self.run_gate("--json")
-        self.assertEqual(result.returncode, 0, result.stdout)
-        payload = json.loads(result.stdout)
+        gate_run = self.run_gate("--json")
+        self.assertEqual(gate_run.returncode, 0, gate_run.stdout)
+        payload = json.loads(gate_run.stdout)
         self.assertEqual(payload["checks"]["naming"], "warn")
         self.assertEqual(
-            [(item["rule"], item["path"]) for item in payload["findings"]],
+            [(finding["rule"], finding["path"]) for finding in payload["findings"]],
             [("naming.source-text", "dev/bin/dev-resources")],
         )
 

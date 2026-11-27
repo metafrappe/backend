@@ -33,6 +33,14 @@ KEPT = (
         'name.startswith("backend/")',
         "checks the review has no old paths",
     ),
+    # Decision 0009 records the naming fix that ran in the old frappesetup repository, where the
+    # code sat under the old folder. Its commands and dev/naming/docs-rename.patch use the old
+    # paths. This test checks the decision text word for word, so it repeats those paths.
+    (
+        "dev/naming/tests/test_apply_to_branch.py",
+        "backend/dev/",
+        "quotes the commands of decision 0009",
+    ),
 )
 # The docs/standartlar paths change in a later task (AJA-1587, "Sınır").
 KEPT_TEXT = ("backend/docs/standartlar",)

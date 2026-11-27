@@ -114,6 +114,9 @@ class TestApproval(AiTestCase):
 		self.assertTrue(outcome["executed"], outcome)
 		version = self.last_log(proposal=proposal_id, stage="execute").version
 		self.assertEqual(frappe.db.get_value("Version", version, ["ref_doctype", "docname"]), (DOCTYPE, name))
+		# G-64: the field is a real link to the "Version" record, not a plain text copy of its name.
+		field = frappe.get_meta("PLT AI Action Log").get_field("version")
+		self.assertEqual((field.fieldtype, field.options), ("Link", "Version"))
 
 	def test_expired_proposal_is_rejected(self):
 		name = self.make_record(USER_A, title="Eski")

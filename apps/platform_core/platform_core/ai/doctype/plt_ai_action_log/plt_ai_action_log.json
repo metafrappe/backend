@@ -149,10 +149,11 @@
    "read_only": 1
   },
   {
-   "description": "Name of the Version document the write produced, if any.",
+   "description": "Version document the write produced, if any.",
    "fieldname": "version",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "label": "Version",
+   "options": "Version",
    "read_only": 1
   },
   {
@@ -173,7 +174,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-26 14:00:00.000000",
+ "modified": "2026-11-28 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "AI",
  "name": "PLT AI Action Log",

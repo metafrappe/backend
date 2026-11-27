@@ -32,8 +32,9 @@ Test kullanıcısı `Website User` türündedir. Bu tür, uygulama kullanıcıs�
 - Kullanıcı standart yönetici rolünü kapatamaz. Rol aynı kalır.
 
 `Tenant Admin` rolü kaynakta yoktur. Bu testler kiracı yöneticisinin kabul testi değildir.
-Korunan bütün ayarlar ve yönetim ekranının yönlendirmesi henüz doğrulanmadı.
-Sunucu yönlendirmesi sonraki işte sınanmalıdır.
+`test_login_policy.py` dosyası yönetim ekranının yönlendirmesini sınar.
+Kullanıcı `/desk` ve `/app` adreslerinden `/panel` sayfasına gider. Oturumu açık kalır.
+Korunan bütün ayarlar henüz doğrulanmadı.
 Yalnız arayüz gerektiren bölüm kapsam dışı: `atonota-web`.
 G-53 açık kalır.
 

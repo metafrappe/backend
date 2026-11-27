@@ -7,7 +7,7 @@ paths:
     post:
       operationId: createPriceRevision
       summary: Copy a Site Plan with a new Turkish lira price.
-      description: Requires System Manager and Site Plan create permission. Creates a disabled successor and records a notice for each active subscriber team in the same transaction. Each team must have an email address. Email is sent at once during the request, before the transaction commits. If the request then fails, the email may already be sent. The effective date must be at least 30 calendar days from the site date.
+      description: Requires System Manager and Site Plan create permission. Creates a disabled successor and records a notice for each active subscriber team in the same transaction. Each team must have an email address. Email is queued in the transaction and sent after commit. The effective date must be at least 30 calendar days from the site date.
       requestBody:
         required: true
         content:
@@ -39,11 +39,7 @@ paths:
     get:
       operationId: getPanelPlans
       summary: List the panel site plans with Turkish lira prices.
-      description: |
-        This endpoint wraps the Press function `press.api.site.get_site_plans`.
-        The `override_whitelisted_methods` hook routes the Press address to this function. The address is listed in `x-frappe-original`.
-        The endpoint returns the Press plan list. It sets `currency` to `TRY` on every plan and adds the `price_try` value of the Site Plan.
-        Press decides who may call the original function. This endpoint adds no access rule and changes no record.
+      description: Wraps the Press function press.api.site.get_site_plans. The override_whitelisted_methods hook routes the Press address in x-frappe-original to this function. Every plan gets currency TRY and the price_try value of its Site Plan. Press decides who may call the original function. This endpoint adds no access rule and changes no record.
       x-frappe-original: [press.api.site.get_site_plans]
       responses:
         "200":

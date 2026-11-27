@@ -49,6 +49,8 @@ def move_subscriptions_on_activation(doc, method=None):
 	if not previous_plan or not before or before.enabled or not doc.enabled:
 		return
 
+	# This save hook moves every active subscriber, not only rows the saving user may read.
+	# Each row is then reloaded under a lock and checked again before the move.
 	subscriptions = frappe.get_all(
 		"Subscription",
 		filters={"plan_type": "Site Plan", "plan": previous_plan, "enabled": 1},
@@ -67,12 +69,13 @@ def move_subscriptions_on_activation(doc, method=None):
 
 
 @frappe.whitelist(methods=["GET", "POST"])
-def get_panel_plans():
+def get_panel_plans() -> list[dict]:
 	from press.api import site
 
 	plans = site.get_site_plans()
 	if not plans:
 		return plans
+	# Press already chose these plans for the caller. This query reads only their lira price.
 	prices = frappe.get_all(
 		"Site Plan",
 		filters={"name": ["in", [plan.name for plan in plans]]},
@@ -179,5 +182,4 @@ def notify_team(team, plan, successor, subject, message, recipients):
 		message=message,
 		reference_doctype=notice.doctype,
 		reference_name=notice.name,
-		now=True,
 	)

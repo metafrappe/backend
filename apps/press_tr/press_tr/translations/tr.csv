@@ -168,3 +168,9 @@ Requires System Manager and Site Plan create permission. Creates a disabled succ
 The new Site Plan name.,Yeni site planının adı.,press_tr.openapi
 The caller cannot create a price revision.,İstek sahibi yeni fiyatlı plan açamaz.,press_tr.openapi
 "Invalid plan name, price, or effective date, or a subscriber team has no email address.","Plan adı, fiyat ya da başlangıç tarihi geçersiz. Ya da bir abone ekibinin e-posta adresi yok.",press_tr.openapi
+List the panel site plans with Turkish lira prices.,Paneldeki site planlarını Türk lirası fiyatlarıyla listeler.,press_tr.openapi
+Wraps the Press function press.api.site.get_site_plans. The override_whitelisted_methods hook routes the Press address in x-frappe-original to this function. Every plan gets currency TRY and the price_try value of its Site Plan. Press decides who may call the original function. This endpoint adds no access rule and changes no record.,"Bu uç nokta Press'in press.api.site.get_site_plans işlevini sarar. override_whitelisted_methods kancası, x-frappe-original içindeki Press adresini bu işleve yönlendirir. Her plana TRY para birimi eklenir. Her plana Site Plan kaydındaki price_try değeri de eklenir. Asıl işlevi kimin çağırabileceğine Press karar verir. Bu uç nokta yeni erişim kuralı eklemez. Bu uç nokta hiçbir kaydı değiştirmez.",press_tr.openapi
+The Press plan list with Turkish lira prices.,Türk lirası fiyatlı Press plan listesi.,press_tr.openapi
+List the panel site plans with Turkish lira prices by POST.,Paneldeki site planlarını POST isteğiyle ve Türk lirası fiyatlarıyla listeler.,press_tr.openapi
+Same response as the GET operation. Press clients may call the original address by POST.,Yanıt GET isteğiyle aynıdır. Press istemcileri asıl adresi POST isteğiyle çağırabilir.,press_tr.openapi
+The Press plan list with Turkish lira prices. The shape is the same as the GET response.,Türk lirası fiyatlı Press plan listesi. Yapısı GET yanıtıyla aynıdır.,press_tr.openapi

@@ -22,4 +22,22 @@
 
   document.addEventListener('pointerdown', pointerMode, true);
   document.addEventListener('touchstart', pointerMode, { capture: true, passive: true });
+
+  // Açılış kipi (AJA-1293). Koyu tema sınıfını ayrı bir betik ekler. WebKit sayfayı o betikten önce çizer.
+  // Geçiş açılışta çalışırsa renkler 200 ms soluk kalır. atonota.css bu işaret gelene kadar geçiş süresini sıfırlar.
+  // İşaret "load" olayından iki kare sonra gelir. Böylece koyu tema renkleri geçişsiz çizilmiş olur.
+  // Sonraki hover ve odak geçişleri merkezi süre tokenıyla çalışır.
+  function motionReady() {
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        root.setAttribute('data-at-motion', '');
+      });
+    });
+  }
+
+  if (document.readyState === 'complete') {
+    motionReady();
+  } else {
+    window.addEventListener('load', motionReady, { once: true });
+  }
 })();

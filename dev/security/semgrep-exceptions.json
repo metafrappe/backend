@@ -169,8 +169,8 @@
   "additionalReviews": [
     {
       "scope": "backend/apps/platform_core/platform_core",
-      "sha256": "c95a300a18a30af40899753caa3d1ccf1977632e1dea516907f59a039391820a",
-      "reviewNote": "Digest refreshed on 28 November 2026 (AJA-2208). The G-166 paid plan gate changed api/atonota_login.py and identity/atonota/decision_api.py. The open_paid_plan finding stays on line 25 and its reason now describes the gate. The owner task finding moved from line 108 to line 117. The digest was computed with semgrep_exceptions.source_digest over a copy of this repository placed under backend/, because the paths here still use the backend/ prefix. The previous digest did not reproduce on origin/main with that method. All 36 findings were re-reviewed and stay approved.",
+      "sha256": "6fabbe5cc50cc237b22bd36e3ed2b47491f049b6ba96dc5b978d63f11406e4c2",
+      "reviewNote": "Digest refreshed on 28 November 2026 (AJA-2208). The G-166 paid plan gate changed api/atonota_login.py and identity/atonota/decision_api.py. The open_paid_plan finding stays on line 25 and its reason now describes the gate. The owner task finding moved from line 108 to line 117. The digest was computed with semgrep_exceptions.source_digest over the listed files, in a copy of this repository placed under backend/, because the paths here still use the backend/ prefix. All 36 findings were re-reviewed and stay approved.",
       "findings": [
         {
           "rule": "frappe-missing-permission",

@@ -1,0 +1,128 @@
+openapi: 3.1.0
+info:
+  title: Platform Core observability API
+  version: 0.1.0
+  description: |
+    Measurement before performance work (G-149). Every tenant response carries a
+    `Server-Timing` header with one entry, `app;dur=<milliseconds>`. The entry has no
+    description text. The browser sends first-party real user monitoring (RUM) beacons to
+    the collection point below. No third party receives the data.
+    A beacon names no person. It has a route template, web-vitals values, the sample rate
+    and the navigation type. Any other field is refused. The server does not add the user,
+    the IP address or the browser name. Each accepted beacon becomes one JSON line in the
+    `platform_core.rum` site log. DevOps forwards that log to Grafana for p75 and p95 views.
+    Sampling happens in the browser. The client sends the sample rate it used.
+servers:
+  - url: /api/method
+    description: Frappe endpoint root of the tenant site
+security:
+  - {}
+  - session: []
+paths:
+  /platform_core.api.observability.collect_rum:
+    post:
+      operationId: collectRum
+      summary: Store one web-vitals beacon
+      description: |
+        Stores one RUM beacon after the checks. Guests may call it, so the sign-in page is
+        measured too. A signed-in browser sends the `X-Frappe-CSRF-Token` header and uses
+        `fetch` with `keepalive: true`, because `navigator.sendBeacon` cannot send headers.
+        The route must be a route template: lowercase word segments or `:parameter`
+        segments, such as `/panel/leave-application/:name`. Digits, dots, `@`, query strings
+        and fragments are refused, so a record name or an e-mail address cannot pass.
+        Metric names are LCP, INP, FCP and TTFB in milliseconds, from 0 to 120000, and CLS
+        without a unit, from 0 to 100. At least one metric is required. The sample rate is
+        above 0 and at most 1; the default is 1. The endpoint allows 120 calls a minute
+        from one address. Writes one log line and no database record.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RumBeacon'
+            example:
+              route: /panel/leave-application/:name
+              metrics:
+                LCP: 1840.5
+                INP: 96
+                CLS: 0.03
+              sample_rate: 0.1
+              navigation_type: navigate
+      responses:
+        '200':
+          description: The beacon was stored.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: object
+                    required: [stored]
+                    properties:
+                      stored:
+                        type: boolean
+                        const: true
+        '417':
+          description: Frappe ValidationError. A field is not allowed or a value is out of range.
+        '429':
+          description: Too many beacons from one address.
+components:
+  securitySchemes:
+    session:
+      type: apiKey
+      in: cookie
+      name: sid
+  schemas:
+    RumBeacon:
+      type: object
+      required: [route, metrics]
+      additionalProperties: false
+      properties:
+        route:
+          type: string
+          maxLength: 200
+          pattern: '^/(?:(?:[a-z][a-z_-]*|:[a-z][a-z_]*)(?:/(?:[a-z][a-z_-]*|:[a-z][a-z_]*))*)?$'
+          description: Route template of the page. Never the real address.
+        metrics:
+          type: object
+          minProperties: 1
+          additionalProperties: false
+          description: Web-vitals values of one page view.
+          properties:
+            LCP:
+              type: number
+              minimum: 0
+              maximum: 120000
+              description: Largest Contentful Paint in milliseconds.
+            INP:
+              type: number
+              minimum: 0
+              maximum: 120000
+              description: Interaction to Next Paint in milliseconds.
+            FCP:
+              type: number
+              minimum: 0
+              maximum: 120000
+              description: First Contentful Paint in milliseconds.
+            TTFB:
+              type: number
+              minimum: 0
+              maximum: 120000
+              description: Time to First Byte in milliseconds.
+            CLS:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Cumulative Layout Shift, no unit.
+        sample_rate:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 1
+          default: 1
+          description: Share of page views the browser reports.
+        navigation_type:
+          type: string
+          enum: [navigate, reload, back-forward, back-forward-cache, prerender, restore]
+          description: Navigation type that web-vitals reports.

@@ -105,14 +105,15 @@ class TestServerTiming(ObservabilityTestCase):
     def test_hooks_register_the_timer(self):
         tree = ast.parse(HOOKS.read_text(encoding="utf-8"))
         lists = {
-            node.targets[0].id: [element.value for element in node.value.elts]
+            node.targets[0].id: [element.value for element in node.value.elts if isinstance(element, ast.Constant)]
             for node in tree.body
             if isinstance(node, ast.Assign)
             and isinstance(node.targets[0], ast.Name)
             and isinstance(node.value, ast.List)
         }
         start = "platform_core.observability.server_timing.start_request_timer"
-        self.assertEqual(lists["before_request"][0], start)
+        # The G-40 guard stays first (test_development_access_guard). The clock starts next.
+        self.assertEqual(lists["before_request"][1], start)
         self.assertIn("platform_core.observability.server_timing.add_server_timing", lists["after_request"])
 
 

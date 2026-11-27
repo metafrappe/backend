@@ -11,6 +11,8 @@ before_login = ["platform_core.identity.login_policy.before_login"]
 before_request = [
 	# G-40: refuse System Console and test endpoints first, unless the site opts in.
 	"platform_core.development_access.guard_development_endpoints",
+	# G-149: start the Server-Timing clock right after the G-40 guard, before the other hooks.
+	"platform_core.observability.server_timing.start_request_timer",
 	"platform_core.identity.login_policy.before_request",
 	"platform_core.identity.session_policy.before_request",
 	"platform_core.shell.native_metadata.guard_website_rpc_before_request",
@@ -172,6 +174,8 @@ website_user_allowed_methods = [
 	"platform_core.api.reseller.list_customers",
 	"platform_core.api.reseller.customer_status",
 	"platform_core.api.reseller.request_customer",
+	# G-149: the web-vitals beacon. It names no person.
+	"platform_core.api.observability.collect_rum",
 ]
 
 
@@ -322,7 +326,11 @@ doc_events = {
 	},
 }
 
-after_request = ["platform_core.shell.headers.add_security_headers"]
+after_request = [
+	"platform_core.shell.headers.add_security_headers",
+	# G-149: the app duration of the request.
+	"platform_core.observability.server_timing.add_server_timing",
+]
 
 # Panel client routes (platform-core-kabuk): every /panel/<path> renders the /panel page.
 website_route_rules = [{"from_route": "/panel/<path:app_path>", "to_route": "panel"}]

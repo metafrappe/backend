@@ -111,6 +111,8 @@ EXPECTED = {
     # a bearer credential, so Frappe sees a guest. The panel user decides on their own proposals.
     "platform_core.api.ai.mcp": PUBLIC,
     "platform_core.api.ai.mcp_resource_metadata": PUBLIC,
+    # G-149: the web-vitals beacon. The sign-in page and the panel both send it; it names no person.
+    "platform_core.api.observability.collect_rum": PUBLIC,
     "platform_core.api.ai.issue_agent_token": PANEL,
     "platform_core.api.ai.list_proposals": PANEL,
     "platform_core.api.ai.list_second_approvals": PANEL,

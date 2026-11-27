@@ -435,6 +435,29 @@ Proje sahibi 22 Kasım 2026 Pazar günü şöyle yazdı: “Herşeyi onaylıyoru
   - Eklerin listesi ve test adımları [devir notundadır](docs/handoff/press-tr-extension-test.md).
   - Bu karar önce O-54 numarasını taşıyordu. O-54 ile O-61 arasındaki numaralar başka kararlara verildi. Karar 25 Kasım 2026 Çarşamba günü O-62 oldu.
 
+- **O-63. Panel oturumu ve başlangıç verisi yerel testlerle sınanır.**
+  - İki kullanıcı yalnız kendi yetkisine açık çalışma alanlarını görür.
+  - Çalışma alanı yetkisi değişince sunucu eski yanıtı kullanmaz.
+  - Operatör adresi ve anlık olay akışı üretim benzeri ortamda ayrıca sınanır.
+  - Kalan adımlar [devir notunda](docs/handoff/session-bootstrap.md) yer alır.
+  - Bu karar önce O-57 numarasını taşıyordu. Karar 27 Kasım 2026 Cuma günü yeni depoda O-63 oldu.
+
+- **O-64. Çıkışta oturumun sunucu kayıtları hemen silinir.** B Takımı Architect bu kararı 23 Kasım 2026 Pazartesi günü verdi.
+  - Bu karar önce O-58 numarasını taşıyordu. Karar 27 Kasım 2026 Cuma günü yeni depoda O-64 oldu.
+  - Her kiracı ayrı bir Frappe sitesidir. Redis anahtarlarının başında site adı vardır. Bu yüzden bir sitenin kaydı öteki siteye açılmaz.
+  - Çıkışta iki kayıt daha silinir. Birincisi oturumun etkinlik anahtarıdır: `kimlik_activity:sid:<sid>`.
+  - İkincisi kullanıcının başlangıç verisi önbelleğidir. Bu anahtar `platform_core:shell:bootstrap:v1:` ile başlar.
+  - Kullanıcının etkinlik anahtarı silinmez: `kimlik_activity:user:<kullanıcı>`. Kullanıcının başka cihazdaki oturumu bu anahtarı okur.
+  - Silme işini tek bir işlev yapar: `session_policy.forget_session`. İşlevi üç yol çağırır.
+  - Birinci yol kullanıcının kendi çıkışıdır: `sign_out.logout_current_session`.
+  - İkinci yol Keycloak'ın arka kanal çıkışıdır: `sign_out.handle_logout_token`. Bu yol Frappe'nin `on_logout` tetiğini çalıştırmaz. Bu yüzden işlev burada açıkça çağrılır.
+  - Üçüncü yol yeni oturumun kimlik denetimi düşünce çalışır: `sign_in._close_new_session`.
+  - Önbellek araması site önekini ve kullanıcı adını taşır. Kullanıcı adındaki `*`, `?` ve `[` işaretleri kaçışlıdır. Böylece arama başka kullanıcının anahtarını bulmaz.
+  - Yeni sunucu ucu açılmadı. Siteler arası çağrı kanalı da açılmadı. Böyle bir kanal G-13 sözleşmesini bozar.
+  - Kiracı değişiminde arayüz eski sitenin `logout` ucunu çağırır. Sunucu aynı temizliği yapar. Arayüz adımları kapsam dışıdır: atonota-web.
+  - Çağrı gitmezse kayıtlar kendi sürelerinde düşer. Oturum 1 saat boşta kalınca kapanır (O-25). Başlangıç verisi 60 saniye sonra düşer.
+  - Testler `identity/tests/test_session_cleanup.py` dosyasındadır. Gerçek iki siteli deneme [devir notunda](docs/handoff/session-bootstrap.md) yer alır.
+
 ## Karar sitesine işlenecek farklar
 
 Backend kararları karar sitesinin bazı maddelerini değiştirdi. Site ayrı bir işte, kendi denetimleriyle güncellenir. Farklar şunlardır:

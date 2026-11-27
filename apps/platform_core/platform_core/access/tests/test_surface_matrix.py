@@ -37,6 +37,14 @@ SEARCH_WORD = "matrixsurfaceword"
 MCP_PATH = "/api/method/platform_core.api.ai.mcp"
 
 
+def without_separators(text: str) -> str:
+	"""Drops digit group and decimal separators, so the salary is found in any number format.
+
+	The site's number format decides the print: "73,191.00" or "73.191,00".
+	"""
+	return text.replace(",", "").replace(".", "")
+
+
 class SurfaceMatrixTestCase(AccessRuleTestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -121,13 +129,13 @@ class TestPrint(SurfaceMatrixTestCase):
 		response = self.print_html(self.login(EMPLOYEE_1), self.records[EMPLOYEE_1])
 
 		self.assertEqual(response.status_code, 200)
-		self.assertNotIn(SALARY_TEXT, response.json["message"]["html"])
+		self.assertNotIn(SALARY_TEXT, without_separators(response.json["message"]["html"]))
 
 	def test_print_shows_the_level_1_field_to_a_role_with_the_level(self):
 		response = self.print_html(self.login(HR), self.records[EMPLOYEE_1])
 
 		self.assertEqual(response.status_code, 200)
-		self.assertIn("73,191", response.json["message"]["html"])
+		self.assertIn(SALARY_TEXT, without_separators(response.json["message"]["html"]))
 
 
 class TestGlobalSearch(SurfaceMatrixTestCase):

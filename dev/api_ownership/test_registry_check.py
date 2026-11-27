@@ -51,7 +51,7 @@ class ApiOwnershipCheckTest(unittest.TestCase):
             json.dumps({"schema": 1, "endpoints": list(endpoints), "overrides": list(overrides)}),
         )
 
-    def assertFails(self, needle):
+    def assert_fails(self, needle):
         errors = check(self.backend)
         self.assertTrue(any(needle in error for error in errors), errors)
 
@@ -60,17 +60,17 @@ class ApiOwnershipCheckTest(unittest.TestCase):
         self.assertEqual(check(self.backend), [])
 
     def test_missing_registry_fails(self):
-        self.assertFails("contracts/api-ownership.json")
+        self.assert_fails("contracts/api-ownership.json")
 
     def test_endpoint_without_owner_team_fails(self):
         self.registry([{**ENDPOINT, "owner_team": ""}])
-        self.assertFails("demo.api.begin: owner_team")
+        self.assert_fails("demo.api.begin: owner_team")
 
     def test_endpoint_without_version_fails(self):
         record = dict(ENDPOINT)
         del record["version"]
         self.registry([record])
-        self.assertFails("demo.api.begin: version")
+        self.assert_fails("demo.api.begin: version")
 
     def test_new_endpoint_missing_from_registry_fails(self):
         self.registry([ENDPOINT])
@@ -84,28 +84,28 @@ class ApiOwnershipCheckTest(unittest.TestCase):
                 return "ok"
             """,
         )
-        self.assertFails("demo.api.extra.added is not in the API ownership registry")
+        self.assert_fails("demo.api.extra.added is not in the API ownership registry")
 
     def test_record_without_endpoint_in_code_fails(self):
         self.registry([ENDPOINT, {**ENDPOINT, "endpoint": "demo.api.removed"}])
-        self.assertFails("demo.api.removed is registered but not whitelisted")
+        self.assert_fails("demo.api.removed is registered but not whitelisted")
 
     def test_duplicate_record_fails(self):
         self.registry([ENDPOINT, ENDPOINT])
-        self.assertFails("demo.api.begin is registered twice")
+        self.assert_fails("demo.api.begin is registered twice")
 
     def test_unknown_status_fails(self):
         self.registry([{**ENDPOINT, "status": "maybe"}])
-        self.assertFails("demo.api.begin: status")
+        self.assert_fails("demo.api.begin: status")
 
     def test_wrong_file_fails(self):
         self.registry([{**ENDPOINT, "file": "apps/demo/demo/api/other.py"}])
-        self.assertFails("demo.api.begin: file")
+        self.assert_fails("demo.api.begin: file")
 
     def test_methods_and_access_follow_the_code(self):
         self.registry([{**ENDPOINT, "methods": ["GET"], "access": "guest"}])
-        self.assertFails("demo.api.begin: methods")
-        self.assertFails("demo.api.begin: access")
+        self.assert_fails("demo.api.begin: methods")
+        self.assert_fails("demo.api.begin: access")
 
     def test_override_must_be_registered_with_owner(self):
         self.write(
@@ -113,7 +113,7 @@ class ApiOwnershipCheckTest(unittest.TestCase):
             'override_whitelisted_methods = {"frappe.core.sign_up": "demo.api.begin"}\n',
         )
         self.registry([ENDPOINT])
-        self.assertFails("frappe.core.sign_up is not in the API ownership registry")
+        self.assert_fails("frappe.core.sign_up is not in the API ownership registry")
 
         override = {
             "endpoint": "frappe.core.sign_up",
@@ -127,7 +127,7 @@ class ApiOwnershipCheckTest(unittest.TestCase):
         self.assertEqual(check(self.backend), [])
 
         self.registry([ENDPOINT], [{**override, "target": "demo.api.other"}])
-        self.assertFails("frappe.core.sign_up: target")
+        self.assert_fails("frappe.core.sign_up: target")
 
     def test_test_files_are_not_endpoints(self):
         self.write("apps/demo/demo/api/test_extra.py", SOURCE)

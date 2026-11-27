@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 import re
 import unittest
-from decimal import Decimal
+from decimal import ROUND_HALF_EVEN, ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,7 +31,12 @@ NO_AMOUNT = {"not_calculated", "service_unavailable"}
 # In these states the tax is known to be zero.
 ZERO_TAX = {"zero_rated", "exempt", "reverse_charge"}
 OPERATIONS = {"quote": False, "purchase": True, "refund": True}
+# Rates are percent text with up to four decimals.
 DECIMAL = re.compile(r"^-?(0|[1-9][0-9]*)(\.[0-9]{1,4})?$")
+# Money always carries exactly two decimals (G-41: currency_precision=2).
+MONEY = re.compile(r"^-?(0|[1-9][0-9]*)\.[0-9]{2}$")
+CENT = Decimal("0.01")
+ROUNDING = {"scale": 2, "mode": "ROUND_HALF_EVEN", "level": "line"}
 
 
 def money_value(money: dict | None) -> Decimal | None:
@@ -76,8 +81,40 @@ class TaxResultContract(unittest.TestCase):
         money = self.defs["money"]
         self.assertEqual(set(money["required"]), {"value", "currency"})
         self.assertEqual(money["properties"]["value"]["type"], "string")
-        self.assertEqual(money["properties"]["value"]["pattern"], DECIMAL.pattern)
+        self.assertEqual(money["properties"]["value"]["pattern"], MONEY.pattern)
         self.assertEqual(money["properties"]["currency"]["pattern"], "^[A-Z]{3}$")
+
+    # 2b. Rounding rule (J-11): two decimals, half to even, per line.
+    def test_rounding_rule_in_schema(self) -> None:
+        rule = self.schema["x-rounding"]
+        for key, value in ROUNDING.items():
+            self.assertEqual(rule[key], value, key)
+        self.assertEqual(self.defs["line"]["properties"]["tax_rate"]["oneOf"][0]["pattern"],
+                         DECIMAL.pattern)
+
+    def test_rounding_rule_in_doc(self) -> None:
+        self.assertTrue("## Yuvarlama" in self.doc, "rounding section is missing")
+        section = self.doc.split("## Yuvarlama", 1)[1].split("\n## ", 1)[0]
+        for text in ("ROUND_HALF_EVEN", "iki ondalık", "satırda", "G-41", "K-8"):
+            self.assertIn(text, section, text)
+
+    def test_examples_show_half_even_and_line_rounding(self) -> None:
+        half_even_differs = False
+        line_level_differs = False
+        for ex in self.schema["examples"]:
+            raw_sum = Decimal(0)
+            for line in ex["lines"]:
+                if line["tax_rate"] is None or line["tax"] is None:
+                    continue
+                raw = money_value(line["net"]) * Decimal(line["tax_rate"]) / 100
+                raw_sum += raw
+                if raw.quantize(CENT, ROUND_HALF_EVEN) != raw.quantize(CENT, ROUND_HALF_UP):
+                    half_even_differs = True
+            if ex["totals"]["tax"] is not None:
+                if raw_sum.quantize(CENT, ROUND_HALF_EVEN) != money_value(ex["totals"]["tax"]):
+                    line_level_differs = True
+        self.assertTrue(half_even_differs, "no example shows a half-to-even tie")
+        self.assertTrue(line_level_differs, "no example shows line-level rounding")
 
     def test_line_fields(self) -> None:
         line = self.defs["line"]
@@ -136,7 +173,7 @@ class TaxResultContract(unittest.TestCase):
         for name in ("net", "tax", "gross"):
             money = line[name]
             if money is not None:
-                self.assertRegex(money["value"], DECIMAL)
+                self.assertRegex(money["value"], MONEY)
                 self.assertEqual(money["currency"], currency)
         if status in NO_AMOUNT:
             # "0.00" would claim a known zero tax. The tax is unknown.
@@ -147,10 +184,14 @@ class TaxResultContract(unittest.TestCase):
         self.assertIsNotNone(line["tax"], status)
         net, tax, gross = (money_value(line[n]) for n in ("net", "tax", "gross"))
         self.assertEqual(net + tax, gross, status)
+        if line["tax_rate"] is not None:
+            # Tax is rounded on each line: two decimals, half to even.
+            raw = net * Decimal(line["tax_rate"]) / 100
+            self.assertEqual(tax, raw.quantize(CENT, ROUND_HALF_EVEN), line["line_id"])
         if status in ZERO_TAX:
-            self.assertEqual(tax, Decimal("0"), status)
+            self.assertEqual(tax, Decimal(0), status)
         else:
-            self.assertGreater(tax, Decimal("0"), status)
+            self.assertGreater(tax, Decimal(0), status)
 
     def check_totals(self, ex: dict) -> None:
         totals = ex["totals"]

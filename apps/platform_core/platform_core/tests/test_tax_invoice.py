@@ -17,7 +17,7 @@ import copy
 import datetime
 import unittest
 
-from platform_core.tax_invoice import InvoiceBook, PurchaseBlocked, purchase
+from platform_core.tax_invoice import InvoiceBook, PurchaseBlockedError, purchase
 from platform_core.tax_quote import quote
 from platform_core.tests.test_tax_quote import LINE_A, LINE_B, RULES, SCHEMA, validate
 
@@ -26,18 +26,17 @@ ISSUED = datetime.date(2026, 11, 27)
 
 
 def buy(book, rules, number="INV-TEST-0001", **extra):
-	return purchase(
-		[LINE_A, LINE_B],
-		billing_country="ZZ",
-		currency="EUR",
-		discount="15.00",
-		rules=rules,
-		idempotency_key=KEY,
-		invoice_number=number,
-		issued_on=ISSUED,
-		book=book,
-		**extra,
-	)
+	args = {
+		"billing_country": "ZZ",
+		"currency": "EUR",
+		"discount": "15.00",
+		"rules": rules,
+		"idempotency_key": KEY,
+		"invoice_number": number,
+		"issued_on": ISSUED,
+		"book": book,
+	}
+	return purchase([LINE_A, LINE_B], **{**args, **extra})
 
 
 class TaxServiceDownTest(unittest.TestCase):
@@ -56,7 +55,7 @@ class TaxServiceDownTest(unittest.TestCase):
 
 	def test_purchase_does_not_finish_when_service_down(self):
 		book = InvoiceBook()
-		with self.assertRaises(PurchaseBlocked) as caught:
+		with self.assertRaises(PurchaseBlockedError) as caught:
 			buy(book, rules=None)
 		self.assertEqual(caught.exception.tax_status, "service_unavailable")
 		self.assertEqual(caught.exception.reason_codes, ["TAX_SERVICE_UNAVAILABLE"])
@@ -67,7 +66,7 @@ class TaxServiceDownTest(unittest.TestCase):
 
 	def test_purchase_does_not_finish_when_tax_not_calculated(self):
 		book = InvoiceBook()
-		with self.assertRaises(PurchaseBlocked) as caught:
+		with self.assertRaises(PurchaseBlockedError) as caught:
 			purchase(
 				[LINE_A],
 				billing_country="XX",
@@ -108,7 +107,9 @@ class OldInvoiceTest(unittest.TestCase):
 		new_rules = copy.deepcopy(RULES)
 		new_rules["ZZ"]["reduced"]["rate"] = "25"
 		new_rules["ZZ"]["standard"]["rate"] = "30"
-		today = quote([LINE_A, LINE_B], billing_country="ZZ", currency="EUR", discount="15.00", rules=new_rules)
+		today = quote(
+			[LINE_A, LINE_B], billing_country="ZZ", currency="EUR", discount="15.00", rules=new_rules
+		)
 		self.assertEqual([line["tax_rate"] for line in today["lines"]], ["25", "30"])
 
 		old = book.open("INV-TEST-0001")

@@ -182,3 +182,43 @@ Bu yüzden istisna dosyası değişmedi.
 `dev/bin/security-audit` bu ana dalda koşulmadı. Betik hâlâ `backend/` önekli yolları arıyor.
 Bandit istisna eşleşmesi bu yüzden tarayıcının imza işleviyle ayrıca denendi.
 Canlı yerel giriş bu taşımada yeniden koşulmadı. GitHub CI iş akışı bu depoda yoktur.
+
+## Ayrı test ortamı betiği
+
+Bu bölüm 27 Kasım 2026 Cuma günü AJA-1659 işinde yazıldı.
+Eski `fs-aja57-oauth` ortamını kuran dosyalar depoda yoktu.
+Bu yüzden QA ortamı belgeden kuramıyordu.
+
+Ortamı artık `e2e/mcp_oauth/fixture.py` betiği kurar.
+Kurulum adımları [istemci belgesindedir](../../e2e/mcp_oauth/README.md).
+Betik sırları depo dışındaki 0600 izinli dosyaya yazar. Sırları ekrana yazmaz.
+Betik ortak test kilidini `~/.cache/frappesetup/mcp-oauth.lock` dosyasıyla uygular.
+
+Önce şu testler başarısız oldu:
+
+1. Betik dosyası yoktu. Bütün yeni testler başarısız oldu.
+2. Compose dosyasında sabit ağ yoktu. Docker'ın hazır ağ adresleri dolmuştu.
+3. Keycloak veri birimi `root` sahipliğindeydi. Keycloak H2 dosyasını açamadı.
+
+Bu üç sorun düzeltildi. Her biri için birim testi vardır.
+
+| Sıra | Komut | Sonuç |
+| --- | --- | --- |
+| 1 | Yeni sanal ortamda `uv pip sync --require-hashes` | `pass` |
+| 2 | `fixture.py prepare` | `pass` |
+| 3 | Boş veri birimleriyle `fixture.py up` | `pass` |
+| 4 | `fixture.py run` | `pass`: `oauth` ve `tool_call` geçti, geçersiz belirteç 401 aldı |
+| 5 | Var olan veri birimleriyle `down` ve `up` | `pass`: site güncellendi |
+| 6 | Kilit başkasındayken `fixture.py run` | `pass`: komut kilit sahibini yazıp durdu |
+| 7 | `fixture.py test` | `pass`: 31 test |
+| 8 | `uvx ruff@0.14.10 check` ve `format --check` | `pass` |
+| 9 | Bandit 1.9.4 ile yeni dosyalar | `pass`: 2 bulgu, 2 istisna |
+
+Deneme 7850 ile 7852 arasındaki portlarda yapıldı.
+Bu sırada eski `fs-aja57-oauth` ortamı 7840 portunda çalışıyordu. O ortama dokunulmadı.
+Deneme bitince deneme kapları ve veri birimleri silindi.
+7400 yığını ve Colima yeniden başlatılmadı.
+
+Bandit iki bulguyu tek süreç çağrısı noktasında buldu.
+Bulgular `import subprocess` satırı ve `run()` yardımcısıdır.
+Bu yardımcı kabuk kullanmaz. Sırlar komut satırına girmez.

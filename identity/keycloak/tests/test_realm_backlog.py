@@ -66,6 +66,9 @@ class RealmBacklogFileTest(unittest.TestCase):
             "ATONOTA_MCP_REDIRECT_URI",
             "ATONOTA_MCP_RESOURCE_URL",
             "ATONOTA_MCP_INTROSPECTION_SECRET",
+            "ATONOTA_SITE_OPS_URL",
+            "ATONOTA_SITE_OPS_SECRET",
+            "ATONOTA_AGENT_SERVICE_SECRET",
         ):
             with self.subTest(name=name):
                 self.assertIn(name, self.dev_env)

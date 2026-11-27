@@ -878,6 +878,25 @@ class TestModelHTTP(unittest.TestCase):
 		frappe.db.rollback()
 		self.assertEqual(frappe.db.count("PLT AI Usage Log", {"api": self.fixture["second_api"]}), 0)
 
+	def test_successful_model_call_records_actor_and_measured_cost(self):
+		model = self.fixture["model"]
+		prices = {"prices_known": 1, "input_price": 1000, "output_price": 2000}
+		original = frappe.db.get_value("PLT AI Model", model, list(prices), as_dict=True)
+		self.addCleanup(self._restore_fields, "PLT AI Model", model, original)
+		self._restore_fields("PLT AI Model", model, prices)
+
+		response = self.complete("manager", self.fixture["role_route"])
+
+		self.assertEqual(response.status_code, 200)
+		frappe.db.rollback()
+		logs = frappe.get_all("PLT AI Usage Log", filters={"api": self.fixture["second_api"]}, fields=["*"])
+		self.assertEqual(len(logs), 1)
+		log = logs[0]
+		self.assertEqual(log.user, self.fixture["users"]["manager"])
+		self.assertEqual((log.model, log.route, log.result), (model, self.fixture["role_route"], "success"))
+		self.assertEqual((log.input_tokens, log.output_tokens), (4, 3))
+		self.assertEqual((log.cost_known, str(log.cost), log.currency), (1, "0.01", "USD"))
+
 	def _complete_concurrently(self, *, budget, expected_second_status):
 		account = self.fixture["second_account"]
 		model = self.fixture["model"]

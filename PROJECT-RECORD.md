@@ -435,6 +435,13 @@ Proje sahibi 22 Kasım 2026 Pazar günü şöyle yazdı: “Herşeyi onaylıyoru
   - Eklerin listesi ve test adımları [devir notundadır](docs/handoff/press-tr-extension-test.md).
   - Bu karar önce O-54 numarasını taşıyordu. O-54 ile O-61 arasındaki numaralar başka kararlara verildi. Karar 25 Kasım 2026 Çarşamba günü O-62 oldu.
 
+- **O-68. G-52 için yasal saklama süresi açık kalır.**
+  - Hukuk sorumlusu kişisel veri ve denetim kayıtları için süreleri belirler.
+  - Ekip süreler belli olunca silme kurallarını ve testleri günceller.
+  - G-64 kapsamındaki işlem ve maliyet kayıtları da bu karara bağlıdır.
+  - Testler ve açık işler [devir notundadır](docs/handoff/privacy-audit.md).
+  - Bu karar önce O-57 numarasını taşıyordu. O-57 ile O-67 arasındaki numaralar başka kararlara verildi. Karar 27 Kasım 2026 Cuma günü O-68 oldu.
+
 ## Karar sitesine işlenecek farklar
 
 Backend kararları karar sitesinin bazı maddelerini değiştirdi. Site ayrı bir işte, kendi denetimleriyle güncellenir. Farklar şunlardır:

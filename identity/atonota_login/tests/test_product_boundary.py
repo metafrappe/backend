@@ -46,17 +46,17 @@ class ProductBoundaryTest(unittest.TestCase):
             self.assertIn("SPDX-License-Identifier: MIT", head, path.name)
 
     def test_documents_point_to_the_brand_setting(self):
-        # AJA-1061: the documents name no brand. They point to backend/brand.env instead.
+        # AJA-1061: the documents name no brand. They point to brand.env instead.
         for path in [PRODUCT / "README.md", PRODUCT / "THIRD-PARTY-NOTICES.md"]:
             text = path.read_text(encoding="utf-8")
             self.assertNotIn(PRODUCT_NAME.lower(), text.lower(), path.name)
-            self.assertIn("backend/brand.env", text, path.name)
+            self.assertIn("brand.env", text, path.name)
 
     def test_visible_brand_comes_from_the_realm_display_name(self):
         example = (KEYCLOAK / ".env.example").read_text(encoding="utf-8")
         production = (KEYCLOAK / "production.env.example").read_text(encoding="utf-8")
         for text in (example, production):
-            # AJA-1062: the value comes from PRODUCT_NAME in backend/brand.env; examples hold a placeholder.
+            # AJA-1062: the value comes from PRODUCT_NAME in brand.env; examples hold a placeholder.
             self.assertRegex(text, r"(?m)^IDENTITY_BRAND_NAME=<PRODUCT_NAME>$")
 
 

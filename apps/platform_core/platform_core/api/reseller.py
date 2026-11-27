@@ -1,6 +1,6 @@
 """Reseller endpoints (G-169, G-170). The business rule is in `platform_core.reseller.customers`.
 
-Contract: `backend/contracts/platform_core-reseller.openapi.yaml`.
+Contract: `contracts/platform_core-reseller.openapi.yaml`.
 """
 
 import frappe

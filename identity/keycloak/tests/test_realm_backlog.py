@@ -1,4 +1,4 @@
-"""Realm file rules from the gap backlog (backend/docs/gap-backlog.md, kimlik-realm items 2-12).
+"""Realm file rules from the gap backlog (docs/gap-backlog.md, kimlik-realm items 2-12).
 
 Expected values come from the backlog, the contract (docs/sozlesmeler.md section 2, d699082),
 mobile.md GR-2 and GR-3, and project record O-25 and O-27. Keycloak is not needed.
@@ -110,7 +110,7 @@ class RealmBacklogFileTest(unittest.TestCase):
         self.assertEqual(self.realm["displayName"], "${IDENTITY_BRAND_NAME}")
         self.assertEqual(self.realm["displayNameHtml"], "${IDENTITY_BRAND_NAME}")
         self.assertEqual(self.realm["smtpServer"]["fromDisplayName"], "${IDENTITY_BRAND_NAME}")
-        # AJA-1062: the value comes from PRODUCT_NAME in backend/brand.env. Examples hold a placeholder.
+        # AJA-1062: the value comes from PRODUCT_NAME in brand.env. Examples hold a placeholder.
         self.assertEqual(self.dev_env["IDENTITY_BRAND_NAME"], "<PRODUCT_NAME>")
         self.assertEqual(self.prod_env["IDENTITY_BRAND_NAME"], "<PRODUCT_NAME>")
         brand = _env_values(DIRECTORY.parents[1] / "brand.env")

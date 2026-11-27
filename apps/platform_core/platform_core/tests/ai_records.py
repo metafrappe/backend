@@ -1,7 +1,7 @@
 """Test records of the AI provider types (AJA-947, AJA-1050).
 
 The types "PLT AI Provider", "PLT AI Account" and "PLT AI API" belong to
-platform_core.model_gateway. The access module may not write them (backend/dev/bin/module-boundaries).
+platform_core.model_gateway. The access module may not write them (dev/bin/module-boundaries).
 The panel role tests of the access module use these helpers instead.
 """
 

@@ -16,7 +16,7 @@ if json.load(sys.stdin)["message"] != "pong":
     raise SystemExit("Frappe ping did not return pong")
 '
 
-apps=$(PRESS_ENV_FILE="$env_file" bash backend/dev/press/compose.sh exec -T \
+apps=$(PRESS_ENV_FILE="$env_file" bash dev/press/compose.sh exec -T \
     --workdir /home/frappe/benches/frappe-bench web \
     bench --site press.localhost execute frappe.get_installed_apps)
 printf '%s\n' "$apps" | python3 -c '

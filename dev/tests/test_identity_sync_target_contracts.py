@@ -20,7 +20,7 @@ from importlib.util import find_spec
 from pathlib import Path
 
 if find_spec("yaml") is None:
-    raise unittest.SkipTest("Install backend/dev/requirements-contract-tests.txt for contract tests")
+    raise unittest.SkipTest("Install dev/requirements-contract-tests.txt for contract tests")
 
 import yaml  # noqa: E402
 

@@ -1,7 +1,7 @@
 """Public functions of the access rule engine.
 
 Other modules of `platform_core` may import this module and nothing else from the engine
-(`backend/dev/modul-sinirlari.json`). The AI layer calls `report_guard` before it runs a report.
+(`dev/modul-sinirlari.json`). The AI layer calls `report_guard` before it runs a report.
 """
 
 from platform_core.access import link_search, reports

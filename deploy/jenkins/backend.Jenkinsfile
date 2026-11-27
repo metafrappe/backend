@@ -1,4 +1,4 @@
-// Backend delivery line of karacaismail/frappesetup. Design: backend/docs/dagitim/ortamlar.md.
+// Backend delivery line of metafrappe/backend. Design: docs/dagitim/ortamlar.md.
 //
 // A push to main builds one release (images pinned by digest), deploys it to alpha and checks
 // alpha. beta waits for a person to press the button and moves the same release. rc and prod are
@@ -6,11 +6,11 @@
 // because the rc and prod keys live only in that Jenkins folder.
 //
 // Jenkins setup (DevOps owner): Pipeline job "atonota-delivery/atonota-backend", SCM branch */main,
-// script path backend/deploy/jenkins/backend.Jenkinsfile, "GitHub hook trigger" on. Plugins:
+// script path deploy/jenkins/backend.Jenkinsfile, "GitHub hook trigger" on. Plugins:
 // Pipeline, Git, GitHub, SSH Agent, Lockable Resources, Pipeline: Milestone Step, Credentials
 // Binding, Copy Artifact, Timestamper. Credentials of the folder "atonota-delivery":
 // atonota-deploy-ssh-alpha and atonota-deploy-ssh-beta (one key per environment and server user),
-// atonota-registry (GHCR user and token). The list is in backend/docs/handoff/jenkins-credentials.md. Agents with label atonota-build: Docker, Python 3.9+, uv,
+// atonota-registry (GHCR user and token). The list is in docs/handoff/jenkins-credentials.md. Agents with label atonota-build: Docker, Python 3.9+, uv,
 // curl, ssh on the Tailscale network, Python 3.12 and 3.14 prepared with uv for the gates, and HTTPS access to github.com and
 // osv-vulnerabilities.storage.googleapis.com for the stage "Security tools".
 //
@@ -22,8 +22,8 @@
 def deployAndCheck(String target) {
     env.DEPLOYING = target
     sshagent(credentials: ["atonota-deploy-ssh-${target}"]) {
-        sh "backend/deploy/bin/deploy ${target} release"
-        sh "backend/deploy/bin/health ${target} release"
+        sh "deploy/bin/deploy ${target} release"
+        sh "deploy/bin/health ${target} release"
     }
     env.DEPLOYING = ''
 }
@@ -35,10 +35,10 @@ def rollbackAfterFailure(String target) {
         return
     }
     def restore = sh(returnStdout: true,
-        script: "sed -n 's/^ATONOTA_AUTO_RESTORE_ON_FAILURE=//p' backend/deploy/environments/${target}.env").trim()
+        script: "sed -n 's/^ATONOTA_AUTO_RESTORE_ON_FAILURE=//p' deploy/environments/${target}.env").trim()
     def extra = restore == '1' ? ' --restore-backup' : ''
     sshagent(credentials: ["atonota-deploy-ssh-${target}"]) {
-        sh "backend/deploy/bin/rollback ${target} backend --failed ${env.RELEASE_ID}${extra}"
+        sh "deploy/bin/rollback ${target} backend --failed ${env.RELEASE_ID}${extra}"
     }
 }
 
@@ -46,15 +46,15 @@ def useStashes() {
     deleteDir()
     unstash 'deploy'
     unstash 'release'
-    sh "test \"\$(python3 -I backend/deploy/release.py field release/release.json commit)\" = '${env.DEPLOY_COMMIT}'"
+    sh "test \"\$(python3 -I deploy/release.py field release/release.json commit)\" = '${env.DEPLOY_COMMIT}'"
 }
 
 def promote(String target, String source) {
     useStashes()
     sshagent(credentials: ["atonota-deploy-ssh-${source}"]) {
-        sh "rm -rf source && backend/deploy/bin/fetch-current ${source} backend source"
+        sh "rm -rf source && deploy/bin/fetch-current ${source} backend source"
     }
-    sh "python3 -I backend/deploy/release.py promote-check release/release.json --target ${target} --source-record source/source-record.json"
+    sh "python3 -I deploy/release.py promote-check release/release.json --target ${target} --source-record source/source-record.json"
     deployAndCheck(target)
 }
 
@@ -83,7 +83,7 @@ pipeline {
                             def scmVars = checkout scm
                             env.DEPLOY_COMMIT = scmVars.GIT_COMMIT
                         }
-                        stash name: 'deploy', includes: 'backend/deploy/**'
+                        stash name: 'deploy', includes: 'deploy/**'
                     }
                 }
                 // security-audit scans the Press lock offline with the pinned OSV-Scanner and a
@@ -91,45 +91,45 @@ pipeline {
                 // allowed, so every build refreshes a database that is six days old or more.
                 stage('Security tools') {
                     steps {
-                        sh 'backend/dev/security/osv-setup --if-stale'
+                        sh 'dev/security/osv-setup --if-stale'
                     }
                 }
                 // Each gate is its own stage, so the build page shows which gate failed. The list
-                // equals the table "Jenkins kapıları" in backend/docs/handoff/ci-security.md
+                // equals the table "Jenkins kapıları" in docs/handoff/ci-security.md
                 // (test_jenkins_gates.py).
                 stage('Gate: deploy tests') {
                     steps {
-                        sh 'uv run --no-project --offline --python 3.14 python -I -m unittest discover -s backend/deploy/tests'
+                        sh 'uv run --no-project --offline --python 3.14 python -I -m unittest discover -s deploy/tests'
                     }
                 }
                 stage('Gate: dev tests') {
                     steps {
-                        sh 'uv run --no-project --offline --python 3.14 python -I -m unittest discover -s backend/dev/tests'
+                        sh 'uv run --no-project --offline --python 3.14 python -I -m unittest discover -s dev/tests'
                     }
                 }
                 stage('Gate: security tool tests') {
                     steps {
-                        sh 'uv run --no-project --offline --python 3.12 python -B -m unittest discover -s backend/dev/security'
+                        sh 'uv run --no-project --offline --python 3.12 python -B -m unittest discover -s dev/security'
                     }
                 }
                 stage('Gate: module boundaries') {
                     steps {
-                        sh 'backend/dev/bin/module-boundaries'
+                        sh 'dev/bin/module-boundaries'
                     }
                 }
                 stage('Gate: security audit') {
                     steps {
-                        sh 'backend/dev/bin/security-audit'
+                        sh 'dev/bin/security-audit'
                     }
                 }
                 stage('Gate: platform_core tests') {
                     steps {
-                        sh 'backend/dev/bin/test platform_core'
+                        sh 'dev/bin/test platform_core'
                     }
                 }
                 stage('Gate: hrms_tr tests') {
                     steps {
-                        sh 'backend/dev/bin/test hrms_tr'
+                        sh 'dev/bin/test hrms_tr'
                     }
                 }
                 stage('Build release') {
@@ -138,14 +138,14 @@ pipeline {
                                 usernameVariable: 'REGISTRY_USER', passwordVariable: 'REGISTRY_TOKEN')]) {
                             sh 'printf %s "$REGISTRY_TOKEN" | docker login ghcr.io --username "$REGISTRY_USER" --password-stdin'
                         }
-                        sh 'rm -rf release && GIT_COMMIT="$DEPLOY_COMMIT" backend/deploy/bin/build-release release/release.json'
+                        sh 'rm -rf release && GIT_COMMIT="$DEPLOY_COMMIT" deploy/bin/build-release release/release.json'
                         script {
                             env.RELEASE_ID = sh(returnStdout: true,
-                                script: 'python3 -I backend/deploy/release.py field release/release.json release_id').trim()
+                                script: 'python3 -I deploy/release.py field release/release.json release_id').trim()
                         }
                         // The release carries the compose files and server scripts of its own commit;
                         // a promotion to rc or prod sends exactly this copy (docs/dagitim/ortamlar.md).
-                        sh 'python3 -I backend/deploy/release.py pack-deploy --commit "$DEPLOY_COMMIT" release'
+                        sh 'python3 -I deploy/release.py pack-deploy --commit "$DEPLOY_COMMIT" release'
                         archiveArtifacts artifacts: 'release/**', fingerprint: true
                         stash name: 'release', includes: 'release/**'
                     }

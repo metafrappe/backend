@@ -2,7 +2,7 @@
 
 Runs inside the stack network with `python -I`. Input on stdin: keycloak_url, admin_username,
 admin_password, password, relaxed_length, restore_policy, organization and the accounts of
-backend/e2e/review-accounts.json.
+e2e/review-accounts.json.
 Output on stdout: the Keycloak subject of every platform realm account. It prints no password.
 
 The platform realm asks for 12 characters, the production rule. The shared review password

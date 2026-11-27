@@ -209,8 +209,8 @@ class BrandDeployment(unittest.TestCase):
         files = [
             name
             for name in files
-            if name.startswith("backend/deploy/")
-            or name == "backend/dev/Dockerfile.tenant"
+            if name.startswith("deploy/")
+            or name == "dev/Dockerfile.tenant"
         ]
         self.assertEqual(
             scanner.find_hits(

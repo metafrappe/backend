@@ -16,7 +16,7 @@
 The apply step reads KC_PUBLIC_URL, KC_BOOTSTRAP_ADMIN_USERNAME, KC_BOOTSTRAP_ADMIN_PASSWORD and the
 platform secret variables from the environment. It prints aliases and states, never a secret.
 A corporate provider without the email_verified rule and without a valid exception stops apply.
-The help text takes the product name from PRODUCT_NAME (backend/brand.env, AJA-1061).
+The help text takes the product name from PRODUCT_NAME (brand.env, AJA-1061).
 """
 
 import argparse

@@ -1,0 +1,122 @@
+"""The code sits at the root of the metafrappe/backend repository (AJA-1524, AJA-1587).
+
+The old frappesetup repository kept this code under a backend/ folder. Paths that still start with
+backend/ point to a folder that no longer exists. These tests run with the standard library only:
+
+    python3 -I -m unittest discover -s deploy/tests
+"""
+
+import re
+import shutil
+import subprocess
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+JENKINS = ROOT / "deploy" / "jenkins"
+JENKINSFILES = ("backend.Jenkinsfile", "promote.Jenkinsfile", "web.Jenkinsfile")
+# A path that starts with backend/. Words such as atonota-backend/ or deploy/backend/ do not count.
+OLD_PREFIX = re.compile(r"(^|[^a-z_/.-])backend/")
+# The acceptance command of AJA-1587, without the paths it excludes itself.
+GREP_EXCLUDES = (":!*.md", ":!*.patch", ":!brand-exclusions.txt")
+# Lines that keep the old prefix on purpose: (path, text on the line or None for every line, reason).
+KEPT = (
+    # Gitleaks fingerprints name a commit and the path inside that commit. The commits belong to
+    # the old frappesetup history, where the files were under the old folder. Changing the path
+    # would break the fingerprint.
+    ("dev/security/.gitleaksignore", None, "old commit fingerprints"),
+    # This test names the prefix it looks for.
+    ("deploy/tests/test_repo_layout.py", None, "the test itself"),
+    # This test checks that the Semgrep review lists no file under the old prefix (AJA-1673).
+    (
+        "deploy/tests/test_moved_config_secrets.py",
+        'name.startswith("backend/")',
+        "checks the review has no old paths",
+    ),
+    # Decision 0009 records the naming fix that ran in the old frappesetup repository, where the
+    # code sat under the old folder. Its commands and dev/naming/docs-rename.patch use the old
+    # paths. This test checks the decision text word for word, so it repeats those paths.
+    (
+        "dev/naming/tests/test_apply_to_branch.py",
+        "backend/dev/",
+        "quotes the commands of decision 0009",
+    ),
+)
+# The docs/standartlar paths change in a later task (AJA-1587, "Sınır").
+KEPT_TEXT = ("backend/docs/standartlar",)
+
+
+def old_prefix_lines(text):
+    return [line for line in text.splitlines() if OLD_PREFIX.search(line)]
+
+
+class JenkinsfilePathTests(unittest.TestCase):
+    def test_jenkinsfiles_use_root_paths(self):
+        for name in JENKINSFILES:
+            with self.subTest(name=name):
+                text = (JENKINS / name).read_text(encoding="utf-8")
+                self.assertEqual(old_prefix_lines(text), [])
+
+    def test_jenkinsfiles_call_the_deploy_scripts_from_the_root(self):
+        for name in JENKINSFILES:
+            with self.subTest(name=name):
+                text = (JENKINS / name).read_text(encoding="utf-8")
+                self.assertIn("deploy/bin/deploy ", text)
+                self.assertIn("python3 -I deploy/release.py ", text)
+                self.assertIn("includes: 'deploy/**'", text)
+
+    def test_web_job_fetches_the_frontend_repository(self):
+        text = (JENKINS / "web.Jenkinsfile").read_text(encoding="utf-8")
+        self.assertIn("git url: 'https://github.com/metafrappe/frontend.git'", text)
+        self.assertNotIn("atonota-web.git", text)
+
+    def test_jenkins_setup_notes_name_the_new_repositories(self):
+        for name in JENKINSFILES:
+            with self.subTest(name=name):
+                text = (JENKINS / name).read_text(encoding="utf-8")
+                self.assertNotIn("karacaismail/frappesetup", text)
+                self.assertNotIn("karacaismail/atonota-web", text)
+
+
+class ReleaseLabelTests(unittest.TestCase):
+    def test_image_source_label_names_the_backend_repository(self):
+        text = (ROOT / "deploy" / "bin" / "build-release").read_text(encoding="utf-8")
+        self.assertIn("org.opencontainers.image.source=https://github.com/metafrappe/backend", text)
+        self.assertNotIn("frappesetup", text)
+
+
+class SecurityAuditRootTests(unittest.TestCase):
+    def test_security_scripts_find_the_root_with_git(self):
+        for relative in ("dev/bin/security-audit", "dev/security/history-scan"):
+            with self.subTest(script=relative):
+                text = (ROOT / relative).read_text(encoding="utf-8")
+                self.assertIn('cd "$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"', text)
+                self.assertNotIn("../../..", text)
+                self.assertEqual(old_prefix_lines(text), [])
+
+
+@unittest.skipUnless(shutil.which("git") and (ROOT / ".git").exists(), "needs a Git checkout")
+class RepositoryPathTests(unittest.TestCase):
+    def test_no_code_file_uses_the_old_prefix(self):
+        command = ["git", "-C", str(ROOT), "grep", "-nE", r"(^|[^a-z_/.-])backend/", "--", *GREP_EXCLUDES]
+        result = subprocess.run(command, capture_output=True, text=True, check=False)
+        self.assertIn(result.returncode, (0, 1), result.stderr)
+        left = []
+        for line in result.stdout.splitlines():
+            path = line.split(":", 1)[0]
+            if any(path == kept and (text is None or text in line) for kept, text, _ in KEPT):
+                continue
+            if any(text in line for text in KEPT_TEXT):
+                continue
+            left.append(line[:160])
+        self.assertEqual(left, [], f"{len(left)} lines still use the backend/ prefix")
+
+    def test_every_kept_line_still_exists(self):
+        for path, text, _ in KEPT:
+            with self.subTest(path=path, text=text):
+                content = (ROOT / path).read_text(encoding="utf-8")
+                self.assertTrue(text is None or text in content)
+
+
+if __name__ == "__main__":
+    unittest.main()

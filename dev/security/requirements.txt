@@ -1,4 +1,4 @@
-# Regenerate with backend/dev/security/compile-lock.
+# Regenerate with dev/security/compile-lock.
 # Manifest SHA256: f88d26f1d7cc212cd0773362f6a38ce18079e2060fe2d41b1a6cef3530bbd854
 annotated-types==0.8.0
 certifi==2026.11.20

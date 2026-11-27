@@ -6,7 +6,7 @@ The patch adds ``agent/offsite_s3.py`` and routes every offsite S3 client throug
 
 The helper module is read from the patch itself and tested here; no Agent checkout is needed.
 With ``AGENT_SOURCE=<Agent checkout at AGENT_COMMIT>`` the patch is also applied to the source.
-Design: backend/docs/handoff/offsite-backup.md and backend/deploy/images/agent-patches/README.md.
+Design: docs/handoff/offsite-backup.md and deploy/images/agent-patches/README.md.
 Credentials in this file are fixture words, not real keys.
 """
 

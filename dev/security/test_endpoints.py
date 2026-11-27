@@ -80,7 +80,7 @@ class EndpointInventoryTest(unittest.TestCase):
             "def test_keycloak_backchannel_logout_foreign_data_denied(): pass\n"
             "def test_other_guest_denied(): pass\ndef test_other_foreign_data_denied(): pass\n",
         )
-        path = "backend/apps/press_tr/press_tr/api/__init__.py"
+        path = "apps/press_tr/press_tr/api/__init__.py"
         rule = "frappe-guest-without-limit"
         with patch("endpoints.approved_keys", return_value={(rule, path, 2), (rule, path, 4)}):
             status, _, errors = self.check()

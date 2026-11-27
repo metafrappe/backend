@@ -2,7 +2,7 @@
 
 ## Denetimler ve bulguların kapanışı
 
-Depo kökünde `backend/dev/bin/ai-readiness` komutunu çalıştırın.
+Depo kökünde `dev/bin/ai-readiness` komutunu çalıştırın.
 Kapı her bulgu için dosyayı, satırı ve kuralı gösterir.
 Programdan okumak için komuta `--json` ekleyin.
 
@@ -14,7 +14,7 @@ Tablodaki **Her kipte** ifadesi, kural çalışıp hata bulduğunda kapının du
 Yalnız uyarı veya `not_run` sonucu kapıyı durdurmaz.
 `not_run`, denetimin bir kısmının veya tamamının çalışmadığını belirtir.
 Kapı tek tek denetimleri kapatan bir seçenek sunmaz.
-Orkestratör, ad denetiminin kipini `backend/dev/naming/enforcement.json` dosyasından yönetir.
+Orkestratör, ad denetiminin kipini `dev/naming/enforcement.json` dosyasından yönetir.
 
 | Kural | Kapı neyi bulur? | Kapı ne zaman durur? | Bulguyu nasıl kapatırsınız? |
 | --- | --- | --- | --- |
@@ -42,9 +42,9 @@ Frappe kaynağının yolunu `FRAPPE_SOURCE` değişkenine yazın.
 Kaynak yoksa çekirdek karşılaştırmaları atlanır.
 Kip dosyası yoksa kapı ad denetimini `advisory` kipinde çalıştırır.
 
-`backend/dev/bin/ai-readiness --list-interfaces` modül arayüzlerini listeler.
+`dev/bin/ai-readiness --list-interfaces` modül arayüzlerini listeler.
 İç işlev aktarımları listeye uyarı olarak girer.
-Testleri çalıştırmak için `backend/dev/bin/ai-readiness --self-test` kullanın.
+Testleri çalıştırmak için `dev/bin/ai-readiness --self-test` kullanın.
 Düzeltmeden sonra aynı taramayı yeniden çalıştırın.
 
 - [0010 karar notu](../../docs/kararlar/0010-ai-readiness-gate.md)

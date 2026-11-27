@@ -20,7 +20,7 @@ from pathlib import Path
 BACKEND = Path(__file__).resolve().parents[1]
 load_brand = runpy.run_path(str(BACKEND / "deploy/brand.py"))["load_brand"]
 # Tests may move BACKEND. The trusted credential root stays this checkout.
-REPOSITORY = Path(__file__).resolve().parents[2]
+REPOSITORY = Path(__file__).resolve().parents[1]
 CONTAINER_ID = re.compile(r"[0-9a-f]{12,64}")
 REQUIRED_SETTING = re.compile(r"\$\{([A-Z][A-Z0-9_]*):\?[^}]*\}")
 INCLUDE_FILE = re.compile(r"^\s*-\s*(?:path:\s*)?([A-Za-z0-9_.-]+\.ya?ml)\s*$")
@@ -30,7 +30,7 @@ REDIS = "redis:7.4-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb
 
 
 def template_entries():
-    root = BACKEND if (BACKEND / "dev/.env.example").is_file() else REPOSITORY / "backend"
+    root = BACKEND if (BACKEND / "dev/.env.example").is_file() else REPOSITORY
     for template in (
         root / "dev/.env.example",
         root / "identity/keycloak/.env.example",
@@ -483,7 +483,7 @@ def require_press_settings(environment):
         raise ValueError(
             "Press setup needs these settings: "
             + ", ".join(missing)
-            + ". Copy the missing keys from backend/identity/keycloak/.env.example into E2E_ENV_FILE."
+            + ". Copy the missing keys from identity/keycloak/.env.example into E2E_ENV_FILE."
         )
 
 
@@ -523,7 +523,7 @@ def require_tenant_login_settings(environment):
             "Tenant sign-in needs these settings: "
             + ", ".join(missing)
             + ". setup() derives the tenant URL from PANE_PORT. Copy the missing secret from"
-            " backend/identity/keycloak/.env.example into E2E_ENV_FILE."
+            " identity/keycloak/.env.example into E2E_ENV_FILE."
         )
 
 
@@ -592,7 +592,7 @@ def require_tenant_settings(environment):
         raise ValueError(
             "Tenant setup needs these settings: "
             + ", ".join(missing)
-            + ". Copy the missing keys from backend/identity/keycloak/.env.example into E2E_ENV_FILE."
+            + ". Copy the missing keys from identity/keycloak/.env.example into E2E_ENV_FILE."
         )
 
 
@@ -646,7 +646,7 @@ def require_realm_sync_settings(environment):
         raise ValueError(
             "Realm sync needs these settings: "
             + ", ".join(missing)
-            + ". Copy the missing keys from backend/identity/keycloak/.env.example into E2E_ENV_FILE."
+            + ". Copy the missing keys from identity/keycloak/.env.example into E2E_ENV_FILE."
         )
 
 
@@ -1076,7 +1076,7 @@ def load_review_accounts(path=REVIEW_ACCOUNTS):
     if "password" in data:
         # AJA-1074: the repository is public. The password lives in the Git-ignored env file only.
         raise ValueError("review-accounts.json must not hold a password. Put it in E2E_REVIEW_PASSWORD"
-                         " in backend/e2e/.env.")
+                         " in e2e/.env.")
     if not isinstance(accounts, list) or not accounts:
         raise ValueError("review-accounts.json needs a list of accounts.")
     for account in accounts:
@@ -1113,10 +1113,10 @@ def check_reseller_links(links):
 
 
 def review_password(environment):
-    """The shared review password from E2E_REVIEW_PASSWORD (backend/e2e/.env, ignored by Git)."""
+    """The shared review password from E2E_REVIEW_PASSWORD (e2e/.env, ignored by Git)."""
     password = environment.get("E2E_REVIEW_PASSWORD", "")
     if len(password) < REVIEW_RELAXED_LENGTH:
-        raise ValueError(f"Set E2E_REVIEW_PASSWORD in backend/e2e/.env to at least {REVIEW_RELAXED_LENGTH}"
+        raise ValueError(f"Set E2E_REVIEW_PASSWORD in e2e/.env to at least {REVIEW_RELAXED_LENGTH}"
                          " characters, then run review-accounts again. No account was changed.")
     return password
 
@@ -1136,7 +1136,7 @@ def require_local_stack(environment):
 
 
 def review_accounts(compose, environment):
-    """Create or update the local review accounts (backend/e2e/review-accounts.json).
+    """Create or update the local review accounts (e2e/review-accounts.json).
 
     The shared password comes from E2E_REVIEW_PASSWORD in the Git-ignored env file.
 
@@ -1250,7 +1250,7 @@ ACTION_HELP = """actions:
   resources        show free disk and memory in the container VM
   seed-deletion    write the account deletion test fixture
   seed-preview     load the API and browser test data into a running stack
-  review-accounts  create the local review accounts (local stack only; see backend/e2e/README.md)
+  review-accounts  create the local review accounts (local stack only; see e2e/README.md)
 """
 
 
@@ -1310,7 +1310,7 @@ def main():
             require_local_stack(environment)
             assert_owner(engine, compose, environment)
             summary = review_accounts(compose, environment)
-            print("Review accounts ready. See backend/e2e/README.md.")
+            print("Review accounts ready. See e2e/README.md.")
             print(json.dumps(summary, indent=2))
         elif args.action == "seed-preview":
             assert_owner(engine, compose, environment)

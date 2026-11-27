@@ -1,12 +1,12 @@
 """The Jenkins handoff note names the environment approver by role, never by person.
 
 Decision of 26 November 2026: one person approves every change on a remote server. The repository
-does not hold that person's name. The note backend/docs/handoff/jenkins-credentials.md calls the
+does not hold that person's name. The note docs/handoff/jenkins-credentials.md calls the
 person "ortam onaylayıcısı", asks for that approval before steps that reach a remote server, does
 not use the older wording "ortamın sorumlusundan" and does not list the server fee as an open item:
 the fee is approved.
 
-Person names are checked with the release residue scanner (backend/dev/tests/test_release_residue.py),
+Person names are checked with the release residue scanner (dev/tests/test_release_residue.py),
 so the list of names stays in one place and only as digests.
 """
 

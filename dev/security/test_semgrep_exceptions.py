@@ -111,17 +111,29 @@ class SemgrepExceptionsTests(unittest.TestCase):
             self.assertEqual(reviewed_findings(root, config, findings, before), [findings[1]])
 
     def test_overlapping_review_targets_are_rejected(self):
-        press = {"scope": "backend/apps/press", "findings": []}
-        access = {"scope": "backend/apps/core", "files": ["backend/apps/core/allowed.py"], "findings": []}
+        press = {"scope": "apps/press", "findings": []}
+        access = {"scope": "apps/core", "files": ["apps/core/allowed.py"], "findings": []}
         with tempfile.TemporaryDirectory() as directory:
             config = Path(directory) / "exceptions.json"
             for extra in (
-                [{"scope": "backend/apps", "findings": []}],
-                [access, {"scope": "backend/apps", "files": ["backend/apps/core/allowed.py"], "findings": []}],
+                [{"scope": "apps", "findings": []}],
+                [access, {"scope": "apps", "files": ["apps/core/allowed.py"], "findings": []}],
             ):
                 with self.subTest(extra=extra):
                     config.write_text(json.dumps({**press, "additionalReviews": extra}))
                     with self.assertRaisesRegex(ValueError, "overlap"):
+                        review_scopes(config)
+
+    def test_repository_root_scope_is_written_as_a_dot(self):
+        # The code sits at the repository root (AJA-1587). A file list may use the root as scope.
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory) / "exceptions.json"
+            config.write_text(json.dumps({"scope": ".", "files": ["apps/a.py", "libs/b.py"], "findings": []}))
+            self.assertEqual([entry["scope"] for entry in review_scopes(config)], ["."])
+            for scope in ("./apps", "", "..", "apps/.."):
+                with self.subTest(scope=scope):
+                    config.write_text(json.dumps({"scope": scope, "files": ["apps/a.py"], "findings": []}))
+                    with self.assertRaises(ValueError):
                         review_scopes(config)
 
     def test_file_scope_ignores_unrelated_files_and_invalidates_on_helper_change(self):
@@ -160,13 +172,13 @@ class SemgrepExceptionsTests(unittest.TestCase):
             root = Path(directory)
             review = json.loads(CONFIG.read_text())
             scope, files = review["scope"], review["files"]
-            press_test = "backend/apps/press_tr/tests/run.sh"
+            press_test = "apps/press_tr/tests/run.sh"
             helpers = (
-                "backend/apps/press_tr/press_tr/press_identity/request_policy.py",
-                "backend/libs/oidc_verify/src/oidc_verify/verification.py",
+                "apps/press_tr/press_tr/press_identity/request_policy.py",
+                "libs/oidc_verify/src/oidc_verify/verification.py",
             )
-            bridge = "backend/apps/press_tr/press_tr/ansible_bridge/__init__.py"
-            team = "backend/apps/press_tr/press_tr/press_identity/custom/team.json"
+            bridge = "apps/press_tr/press_tr/ansible_bridge/__init__.py"
+            team = "apps/press_tr/press_tr/press_identity/custom/team.json"
             self.assertNotIn(press_test, files)
             self.assertNotIn(bridge, files)
             self.assertTrue({*helpers, team}.issubset(files))
@@ -175,7 +187,7 @@ class SemgrepExceptionsTests(unittest.TestCase):
                 source.parent.mkdir(parents=True, exist_ok=True)
                 source.write_text("fixture\n")
             self.git(root, "init", "-q")
-            self.git(root, "add", "backend")
+            self.git(root, "add", ".")
             before = source_digest(root, scope, files)
             self.assertIsNotNone(before)
             config = root / "exceptions.json"

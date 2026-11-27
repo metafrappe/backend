@@ -15,7 +15,7 @@ of the employee record (AJA-1024).
 
 The requests go through the WSGI application of Frappe with a real session. The test needs a
 Frappe test site with HRMS TR and platform_core installed:
-`PANE_PORT=<port> backend/dev/bin/test hrms_tr --module hrms_tr.tests.test_panel_roles`.
+`PANE_PORT=<port> dev/bin/test hrms_tr --module hrms_tr.tests.test_panel_roles`.
 All people, companies and records are made up.
 """
 

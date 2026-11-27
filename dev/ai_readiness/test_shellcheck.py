@@ -18,7 +18,7 @@ class ShellCheckTests(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.repository = Path(temporary.name).resolve()
         subprocess.run(["git", "init", "--quiet", self.repository], check=True)
-        self.root = self.repository / "backend"
+        self.root = self.repository
         (self.root / "apps").mkdir(parents=True)
         self.tools = self.repository / "tools"
         self.tools.mkdir()
@@ -67,10 +67,10 @@ assert '--network' in args and args[args.index('--network') + 1] == 'none'
 assert any(arg.startswith('koalaman/shellcheck-alpine:v0.11.0@sha256:') for arg in args)
 with tarfile.open(fileobj=sys.stdin.buffer, mode='r|') as archive:
     entries = {item.name for item in archive}
-assert entries == {'backend/dev/bin/run', 'backend/e2e/check.sh'}
+assert entries == {'dev/bin/run', 'e2e/check.sh'}
 print(json.dumps({'comments': [
-    {'file': 'backend/dev/bin/run', 'line': 2, 'code': 2086, 'message': 'Quote variable.', 'level': 'info'},
-    {'file': 'backend/e2e/check.sh', 'line': 2, 'code': 2086, 'message': 'Quote variable.', 'level': 'info'},
+    {'file': 'dev/bin/run', 'line': 2, 'code': 2086, 'message': 'Quote variable.', 'level': 'info'},
+    {'file': 'e2e/check.sh', 'line': 2, 'code': 2086, 'message': 'Quote variable.', 'level': 'info'},
 ]}))
 raise SystemExit(1)
 """

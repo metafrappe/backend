@@ -10,7 +10,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-APP = "backend/apps/platform_core"
+APP = "apps/platform_core"
 HOOKS = f"{APP}/platform_core/hooks.py"
 TRANSLATIONS = f"{APP}/platform_core/translations/tr.csv"
 MODULES = f"{APP}/platform_core/modules.txt"

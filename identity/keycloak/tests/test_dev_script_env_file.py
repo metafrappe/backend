@@ -4,7 +4,7 @@ The script reads the file line by line, the way `docker run --env-file` does. Th
 the value, with no shell quoting. So a value with a space, like "Sample Brand", stays whole. If the
 file were run by the shell again, these tests would fail.
 
-The visible product name comes from `backend/brand.env` (AJA-1062). The script reads that file the
+The visible product name comes from `brand.env` (AJA-1062). The script reads that file the
 same strict way and gives its PRODUCT_NAME value to Keycloak as IDENTITY_BRAND_NAME.
 
 The tests run a copy of the real script. A stand-in `docker` command records the environment it
@@ -58,7 +58,7 @@ class KcDevScriptCase(unittest.TestCase):
         self.env_file = self.dir / "test.env"
         # The script adds missing keys from .env.example. An empty example keeps the test file as written.
         (root / ".env.example").write_text("", encoding="utf-8")
-        # A made-up brand file. The real one is backend/brand.env; tests never read its value here.
+        # A made-up brand file. The real one is brand.env; tests never read its value here.
         self.brand_file = self.dir / "backend" / "brand.env"
         self.write_brand("Sample Brand", "sample.test")
         self.env = {
@@ -157,7 +157,7 @@ class EnvFileReadingTest(KcDevScriptCase):
 
 
 class BrandFileTest(KcDevScriptCase):
-    """AJA-1062: the login theme shows the product name from backend/brand.env."""
+    """AJA-1062: the login theme shows the product name from brand.env."""
 
     def test_brand_name_comes_from_the_brand_file(self):
         result = self.run_script(b"TEST_OK=1\n")

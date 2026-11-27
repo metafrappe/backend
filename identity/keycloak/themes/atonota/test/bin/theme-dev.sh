@@ -14,7 +14,7 @@ set -euo pipefail
 here="$(cd "$(dirname "$0")/.." && pwd)"
 theme="$(cd "$here/.." && pwd)"
 env_file="$here/.env"
-# The shared "factory" disk is nearly full (backend/AGENTS.md, "Disk dar").
+# The shared "factory" disk is nearly full (AGENTS.md, "Disk dar").
 # FS_COLIMA_PROFILE=default starts the environment in the "colima" profile instead.
 if [[ "${FS_COLIMA_PROFILE:-factory}" == "default" ]]; then
   export DOCKER_CONTEXT="${DOCKER_CONTEXT:-colima}"

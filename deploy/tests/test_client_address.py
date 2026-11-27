@@ -5,7 +5,7 @@ from X-Forwarded-For (KC_PROXY_HEADERS=xforwarded). That is safe only while:
 - only Caddy reaches Keycloak: the keycloak service has no published port;
 - Caddy writes X-Forwarded-For itself: without trusted_proxies Caddy drops the header the client
   sent and writes the address it saw. No site may set the header by hand either.
-Design: backend/docs/decisions/0003-keycloak-extensions.md, section "G-162 ek iş".
+Design: docs/decisions/0003-keycloak-extensions.md, section "G-162 ek iş".
 """
 
 import re

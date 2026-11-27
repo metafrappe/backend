@@ -23,23 +23,23 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.parse import urlencode, urlsplit
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[2]
 RESULTS = ROOT / ".pane/prompts/security-results"
-SECURITY = Path("backend/dev/security")
+SECURITY = Path("dev/security")
 FIXTURES = SECURITY / "fixtures"
 CONTRACT_FIXTURE = SECURITY / "contract-fixtures" / "contract.yaml"
 OSV_CONFIG = SECURITY / "osv-exceptions.toml"
 # Exceptions that hold only for the Press image lock (review 2, small finding 2).
 PRESS_OSV_CONFIG = SECURITY / "osv-exceptions-press.toml"
-# The Press production image installs this lock (backend/deploy/images/press.Dockerfile).
-PRESS_LOCK = Path("backend/deploy/images/press-requirements.lock.txt")
-# backend/dev/security/osv-setup puts the pinned scanner and the open vulnerability database here.
+# The Press production image installs this lock (deploy/images/press.Dockerfile).
+PRESS_LOCK = Path("deploy/images/press-requirements.lock.txt")
+# dev/security/osv-setup puts the pinned scanner and the open vulnerability database here.
 OSV_HOME = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "frappesetup-osv"
 VERSIONS = dict(line.split("=", 1) for line in (ROOT / SECURITY / "tool-versions.env").read_text().splitlines())
 BANDIT = VERSIONS["BANDIT_VERSION"]
 OSV = VERSIONS["OSV_VERSION"]
 SCHEMATHESIS = VERSIONS["SCHEMATHESIS_VERSION"]
-CONTRACTS = Path("backend/contracts")
+CONTRACTS = Path("contracts")
 CONTRACT_CHECKS = ("not_a_server_error,status_code_conformance,content_type_conformance,"
                    "response_headers_conformance,response_schema_conformance")
 
@@ -98,7 +98,7 @@ def load_results(directory):
         except TypeError:
             results = []
         if not results:
-            yield Result(command, "—", f"backend/dev/bin/{command}", "not_run")
+            yield Result(command, "—", f"dev/bin/{command}", "not_run")
             continue
         matches = (record.get("dirty") is False and current["dirty"] is False
                    and record.get("utc") and record.get("commit") == current["commit"])
@@ -223,7 +223,7 @@ def scan_bandit():
             for (_, _, code, digest), count in signatures.items()
         ):
             raise ValueError("Invalid or duplicate Bandit exception signature.")
-        files = [path for path in git("ls-files", "-z", "--", "backend").split("\0")
+        files = [path for path in git("ls-files", "-z").split("\0")
                  if not path.startswith(f"{FIXTURES}/") and is_python_source(ROOT / path)]
         if not files:
             raise ValueError("No tracked Python files to scan.")
@@ -325,7 +325,7 @@ def osv_database():
 
 def python_manifests():
     return sorted(path for path in git("ls-files", "-z").split("\0")
-                  if path.startswith("backend/") and Path(path).name == "pyproject.toml")
+                  if Path(path).name == "pyproject.toml")
 
 
 def manifest_digest(paths):
@@ -350,7 +350,7 @@ def generated_lock():
     command = ["uv", "pip", "compile", "--universal", "--python-version", "3.14",
                "--exclude-newer", VERSIONS["TOOL_CUTOFF"], "--no-header", "--no-annotate", "-"]
     output = subprocess.check_output(command, cwd=ROOT, input="\n".join(external) + "\n", text=True)
-    header = (f"# Regenerate with backend/dev/security/compile-lock.\n"
+    header = (f"# Regenerate with dev/security/compile-lock.\n"
               f"# Manifest SHA256: {manifest_digest(manifests)}\n")
     return header + output
 
@@ -366,7 +366,7 @@ def verify_python_lock(locks, *, reproduce=False):
     expected = f"# Manifest SHA256: {manifest_digest(python_manifests())}"
     content = (ROOT / lock).read_text()
     if expected not in content.splitlines():
-        raise ValueError("Python dependency lock is stale. Run backend/dev/security/compile-lock.")
+        raise ValueError("Python dependency lock is stale. Run dev/security/compile-lock.")
     if reproduce and generated_lock() != content:
         raise ValueError("Python lock differs from the generated lock.")
 
@@ -438,7 +438,7 @@ def scan_press_lock():
                "--config", str(PRESS_OSV_CONFIG), "--lockfile", osv_lockfile(PRESS_LOCK)]
     result = Result("OSV-Scanner (Press lock)", OSV, shlex.join(command), "fail")
     if scanner is None:
-        print("The pinned OSV-Scanner is missing. Run backend/dev/security/osv-setup (needs the network).")
+        print("The pinned OSV-Scanner is missing. Run dev/security/osv-setup (needs the network).")
         return result
     try:
         osv_database()
@@ -457,7 +457,7 @@ def scan_press_lock():
             print(f"OSV: {note}")
         return replace(result, status="fail" if findings else "pass", findings=tuple(sorted(findings)))
     except (OSError, ValueError, KeyError, subprocess.CalledProcessError) as error:
-        print(f"OSV check failed: {error} Refresh with backend/dev/security/osv-setup (needs the network).")
+        print(f"OSV check failed: {error} Refresh with dev/security/osv-setup (needs the network).")
         return result
 
 
@@ -469,7 +469,7 @@ def scan_dependencies(requirements=None, *, reproduce=False):
     result = Result("OSV-Scanner", OSV, shlex.join(command) + " LOCKFILES", "fail")
     try:
         if scanner is None:
-            print("The pinned OSV-Scanner is not available. Run backend/dev/security/osv-setup.")
+            print("The pinned OSV-Scanner is not available. Run dev/security/osv-setup.")
             return replace(result, status="not_run")
         osv_database()
         output = osv_version(scanner)
@@ -651,7 +651,7 @@ def contract_fixture_found():
 def scan_contracts(target, *, writes=False, contracts=None):
     mode = "--allow-writes" if writes else "GET only"
     result = Result("Schemathesis API contract", SCHEMATHESIS,
-                    f"backend/dev/bin/security-full --api-target LOCAL_URL ({mode})", "fail")
+                    f"dev/bin/security-full --api-target LOCAL_URL ({mode})", "fail")
     if target is None:
         print("Schemathesis: no local API target. Use --api-target or FS_API_TARGET.")
         return replace(result, status="not_run")
@@ -712,7 +712,7 @@ def scan_full(requirements, *, ci=False, runtime_image=None, api_target=None, al
         run("Security tool tests", "Python", [sys.executable, "-B", "-m", "unittest", "discover",
                                                "-s", str(SECURITY)]),
         run("Backend gate", f"Semgrep {VERSIONS['SEMGREP_VERSION']} / Gitleaks {VERSIONS['GITLEAKS_VERSION']}",
-            ["backend/dev/bin/security-audit"]),
+            ["dev/bin/security-audit"]),
         scan_bandit(),
         run("Gitleaks", VERSIONS["GITLEAKS_VERSION"], [str(SECURITY / "history-scan")]),
         scan_dependencies(requirements, reproduce=ci),
@@ -849,7 +849,7 @@ def scan_local(target, *, ci=False):
         status = "fail"
     finally:
         connection.close()
-    results = [Result("Local HTTP header check", "1", "backend/dev/bin/dast-scan LOCAL_URL", status),
+    results = [Result("Local HTTP header check", "1", "dev/bin/dast-scan LOCAL_URL", status),
                zap]
     save(RESULTS, "local", results, source)
     return exit_status(results, ci=ci)

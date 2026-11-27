@@ -21,8 +21,7 @@ class CommitScanTests(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.repository = Path(temporary.name)
         subprocess.run(["git", "init", "--quiet", self.repository], check=True)
-        self.backend = self.repository / "backend"
-        self.backend.mkdir()
+        self.backend = self.repository
 
     def test_gate_rejects_missing_and_relative_git_paths(self):
         tools = self.repository / "tools"

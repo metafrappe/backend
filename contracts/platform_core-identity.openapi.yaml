@@ -5,7 +5,7 @@ info:
   summary: Endpoints for Keycloak sign-in, callback, sign-out and user sync.
   description: |
     This contract describes the identity endpoints of the `platform_core` app.
-    The rules are in sections 3, 4, 5 and 8 of the `backend/docs/sozlesmeler.md` file.
+    The rules are in sections 3, 4, 5 and 8 of the `docs/sozlesmeler.md` file.
 
     The goal is this. A user of the tenant site signs in with Keycloak.
     Keycloak is the identity server. Passwords and user records live there.
@@ -172,7 +172,7 @@ x-site-settings:
     - key: identity_brand_name
       example: <PRODUCT_NAME>
       required: true
-      note: The sign-in button label uses PRODUCT_NAME from backend/brand.env, injected into this site setting.
+      note: The sign-in button label uses PRODUCT_NAME from brand.env, injected into this site setting.
     - key: platform_panel_url
       example: http://tenant1.localhost:8661/panel
       required: true

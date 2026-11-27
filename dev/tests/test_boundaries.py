@@ -1,4 +1,4 @@
-"""Contract examples from backend/docs/isler/dev-ortam.md and D-11."""
+"""Contract examples from docs/isler/dev-ortam.md and D-11."""
 
 import importlib.util
 import json

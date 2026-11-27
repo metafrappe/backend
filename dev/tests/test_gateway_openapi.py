@@ -6,7 +6,7 @@ from importlib.util import find_spec
 from pathlib import Path
 
 if any(find_spec(module) is None for module in ("jsonschema", "referencing", "yaml")):
-    raise unittest.SkipTest("Install backend/dev/requirements-contract-tests.txt for contract tests")
+    raise unittest.SkipTest("Install dev/requirements-contract-tests.txt for contract tests")
 
 from jsonschema.exceptions import ValidationError  # noqa: E402
 

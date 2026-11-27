@@ -45,28 +45,28 @@ class SecurityScanTests(unittest.TestCase):
                 self.assertIn("`not_run`", scans.report(path))
 
     def test_bandit_exception_requires_owner_and_unexpired_date(self):
-        item = {"rule": "B603", "file": "backend/example.py", "line": 2,
+        item = {"rule": "B603", "file": "example.py", "line": 2,
                 "owner": "dev", "reason": "Fixed argv.", "ignoreUntil": "2026-12-01"}
         self.assertTrue(scans.valid_exception(item, date(2026, 11, 22)))
         self.assertFalse(scans.valid_exception({**item, "owner": ""}, date(2026, 11, 22)))
         self.assertFalse(scans.valid_exception(item, date(2026, 12, 2)))
 
     def test_dependency_locks_include_root_and_exclude_fixtures(self):
-        files = ["package-lock.json", "backend/apps/a/requirements.txt",
-                 "backend/dev/security/fixtures/requirements.txt"]
+        files = ["package-lock.json", "apps/a/requirements.txt",
+                 "dev/security/fixtures/requirements.txt"]
         self.assertEqual(scans.dependency_locks(files), files[:2])
 
     def test_dependency_locks_include_the_press_image_lock(self):
         # Review 1, finding 3: the Press image lock has its own file name.
-        files = ["backend/deploy/images/press-requirements.lock.txt", "backend/deploy/images/press-requirements.in"]
+        files = ["deploy/images/press-requirements.lock.txt", "deploy/images/press-requirements.in"]
         self.assertEqual(scans.dependency_locks(files), files[:1])
         self.assertEqual(scans.osv_lockfile(files[0]), f"requirements.txt:{files[0]}")
         self.assertEqual(scans.osv_lockfile("package-lock.json"), "package-lock.json")
 
     def test_security_gate_scans_the_press_lock(self):
-        gate = (scans.ROOT / "backend/dev/bin/security-audit").read_text()
-        self.assertIn("backend/dev/security/scans.py press-lock", gate)
-        self.assertEqual(str(scans.PRESS_LOCK), "backend/deploy/images/press-requirements.lock.txt")
+        gate = (scans.ROOT / "dev/bin/security-audit").read_text()
+        self.assertIn("dev/security/scans.py press-lock", gate)
+        self.assertEqual(str(scans.PRESS_LOCK), "deploy/images/press-requirements.lock.txt")
         self.assertTrue((scans.ROOT / scans.PRESS_LOCK).is_file())
 
     def press_lock_scan(self, report_code, report, scanner="/opt/osv-scanner"):
@@ -176,7 +176,7 @@ class SecurityScanTests(unittest.TestCase):
             calls.append(command)
             return 0, {"results": []}
 
-        locks = ["backend/dev/security/requirements.txt", str(scans.PRESS_LOCK)]
+        locks = ["dev/security/requirements.txt", str(scans.PRESS_LOCK)]
         with patch.object(scans, "osv_scanner", return_value="/opt/osv-scanner"), \
                 patch.object(scans, "dependency_locks", return_value=list(locks)), \
                 patch.object(scans, "git", return_value=""), \
@@ -192,7 +192,7 @@ class SecurityScanTests(unittest.TestCase):
             lockfiles = [command[i + 1] for i, arg in enumerate(command) if arg == "--lockfile"]
             by_config.setdefault(command[command.index("--config") + 1], []).extend(lockfiles)
         self.assertEqual(by_config, {
-            str(scans.OSV_CONFIG): ["backend/dev/security/requirements.txt"],
+            str(scans.OSV_CONFIG): ["dev/security/requirements.txt"],
             str(scans.PRESS_OSV_CONFIG): [f"requirements.txt:{scans.PRESS_LOCK}"],
         })
 
@@ -219,7 +219,7 @@ class SecurityScanTests(unittest.TestCase):
                     self.assertTrue(scans.osv_exception_valid(item, date.today()))
         scanner = scans.osv_scanner()
         if scanner is None:
-            self.skipTest("OSV-Scanner is not installed (backend/dev/security/osv-setup)")
+            self.skipTest("OSV-Scanner is not installed (dev/security/osv-setup)")
         for path in configs:
             with self.subTest(scanner_config=path.name):
                 process = scans.subprocess.run(
@@ -400,9 +400,9 @@ class ContractScanTests(CleanEnvironment):
     def test_findings_name_contract_check_and_operation(self):
         report = {"complete": True, "errors": [], "failures": [
             {"code": "ST101", "title": "Server error", "operations": ["GET /a", "GET /b"]}]}
-        self.assertEqual(scans.contract_findings(report, "backend/contracts/x.yaml"), (
-            "backend/contracts/x.yaml · ST101 Server error · GET /a",
-            "backend/contracts/x.yaml · ST101 Server error · GET /b"))
+        self.assertEqual(scans.contract_findings(report, "contracts/x.yaml"), (
+            "contracts/x.yaml · ST101 Server error · GET /a",
+            "contracts/x.yaml · ST101 Server error · GET /b"))
         with self.assertRaises(ValueError):
             scans.contract_findings({"complete": False, "errors": [], "failures": []}, "x.yaml")
 

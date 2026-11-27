@@ -1,6 +1,6 @@
 """G-138 field help on the site. The rules are in `help_content`; this module reads Frappe.
 
-Contract: `backend/contracts/platform_core-help.openapi.yaml`.
+Contract: `contracts/platform_core-help.openapi.yaml`.
 """
 
 import frappe

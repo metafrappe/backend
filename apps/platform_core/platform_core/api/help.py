@@ -1,6 +1,6 @@
 """HTTP entry points for field help (G-138). The rules are in `platform_core.shell.help`.
 
-Contract: `backend/contracts/platform_core-help.openapi.yaml`.
+Contract: `contracts/platform_core-help.openapi.yaml`.
 """
 
 import frappe

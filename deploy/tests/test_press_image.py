@@ -1,6 +1,6 @@
 """Tests for the Press production image and its place in the release (blocker E-2).
 
-Design: backend/docs/dagitim/ortamlar.md and backend/docs/dagitim/press-imaji.md.
+Design: docs/dagitim/ortamlar.md and docs/dagitim/press-imaji.md.
 These tests read files and run bin/build-release with a fake docker; they need only bash.
 """
 

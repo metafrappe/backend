@@ -12,11 +12,14 @@ from frappe.tests.test_api import FrappeAPITestCase
 from platform_core.identity import provider_setup, session_policy
 from platform_core.identity.tests import helpers as h
 from platform_core.shell.api import BOOTSTRAP_KEY_PREFIX
+from platform_core.shell.bootstrap import get_bootstrap
 
 BACKCHANNEL = "/api/method/platform_core.api.keycloak_backchannel_logout"
 LOGOUT = "/api/method/platform_core.api.auth.logout"
 SID = "77777777-7777-4777-8777-777777777777"
 BOOTSTRAP_KEY = f"{BOOTSTRAP_KEY_PREFIX}generation:scope"
+# Every bootstrap key version of the user. The check does not trust the constant under test.
+ANY_BOOTSTRAP_VERSION = "platform_core:shell:bootstrap:"
 
 
 def read(key: str, user: str | None = None):
@@ -67,6 +70,17 @@ class TestSessionCleanup(FrappeAPITestCase):
 		# Other sessions of the user still read the user activity key.
 		self.assertIsNotNone(read(session_policy._user_key(h.AYSE)))
 
+	def real_bootstrap_keys(self, user: str) -> list:
+		return frappe.cache.get_keys(f"user:{user}:{ANY_BOOTSTRAP_VERSION}")
+
+	def build_real_bootstrap(self, user: str) -> None:
+		frappe.set_user(user)
+		try:
+			get_bootstrap(user)
+		finally:
+			frappe.set_user("Administrator")
+		self.assertTrue(self.real_bootstrap_keys(user))
+
 	def back_channel(self, payload: dict):
 		return h.request(
 			h.new_client().post,
@@ -79,6 +93,22 @@ class TestSessionCleanup(FrappeAPITestCase):
 		frappe_sid = self.sign_in(self.client)
 		response = h.request(self.client.post, LOGOUT, headers=h.csrf_headers(self.client))
 		self.assertEqual(response.status_code, 200, response.data[:300])
+		self.assert_cleaned(frappe_sid)
+
+	def test_logout_clears_the_key_written_by_get_bootstrap(self):
+		frappe_sid = self.sign_in(self.client)
+		self.build_real_bootstrap(h.AYSE)
+		response = h.request(self.client.post, LOGOUT, headers=h.csrf_headers(self.client))
+		self.assertEqual(response.status_code, 200, response.data[:300])
+		self.assertEqual(self.real_bootstrap_keys(h.AYSE), [])
+		self.assert_cleaned(frappe_sid)
+
+	def test_back_channel_logout_clears_the_key_written_by_get_bootstrap(self):
+		frappe_sid = self.sign_in(self.client)
+		self.build_real_bootstrap(h.AYSE)
+		response = self.back_channel(h.logout_payload(sub="sub-ayse", sid=SID))
+		self.assertEqual(response.json["message"], {"closed_sessions": 1}, response.data[:300])
+		self.assertEqual(self.real_bootstrap_keys(h.AYSE), [])
 		self.assert_cleaned(frappe_sid)
 
 	def test_back_channel_logout_by_sid_clears_the_same_keys(self):

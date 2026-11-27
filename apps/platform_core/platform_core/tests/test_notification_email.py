@@ -1,3 +1,5 @@
+# ruff: noqa: RUF001, RUF002
+# Turkish month names and texts use the dotless letter on purpose.
 """A notification email goes out in the recipient's language (AJA-1783, parent AJA-1733).
 
 Expected behaviour comes from the language and notification contract (AJA-1776,
@@ -54,7 +56,7 @@ class NotificationEmailTest(IntegrationTestCase):
 		_user(ENGLISH_ADMIN, "en", roles=("System Manager",))
 		_user(NO_LANGUAGE_USER, None)
 		_user(GERMAN_USER, "de")
-		frappe.db.delete("Email Queue", {"message_id": ("like", "<notification-%")})
+		frappe.db.delete("Email Queue", {"message_id": ("like", "notification-%")})
 
 	def tearDown(self):
 		frappe.set_user("Administrator")

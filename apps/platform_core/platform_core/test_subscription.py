@@ -274,9 +274,7 @@ class AppStateModelTest(unittest.TestCase):
 
 	def test_read_only_app_rejects_write_and_keeps_read_and_export(self):
 		self.response["plan"] = "basic"
-		self.config["platform_subscriptions"]["example"]["plans"]["basic"]["features"].append(
-			"export_report"
-		)
+		self.config["platform_subscriptions"]["example"]["plans"]["basic"]["features"].append("export_report")
 		self.assertTrue(self.state()["read_only"])
 		self.assert_write_forbidden()
 		self.assertEqual(self.guarded("read")(), "read")

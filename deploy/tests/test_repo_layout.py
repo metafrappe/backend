@@ -18,7 +18,7 @@ JENKINSFILES = ("backend.Jenkinsfile", "promote.Jenkinsfile", "web.Jenkinsfile")
 # A path that starts with backend/. Words such as atonota-backend/ or deploy/backend/ do not count.
 OLD_PREFIX = re.compile(r"(^|[^a-z_/.-])backend/")
 # The acceptance command of AJA-1587, without the paths it excludes itself.
-GREP_EXCLUDES = (":!*.md", ":!*.patch", ":!dev/naming", ":!brand-exclusions.txt")
+GREP_EXCLUDES = (":!*.md", ":!*.patch", ":!brand-exclusions.txt")
 # Lines that keep the old prefix on purpose: (path, text on the line or None for every line, reason).
 KEPT = (
     # Gitleaks fingerprints name a commit and the path inside that commit. The commits belong to
@@ -30,6 +30,20 @@ KEPT = (
     # The G-128 Press evidence link is pinned to an old frappesetup commit, where the file sat
     # under the old folder (AJA-1673).
     ("dev/bin/check-source-ledger", 'PRESS_EVIDENCE_PATH = "backend/', "pinned old-repository evidence"),
+    # This test checks that the Semgrep review lists no file under the old prefix (AJA-1673).
+    (
+        "deploy/tests/test_moved_config_secrets.py",
+        'name.startswith("backend/")',
+        "checks the review has no old paths",
+    ),
+    # Decision 0009 records the naming fix that ran in the old frappesetup repository, where the
+    # code sat under the old folder. Its commands and dev/naming/docs-rename.patch use the old
+    # paths. This test checks the decision text word for word, so it repeats those paths.
+    (
+        "dev/naming/tests/test_apply_to_branch.py",
+        "backend/dev/",
+        "quotes the commands of decision 0009",
+    ),
 )
 # The docs/standartlar paths change in a later task (AJA-1587, "Sınır").
 KEPT_TEXT = ("backend/docs/standartlar",)

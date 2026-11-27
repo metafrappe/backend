@@ -227,26 +227,13 @@ after_migrate = ["press_tr.press_identity.recovery.ensure_reviewer_role"]
 # User Data Protection
 # --------------------
 
-# user_data_fields = [
-# 	{
-# 		"doctype": "{doctype_1}",
-# 		"filter_by": "{filter_by}",
-# 		"redact_fields": ["{field_1}", "{field_2}"],
-# 		"partial": 1,
-# 	},
-# 	{
-# 		"doctype": "{doctype_2}",
-# 		"filter_by": "{filter_by}",
-# 		"partial": 1,
-# 	},
-# 	{
-# 		"doctype": "{doctype_3}",
-# 		"strict": False,
-# 	},
-# 	{
-# 		"doctype": "{doctype_4}"
-# 	}
-# ]
+# G-52: personal data download (Frappe) reads these records.
+# press_identity/anonymization.py cleans them with its own steps.
+# PTR Keycloak Session is left out: it holds live session ids, and anonymization deletes it.
+user_data_fields = [
+	{"doctype": "PTR Identity Link", "filter_by": "user"},
+	{"doctype": "PTR Recovery Review", "filter_by": "identity_link.user", "redact_fields": ["review_note"]},
+]
 
 # Authentication and authorization
 # --------------------------------

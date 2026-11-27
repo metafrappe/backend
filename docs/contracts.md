@@ -498,12 +498,15 @@ Ayarlar `site_config.json` dosyasında durur. Sır taşıyan ayar depoya girmez.
 
 ### Kişisel veri silme yolları
 
-Aşağıdaki tablo, HRMS TR kayıtlarında kişisel verinin nasıl silindiğini gösterir.
+Aşağıdaki tablo, HRMS TR ve Press TR kayıtlarında kişisel verinin nasıl silindiğini gösterir.
 
 | Kişisel veri | Silme yolu |
 | --- | --- |
 | HRMS TR çalışan kartı | `user_data_fields` kancası kartı `user_id` ile bulur. Adlar, e-posta, telefon, acil durum kişisi, yakınlık, adresler ve biyografi anonimleşir. Pasaport numarası ve düzenlenme yeri anonimleşir. Banka adı, hesap numarası, IBAN, sağlık notu, sigorta numarası ve aile bilgisi anonimleşir. Doğum tarihi, pasaport tarihleri, devam cihazı kimliği, kan grubu ve medeni durum alanları boşalır. Sistem fotoğraf alanını boşaltır ve bağlı dosya kaydını siler. Dosyanın diskten silinmesi ve yükleme bağlantısının temizlenmesi 7. bölümdeki kurallara uyar. Sistem, seçili kart alanlarının eski ve yeni değerlerini İK'nın yazdığı geçmişten de temizler. Eğitim ve önceki iş alt tabloları kalır (O-41). |
 | HRMS TR iş kayıtları | Hesap silme kayıtları korur. İzin, devam ve bordrodaki çalışan adı kopyaları değişmez (O-41). `hrms_tr.retention.purge` yalnız süresi dolan taslak ve iptal edilmiş izinleri siler (O-39). |
+| Press TR kimlik bağı (`PTR Identity Link`) | `user_data_fields` kancası kaydı `user` alanıyla bulur. Kişisel veri indirme dosyası bu kaydı gösterir. Hesap silme kaydı silmez. Sistem ham `subject` değerini HMAC özetiyle değiştirir. Kullanıcı bağı anonim adrese geçer (G-52). |
+| Press TR kurtarma incelemesi (`PTR Recovery Review`) | Kanca kaydı `identity_link.user` yoluyla bulur. Kişisel veri indirme dosyası bu kaydı gösterir. Hesap silme yalnız `review_note` alanını boşaltır. Durum, inceleyen ve tarihler karar kaydı olarak kalır. Sistem geçmiş kayıtlarını silmez. Geçmişte yalnız not alanının eski ve yeni değeri boşalır (G-52). |
+| Press TR Keycloak oturumu (`PTR Keycloak Session`) | Kayıt kancada yoktur, çünkü canlı oturum kimliği taşır. İndirme dosyasına oturum kimliği girmez. Hesap silmenin ilk adımı bu kayıtları siler (G-52). |
 
 ## 9. Geliştirme ortamı
 

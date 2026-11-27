@@ -1,0 +1,1635 @@
+{
+  "schema": 1,
+  "about": "G-126 API ownership registry. One record per whitelisted method and per override_whitelisted_methods entry in apps/. owner_team is the owner job from the folder table in AGENTS.md. Check: python3 -I backend/dev/api_ownership/registry_check.py backend",
+  "statuses": {
+    "upstream-ready": "upstream endpoint used as is",
+    "new-custom": "new endpoint in our app",
+    "upstream-patch": "our function replaces an upstream endpoint"
+  },
+  "endpoints": [
+    {
+      "endpoint": "hrms_tr.api.approve_leave",
+      "app": "hrms_tr",
+      "file": "apps/hrms_tr/hrms_tr/api.py",
+      "owner_team": "ilk-dikey-dilim",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "hrms_tr.api.cancel_leave",
+      "app": "hrms_tr",
+      "file": "apps/hrms_tr/hrms_tr/api.py",
+      "owner_team": "ilk-dikey-dilim",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "hrms_tr.api.get_home_summary",
+      "app": "hrms_tr",
+      "file": "apps/hrms_tr/hrms_tr/api.py",
+      "owner_team": "ilk-dikey-dilim",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "hrms_tr.api.get_leave_approver",
+      "app": "hrms_tr",
+      "file": "apps/hrms_tr/hrms_tr/api.py",
+      "owner_team": "ilk-dikey-dilim",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "hrms_tr.api.get_leave_request_context",
+      "app": "hrms_tr",
+      "file": "apps/hrms_tr/hrms_tr/api.py",
+      "owner_team": "ilk-dikey-dilim",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "hrms_tr.api.reject_leave",
+      "app": "hrms_tr",
+      "file": "apps/hrms_tr/hrms_tr/api.py",
+      "owner_team": "ilk-dikey-dilim",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "hrms_tr.hrms_endpoints.deny_legacy_leave_query",
+      "app": "hrms_tr",
+      "file": "apps/hrms_tr/hrms_tr/hrms_endpoints.py",
+      "owner_team": "ilk-dikey-dilim",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.access.link_search.search_link",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/access/link_search.py",
+      "owner_team": "erisim-kurali",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.access.link_search.search_widget",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/access/link_search.py",
+      "owner_team": "erisim-kurali",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.access.link_search.validate_link_and_fetch",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/access/link_search.py",
+      "owner_team": "erisim-kurali",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.access.explain_permission",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/access.py",
+      "owner_team": "erisim-kurali",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.access.get_access_summary",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/access.py",
+      "owner_team": "erisim-kurali",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.access.list_permission_logs",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/access.py",
+      "owner_team": "erisim-kurali",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.access.list_role_permissions",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/access.py",
+      "owner_team": "erisim-kurali",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.access.remove_role_permission",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/access.py",
+      "owner_team": "erisim-kurali",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.access.set_field_level",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/access.py",
+      "owner_team": "erisim-kurali",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.access.set_level_access",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/access.py",
+      "owner_team": "erisim-kurali",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.access.set_role_permission",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/access.py",
+      "owner_team": "erisim-kurali",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.ai.approve_proposal",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/ai.py",
+      "owner_team": "platform-core-yz",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.ai.get_proposal",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/ai.py",
+      "owner_team": "platform-core-yz",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.ai.issue_agent_token",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/ai.py",
+      "owner_team": "platform-core-yz",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.ai.list_proposals",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/ai.py",
+      "owner_team": "platform-core-yz",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.ai.list_second_approvals",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/ai.py",
+      "owner_team": "platform-core-yz",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.ai.mcp",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/ai.py",
+      "owner_team": "platform-core-yz",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.api.ai.mcp_resource_metadata",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/ai.py",
+      "owner_team": "platform-core-yz",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.api.ai.propose_revert",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/ai.py",
+      "owner_team": "platform-core-yz",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.ai.purge_logs",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/ai.py",
+      "owner_team": "platform-core-yz",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.ai.reject_proposal",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/ai.py",
+      "owner_team": "platform-core-yz",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.ai.resolve_proposal",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/ai.py",
+      "owner_team": "platform-core-yz",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.atonota_login.evaluate",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/atonota_login.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.atonota_login.open_paid_plan",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/atonota_login.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.atonota_login.verification_notice",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/atonota_login.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.api.auth.get_csrf_token",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/auth.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.auth.get_login_url",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/auth.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.api.auth.keycloak_callback",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/auth.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.api.auth.list_linked_accounts",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/auth.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.auth.list_login_providers",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/auth.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.api.auth.logout",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/auth.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.auth.setup_keycloak_login",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/auth.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.auth.start_login",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/auth.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.api.collection.group_summary",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/collection.py",
+      "owner_team": "platform-core",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.help.get_component_help",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/help.py",
+      "owner_team": "platform-core",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.help.get_field_help",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/help.py",
+      "owner_team": "platform-core",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.help.get_help_coverage",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/help.py",
+      "owner_team": "platform-core",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.identity.anonymize_user",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/identity.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.identity.change_email",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/identity.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.identity.invite_user",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/identity.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.identity.list_identities",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/identity.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.identity.provision",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/identity.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.identity.set_enabled",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/identity.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.identity.set_user_role_profiles",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/identity.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.keycloak_backchannel_logout",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/__init__.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.api.meta.get_doctype",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/meta.py",
+      "owner_team": "platform-core-kabuk",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.meta.validate_mobile_policy",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/meta.py",
+      "owner_team": "platform-core-kabuk",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.mobile.revoke_user_installations",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/mobile.py",
+      "owner_team": "platform-core-mobil",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.mobile.v1_activity",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/mobile.py",
+      "owner_team": "platform-core-mobil",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.mobile.v1_cleanup",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/mobile.py",
+      "owner_team": "platform-core-mobil",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.mobile.v1_list_installations",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/mobile.py",
+      "owner_team": "platform-core-mobil",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.mobile.v1_pull",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/mobile.py",
+      "owner_team": "platform-core-mobil",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.mobile.v1_push",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/mobile.py",
+      "owner_team": "platform-core-mobil",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.mobile.v1_register",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/mobile.py",
+      "owner_team": "platform-core-mobil",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.mobile.v1_revoke",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/mobile.py",
+      "owner_team": "platform-core-mobil",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.mobile.v1_revoke_installation",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/mobile.py",
+      "owner_team": "platform-core-mobil",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.mobile_pwa.v1_activity",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/mobile_pwa.py",
+      "owner_team": "platform-core-mobil",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.mobile_pwa.v1_list_installations",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/mobile_pwa.py",
+      "owner_team": "platform-core-mobil",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.mobile_pwa.v1_pull",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/mobile_pwa.py",
+      "owner_team": "platform-core-mobil",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.mobile_pwa.v1_push",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/mobile_pwa.py",
+      "owner_team": "platform-core-mobil",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.mobile_pwa.v1_register",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/mobile_pwa.py",
+      "owner_team": "platform-core-mobil",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.mobile_pwa.v1_revoke",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/mobile_pwa.py",
+      "owner_team": "platform-core-mobil",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.mobile_pwa.v1_revoke_installation",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/mobile_pwa.py",
+      "owner_team": "platform-core-mobil",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.model.check_connection",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/model.py",
+      "owner_team": "platform-core-gecit",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.model.clear_api_credential",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/model.py",
+      "owner_team": "platform-core-gecit",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.model.complete",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/model.py",
+      "owner_team": "platform-core-gecit",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.model.create_file_job",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/model.py",
+      "owner_team": "platform-core-gecit",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.model.file_job_status",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/model.py",
+      "owner_team": "platform-core-gecit",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.model.provider_catalog",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/model.py",
+      "owner_team": "platform-core-gecit",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.model.purge_usage",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/model.py",
+      "owner_team": "platform-core-gecit",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.model.reconcile_stale_pending",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/model.py",
+      "owner_team": "platform-core-gecit",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.model.resolve_usage",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/model.py",
+      "owner_team": "platform-core-gecit",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.model.retry_file_chunk",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/model.py",
+      "owner_team": "platform-core-gecit",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.model.save_connection",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/model.py",
+      "owner_team": "platform-core-gecit",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.model.start_file_job",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/model.py",
+      "owner_team": "platform-core-gecit",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.model.test_api",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/model.py",
+      "owner_team": "platform-core-gecit",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.reseller.approve_customer_request",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/reseller.py",
+      "owner_team": "platform-core",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.reseller.customer_status",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/reseller.py",
+      "owner_team": "platform-core",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.reseller.list_customers",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/reseller.py",
+      "owner_team": "platform-core",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.reseller.request_customer",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/reseller.py",
+      "owner_team": "platform-core",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.api.shell.get_bootstrap",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/api/shell.py",
+      "owner_team": "platform-core-kabuk",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.identity.enterprise_membership.approve_exception",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/identity/enterprise_membership.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.identity.enterprise_membership.revoke_exception",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/identity/enterprise_membership.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "platform_core.identity.login_policy.custom",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/identity/login_policy.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.identity.login_policy.ldap_login",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/identity/login_policy.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.identity.login_policy.login_via_facebook",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/identity/login_policy.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.identity.login_policy.login_via_fairlogin",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/identity/login_policy.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.identity.login_policy.login_via_frappe",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/identity/login_policy.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.identity.login_policy.login_via_github",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/identity/login_policy.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.identity.login_policy.login_via_google",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/identity/login_policy.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.identity.login_policy.login_via_key",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/identity/login_policy.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.identity.login_policy.login_via_keycloak",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/identity/login_policy.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.identity.login_policy.login_via_office365",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/identity/login_policy.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.identity.login_policy.login_via_salesforce",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/identity/login_policy.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.identity.login_policy.login_via_token",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/identity/login_policy.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.identity.login_policy.reset_password",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/identity/login_policy.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.identity.login_policy.send_login_link",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/identity/login_policy.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.identity.login_policy.sign_up",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/identity/login_policy.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "platform_core.identity.login_policy.update_password",
+      "app": "platform_core",
+      "file": "apps/platform_core/platform_core/identity/login_policy.py",
+      "owner_team": "platform-core-kimlik",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "press_tr.api.account.request_deletion",
+      "app": "press_tr",
+      "file": "apps/press_tr/press_tr/api/account.py",
+      "owner_team": "press-tr",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "press_tr.api.account.request_recovery",
+      "app": "press_tr",
+      "file": "apps/press_tr/press_tr/api/account.py",
+      "owner_team": "press-tr",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "press_tr.api.auth.get_login_url",
+      "app": "press_tr",
+      "file": "apps/press_tr/press_tr/api/auth.py",
+      "owner_team": "press-tr",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "press_tr.api.auth.keycloak_callback",
+      "app": "press_tr",
+      "file": "apps/press_tr/press_tr/api/auth.py",
+      "owner_team": "press-tr",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "press_tr.api.identity.anonymize_user",
+      "app": "press_tr",
+      "file": "apps/press_tr/press_tr/api/identity.py",
+      "owner_team": "press-tr",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "press_tr.api.identity.ensure_team",
+      "app": "press_tr",
+      "file": "apps/press_tr/press_tr/api/identity.py",
+      "owner_team": "press-tr",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "press_tr.api.identity.list_identities",
+      "app": "press_tr",
+      "file": "apps/press_tr/press_tr/api/identity.py",
+      "owner_team": "press-tr",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "press_tr.api.identity.remove_team_member",
+      "app": "press_tr",
+      "file": "apps/press_tr/press_tr/api/identity.py",
+      "owner_team": "press-tr",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    },
+    {
+      "endpoint": "press_tr.api.keycloak_backchannel_logout",
+      "app": "press_tr",
+      "file": "apps/press_tr/press_tr/api/__init__.py",
+      "owner_team": "press-tr",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest"
+    },
+    {
+      "endpoint": "press_tr.api.maintenance.cleanup_expired_sessions",
+      "app": "press_tr",
+      "file": "apps/press_tr/press_tr/api/maintenance.py",
+      "owner_team": "press-tr",
+      "status": "new-custom",
+      "version": "0.1.0",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated"
+    }
+  ],
+  "overrides": [
+    {
+      "endpoint": "frappe.client.validate_link_and_fetch",
+      "target": "platform_core.access.link_search.validate_link_and_fetch",
+      "app": "platform_core",
+      "owner_team": "erisim-kurali",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "frappe.core.doctype.user.user.reset_password",
+      "target": "platform_core.identity.login_policy.reset_password",
+      "app": "platform_core",
+      "owner_team": "platform-core-kimlik",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "frappe.core.doctype.user.user.sign_up",
+      "target": "platform_core.identity.login_policy.sign_up",
+      "app": "platform_core",
+      "owner_team": "platform-core-kimlik",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "frappe.core.doctype.user.user.update_password",
+      "target": "platform_core.identity.login_policy.update_password",
+      "app": "platform_core",
+      "owner_team": "platform-core-kimlik",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "frappe.desk.search.search_link",
+      "target": "platform_core.access.link_search.search_link",
+      "app": "platform_core",
+      "owner_team": "erisim-kurali",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "frappe.desk.search.search_widget",
+      "target": "platform_core.access.link_search.search_widget",
+      "app": "platform_core",
+      "owner_team": "erisim-kurali",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "frappe.integrations.doctype.ldap_settings.ldap_settings.login",
+      "target": "platform_core.identity.login_policy.ldap_login",
+      "app": "platform_core",
+      "owner_team": "platform-core-kimlik",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "frappe.integrations.oauth2_logins.custom",
+      "target": "platform_core.identity.login_policy.custom",
+      "app": "platform_core",
+      "owner_team": "platform-core-kimlik",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "frappe.integrations.oauth2_logins.login_via_facebook",
+      "target": "platform_core.identity.login_policy.login_via_facebook",
+      "app": "platform_core",
+      "owner_team": "platform-core-kimlik",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "frappe.integrations.oauth2_logins.login_via_fairlogin",
+      "target": "platform_core.identity.login_policy.login_via_fairlogin",
+      "app": "platform_core",
+      "owner_team": "platform-core-kimlik",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "frappe.integrations.oauth2_logins.login_via_frappe",
+      "target": "platform_core.identity.login_policy.login_via_frappe",
+      "app": "platform_core",
+      "owner_team": "platform-core-kimlik",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "frappe.integrations.oauth2_logins.login_via_github",
+      "target": "platform_core.identity.login_policy.login_via_github",
+      "app": "platform_core",
+      "owner_team": "platform-core-kimlik",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "frappe.integrations.oauth2_logins.login_via_google",
+      "target": "platform_core.identity.login_policy.login_via_google",
+      "app": "platform_core",
+      "owner_team": "platform-core-kimlik",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "frappe.integrations.oauth2_logins.login_via_keycloak",
+      "target": "platform_core.identity.login_policy.login_via_keycloak",
+      "app": "platform_core",
+      "owner_team": "platform-core-kimlik",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "frappe.integrations.oauth2_logins.login_via_office365",
+      "target": "platform_core.identity.login_policy.login_via_office365",
+      "app": "platform_core",
+      "owner_team": "platform-core-kimlik",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "frappe.integrations.oauth2_logins.login_via_salesforce",
+      "target": "platform_core.identity.login_policy.login_via_salesforce",
+      "app": "platform_core",
+      "owner_team": "platform-core-kimlik",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "frappe.www.login.login_via_key",
+      "target": "platform_core.identity.login_policy.login_via_key",
+      "app": "platform_core",
+      "owner_team": "platform-core-kimlik",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "frappe.www.login.login_via_token",
+      "target": "platform_core.identity.login_policy.login_via_token",
+      "app": "platform_core",
+      "owner_team": "platform-core-kimlik",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "frappe.www.login.send_login_link",
+      "target": "platform_core.identity.login_policy.send_login_link",
+      "app": "platform_core",
+      "owner_team": "platform-core-kimlik",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "hrms.api.get_leave_balance_map",
+      "target": "hrms_tr.hrms_endpoints.deny_legacy_leave_query",
+      "app": "hrms_tr",
+      "owner_team": "ilk-dikey-dilim",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "hrms.api.get_leave_types",
+      "target": "hrms_tr.hrms_endpoints.deny_legacy_leave_query",
+      "app": "hrms_tr",
+      "owner_team": "ilk-dikey-dilim",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "hrms.hr.doctype.leave_application.leave_application.get_events",
+      "target": "hrms_tr.hrms_endpoints.deny_legacy_leave_query",
+      "app": "hrms_tr",
+      "owner_team": "ilk-dikey-dilim",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "hrms.hr.doctype.leave_application.leave_application.get_leave_balance_on",
+      "target": "hrms_tr.hrms_endpoints.deny_legacy_leave_query",
+      "app": "hrms_tr",
+      "owner_team": "ilk-dikey-dilim",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "hrms.hr.doctype.leave_application.leave_application.get_leave_details",
+      "target": "hrms_tr.hrms_endpoints.deny_legacy_leave_query",
+      "app": "hrms_tr",
+      "owner_team": "ilk-dikey-dilim",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "hrms.payroll.doctype.salary_slip.salary_slip.make_salary_slip_from_timesheet",
+      "target": "hrms_tr.hrms_endpoints.deny_legacy_leave_query",
+      "app": "hrms_tr",
+      "owner_team": "ilk-dikey-dilim",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "hrms.payroll.doctype.salary_structure.salary_structure.make_salary_slip",
+      "target": "hrms_tr.hrms_endpoints.deny_legacy_leave_query",
+      "app": "hrms_tr",
+      "owner_team": "ilk-dikey-dilim",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    },
+    {
+      "endpoint": "hrms.www.hrms.get_context_for_dev",
+      "target": "hrms_tr.hrms_endpoints.deny_legacy_leave_query",
+      "app": "hrms_tr",
+      "owner_team": "ilk-dikey-dilim",
+      "status": "upstream-patch",
+      "version": "0.1.0"
+    }
+  ]
+}

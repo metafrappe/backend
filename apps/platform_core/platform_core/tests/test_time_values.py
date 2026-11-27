@@ -32,7 +32,16 @@ class CalendarDayTests(unittest.TestCase):
 		self.assertEqual(day.to_api(), "2026-03-29")
 
 	def test_calendar_day_rejects_a_value_with_time(self):
-		for raw in ("2026-03-29T00:00:00", "2026-03-29T00:00:00+03:00", "29.03.2026", ""):
+		for raw in (
+			"2026-03-29T00:00:00",
+			"2026-03-29T00:00:00+03:00",
+			"29.03.2026",
+			"",
+			"2026-W13-7",
+			"20260329  ",
+			"2026-03-29\n",
+			"２０２６-03-29",
+		):
 			with self.subTest(raw=raw), self.assertRaises(ValueError):
 				CalendarDay.parse(raw)
 

@@ -1,0 +1,25 @@
+# Secret environment files. Templates end in .example and stay tracked.
+.env
+.env.production
+.env.local
+*.env
+!*.env.example
+
+# Tracked public settings that use the .env extension. They hold no secrets.
+!/brand.env
+!/deploy/environments/*.env
+!/dev/security/tool-versions.env
+
+# e2e/stack tests use this name as a path that Git does not ignore.
+!/e2e/stack-candidate.env
+
+# Staging files for generated e2e credentials (e2e/stack)
+/e2e/.fs-stack-env.[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f].tmp
+
+# Python
+__pycache__/
+*.pyc
+.ruff_cache/
+
+# macOS
+.DS_Store

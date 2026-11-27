@@ -170,3 +170,12 @@ class StandardsPr64Tests(unittest.TestCase):
         text = standards_text("KARARLAR.md")
         self.assertIn("### Karar 45. Köşe yuvarlaklığının tek kuralı radius.md yönergesidir", text)
         self.assertIn("### Karar 46. Güvenlik yönergesi depoda korunur", text)
+
+
+class StandardsPr66Tests(unittest.TestCase):
+    """frappesetup PR #66: code comments are also written in English (AJA-1672)."""
+
+    def test_decision_44_covers_code_comments(self):
+        text = standards_text("KARARLAR.md")
+        self.assertIn("#### Kod yorumlarının dili", text)
+        self.assertIn("Kod yorumları da İngiliz İngilizcesiyle yazılır.", text)

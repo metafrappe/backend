@@ -1,0 +1,134 @@
+{
+  "groups": [
+    {
+      "name": "availability",
+      "rules": [
+        {
+          "alert": "InstanceDown",
+          "expr": "up{job=~\"node|cadvisor|blackbox\"} == 0",
+          "for": "5m",
+          "labels": {"severity": "critical"},
+          "annotations": {
+            "summary": "Prometheus cannot scrape {{ $labels.job }} on {{ $labels.instance }}.",
+            "description": "The exporter or its server has not answered for 5 minutes.",
+            "runbook_url": "deploy/runbooks/alerts.md#instancedown"
+          }
+        },
+        {
+          "alert": "UptimeProbeFailed",
+          "expr": "probe_success{job=\"uptime\"} == 0",
+          "for": "3m",
+          "labels": {"severity": "critical"},
+          "annotations": {
+            "summary": "External check {{ $labels.check }} fails in {{ $labels.env }}.",
+            "description": "The outside HTTPS probe of deploy/monitoring/uptime-checks.json has failed for 3 minutes.",
+            "runbook_url": "deploy/runbooks/alerts.md#uptimeprobefailed"
+          }
+        },
+        {
+          "alert": "CertificateExpiresSoon",
+          "expr": "probe_ssl_earliest_cert_expiry{job=\"uptime\"} - time() < 14 * 86400",
+          "for": "1h",
+          "labels": {"severity": "warning"},
+          "annotations": {
+            "summary": "TLS certificate of {{ $labels.instance }} expires in less than 14 days.",
+            "description": "Caddy renews certificates by itself. A near expiry means the renewal fails.",
+            "runbook_url": "deploy/runbooks/alerts.md#certificateexpiressoon"
+          }
+        },
+        {
+          "alert": "ContainerRestarting",
+          "expr": "changes(container_start_time_seconds{name=~\".+\"}[15m]) > 2",
+          "labels": {"severity": "warning"},
+          "annotations": {
+            "summary": "Container {{ $labels.name }} restarted more than twice in 15 minutes.",
+            "description": "A crash loop. Read the container log before you restart anything.",
+            "runbook_url": "deploy/runbooks/alerts.md#containerrestarting"
+          }
+        },
+        {
+          "record": "env:probe_success:avg_1h",
+          "expr": "avg by (env) (avg_over_time(probe_success{job=\"uptime\"}[1h]))"
+        },
+        {
+          "record": "env:probe_success:avg_5m",
+          "expr": "avg by (env) (avg_over_time(probe_success{job=\"uptime\"}[5m]))"
+        },
+        {
+          "alert": "AvailabilityBudgetBurn",
+          "expr": "(1 - env:probe_success:avg_1h) > 14.4 * 0.005 and (1 - env:probe_success:avg_5m) > 14.4 * 0.005",
+          "for": "2m",
+          "labels": {"severity": "critical"},
+          "annotations": {
+            "summary": "{{ $labels.env }} spends its monthly availability budget too fast.",
+            "description": "The target is 99.5 percent a month (G-113 proposal). At this rate the budget is gone in about two days.",
+            "runbook_url": "deploy/runbooks/alerts.md#availabilitybudgetburn"
+          }
+        }
+      ]
+    },
+    {
+      "name": "resources",
+      "rules": [
+        {
+          "alert": "DiskSpaceLow",
+          "expr": "node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay\"} < 0.15",
+          "for": "10m",
+          "labels": {"severity": "warning"},
+          "annotations": {
+            "summary": "Less than 15 percent free disk on {{ $labels.instance }} {{ $labels.mountpoint }}.",
+            "description": "Backups and database writes stop when the disk is full.",
+            "runbook_url": "deploy/runbooks/alerts.md#diskspacelow"
+          }
+        },
+        {
+          "alert": "DiskSpaceCritical",
+          "expr": "node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay\"} < 0.05",
+          "for": "5m",
+          "labels": {"severity": "critical"},
+          "annotations": {
+            "summary": "Less than 5 percent free disk on {{ $labels.instance }} {{ $labels.mountpoint }}.",
+            "description": "Free space now, before MariaDB and PostgreSQL stop writing.",
+            "runbook_url": "deploy/runbooks/alerts.md#diskspacecritical"
+          }
+        },
+        {
+          "alert": "MemoryLow",
+          "expr": "node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.10",
+          "for": "10m",
+          "labels": {"severity": "warning"},
+          "annotations": {
+            "summary": "Less than 10 percent available memory on {{ $labels.instance }}.",
+            "description": "The worker sizing in docs/dagitim/ortamlar.md may not fit the real load.",
+            "runbook_url": "deploy/runbooks/alerts.md#memorylow"
+          }
+        }
+      ]
+    },
+    {
+      "name": "backups",
+      "rules": [
+        {
+          "alert": "BackupMissing",
+          "expr": "time() - platform_backup_last_success_timestamp_seconds > 26 * 3600",
+          "labels": {"severity": "critical"},
+          "annotations": {
+            "summary": "{{ $labels.env }} has no successful backup for more than 26 hours.",
+            "description": "The tenant RPO is 24 hours (G-114). The 2 extra hours leave room for a slow backup.",
+            "runbook_url": "deploy/runbooks/backup.md#adımlar"
+          }
+        },
+        {
+          "alert": "OffsiteBackupMissing",
+          "expr": "time() - platform_offsite_backup_last_success_timestamp_seconds{env=~\"rc|prod\"} > 26 * 3600",
+          "labels": {"severity": "critical"},
+          "annotations": {
+            "summary": "{{ $labels.env }} has no checked offsite copy for more than 26 hours.",
+            "description": "rc and prod need the offsite copy (docs/dagitim/ortamlar.md).",
+            "runbook_url": "deploy/runbooks/backup.md#doğrulama"
+          }
+        }
+      ]
+    }
+  ]
+}

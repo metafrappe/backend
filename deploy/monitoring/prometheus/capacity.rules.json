@@ -1,0 +1,47 @@
+{
+  "groups": [
+    {
+      "name": "capacity",
+      "rules": [
+        {
+          "record": "instance:node_cpu_busy:ratio_5m",
+          "expr": "1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m]))"
+        },
+        {
+          "record": "instance:node_memory_used:ratio",
+          "expr": "1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes"
+        },
+        {
+          "record": "mountpoint:node_filesystem_used:ratio",
+          "expr": "1 - node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay\"}"
+        },
+        {
+          "record": "container:memory_working_set_bytes:sum",
+          "expr": "sum by (instance, name) (container_memory_working_set_bytes{name=~\".+\"})"
+        },
+        {
+          "alert": "DiskWillFillSoon",
+          "expr": "predict_linear(node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay\"}[6h], 4 * 86400) < 0",
+          "for": "1h",
+          "labels": {"severity": "warning"},
+          "annotations": {
+            "summary": "{{ $labels.instance }} {{ $labels.mountpoint }} fills up within 4 days at the current rate.",
+            "description": "Plan more disk or move old backups offsite before the disk fills.",
+            "runbook_url": "deploy/runbooks/alerts.md#diskwillfillsoon"
+          }
+        },
+        {
+          "alert": "CpuSaturated",
+          "expr": "instance:node_cpu_busy:ratio_5m > 0.90",
+          "for": "30m",
+          "labels": {"severity": "warning"},
+          "annotations": {
+            "summary": "CPU of {{ $labels.instance }} is over 90 percent busy for 30 minutes.",
+            "description": "The core shares in docs/dagitim/ortamlar.md are not verified. Measure and update them.",
+            "runbook_url": "deploy/runbooks/alerts.md#cpusaturated"
+          }
+        }
+      ]
+    }
+  ]
+}

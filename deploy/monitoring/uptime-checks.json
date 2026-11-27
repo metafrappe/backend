@@ -1,0 +1,10 @@
+{
+  "description": "External uptime checks. A probe outside the server runs them over HTTPS. Only paths are written here: the host of each service comes from the environment (deploy/release.py env-show <env>).",
+  "prober": "blackbox_exporter http_2xx module, job name uptime",
+  "checks": [
+    {"name": "tenant-ping", "service": "tenant-frontend", "path": "/api/method/ping", "expect_status": 200, "interval": "1m"},
+    {"name": "tenant-login-page", "service": "tenant-frontend", "path": "/login", "expect_status": 200, "interval": "5m"},
+    {"name": "keycloak-ready", "service": "keycloak", "path": "/health/ready", "expect_status": 200, "interval": "1m"},
+    {"name": "press-ping", "service": "press-frontend", "path": "/api/method/ping", "expect_status": 200, "interval": "1m", "only_when": "ATONOTA_PRESS_ENABLED=1"}
+  ]
+}

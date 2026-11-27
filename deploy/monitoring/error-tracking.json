@@ -1,0 +1,13 @@
+{
+  "description": "Error tracking settings. Frappe v16 starts Sentry only from these environment variables. The receiver is a self-hosted GlitchTip (G-113). Values live only on the server, never in the repository.",
+  "receiver": "self-hosted GlitchTip, Sentry protocol",
+  "environment": [
+    {"name": "FRAPPE_SENTRY_DSN", "where": "tenant.env on the server, or Release Group environment_variables in Press", "required": true},
+    {"name": "SENTRY_ENVIRONMENT", "where": "same file, set to the environment name: alpha, beta, rc or prod", "required": true},
+    {"name": "SENTRY_TRACES_SAMPLE_RATE", "where": "same file, a number from 0 to 1; start with 0", "required": false}
+  ],
+  "press_setting": "Press Settings.agent_sentry_dsn for the Press agent",
+  "scrub": ["Authorization", "Cookie", "Set-Cookie", "X-Frappe-CSRF-Token", "email", "phone", "password", "api_key", "api_secret"],
+  "shared_tags": ["X-Request-Id", "site", "env", "release_id"],
+  "not_sent_to": "marketing tools; X-Request-Id stays in logs and traces only"
+}

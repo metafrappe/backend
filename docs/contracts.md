@@ -8,14 +8,22 @@ Bu dosya backend bileşenlerinin ortak adlarını tutar. İşler paralel yürür
 
 Ayrıntılı istek ve yanıt biçimi `contracts/` klasöründeki OpenAPI dosyalarındadır. OpenAPI, uçları tarif eden belge biçimidir. Her uç sahibi kendi dosyasını yazar:
 
-| Dosya | Sahip iş |
-| --- | --- |
-| `contracts/platform_core-identity.openapi.yaml` | platform-core-kimlik |
-| `contracts/platform_core-shell.openapi.yaml` | platform-core-kabuk |
-| `contracts/press_tr.openapi.yaml` | press-tr |
-| `contracts/identity_sync.openapi.yaml` | identity-sync |
-| `contracts/platform_core-model-gateway.openapi.yaml` | platform-core-gecit |
-| `contracts/platform_core-ai.openapi.yaml` | platform-core-yz |
+| Dosya | Sahip iş | Durum |
+| --- | --- | --- |
+| `contracts/platform_core-identity.openapi.yaml` | platform-core-kimlik | Etkin |
+| `contracts/platform_core-shell.openapi.yaml` | platform-core-kabuk | Etkin |
+| `contracts/platform_core-collection.openapi.yaml` | platform-core-kabuk | Etkin |
+| `contracts/press_tr.openapi.yaml` | press-tr | Etkin |
+| `contracts/identity_sync.openapi.yaml` | identity-sync | Etkin |
+| `contracts/platform_core-model-gateway.openapi.yaml` | platform-core-gecit | Etkin |
+| `contracts/platform_core-ai.openapi.yaml` | platform-core-yz | Etkin |
+| `contracts/platform_core-access.openapi.yaml` | erisim-kurali | Etkin |
+| `contracts/platform_core-mobile.openapi.yaml` | platform-core-mobil | Etkin |
+| `contracts/hrms_tr.openapi.yaml` | ilk-dikey-dilim | Etkin |
+| `contracts/platform_core-help.openapi.yaml` | platform-core-yardim | Etkin |
+| `contracts/platform_core-reseller.openapi.yaml` | platform-core-bayi | Etkin |
+
+“Etkin” durumu, sözleşmedeki uçların kodda çalıştığını gösterir. `contracts/` klasörüne eklenen her sözleşme bu tabloya da yazılır. `dev/ai_readiness/test_call_registry.py` testi tabloda olmayan sözleşmeyi yakalar.
 
 ## 1. Marka
 

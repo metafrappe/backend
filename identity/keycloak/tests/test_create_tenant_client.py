@@ -55,7 +55,9 @@ class FakeKeycloak:
             self.scopes[body["name"]] = {**body, "id": "scope"}
             status, data = 201, None
         elif method == "GET" and path.endswith("/protocol-mappers/models"):
-            status, data = 200, self.scopes["aud-site-acme"]["protocolMappers"]
+            scope_id = path.split("/")[2]
+            scope = next(scope for scope in self.scopes.values() if scope["id"] == scope_id)
+            status, data = 200, scope["protocolMappers"]
         elif method == "GET" and path.endswith("/scope-mappings"):
             status, data = 200, {}
         elif method == "GET" and path in ("/default-default-client-scopes", "/default-optional-client-scopes"):

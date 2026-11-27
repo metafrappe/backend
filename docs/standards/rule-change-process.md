@@ -12,12 +12,12 @@ Takım şu sırayı izler:
 4. Geliştirici değişikliğin etkilediği işleri ve riskleri belirtir.
 5. PO öneriyi müşterinin kararına sunar.
 6. Müşteri öneriyi kabul eder veya reddeder.
-7. PO kararı [KARARLAR.md](KARARLAR.md) dosyasına yazar.
+7. PO kararı [KARARLAR.md](https://github.com/karacaismail/frappesetup/blob/backend/docs/standartlar/KARARLAR.md) dosyasına yazar.
 8. Müşteri kabul ederse geliştirici onaylanan değişikliği uygular.
 9. QA değişikliği kararın kapsamıyla karşılaştırır.
 10. Committer karar kaydını denetler.
 
-PO, takımın işlerini tanımlayan ürün sorumlusudur. QA, işi deneyen kişidir. Committer, dalı inceleyen ve birleştirme sürecini yürüten kişidir.
+PO, takımın işlerini tanımlayan ürün sorumlusudur. QA, işi deneyen kişidir. Committer, dalı inceleyen ve birleştirme kararını yazan kişidir. PR'ı ProPR birleştirir.
 
 Müşteri yanıt vermezse öneri onaylanmış sayılmaz. Geliştirici karar bekleyen kural değişikliğini uygulamaz. Takım diğer bağımsız işleri sürdürebilir.
 
@@ -40,13 +40,13 @@ PO müşteri adına karar uydurmaz. Ajanın önerisi müşterinin onayı değild
 
 ## Somut örnek
 
-GILT, ürünü farklı dil ve bölgelere hazırlama işlerinin ortak adıdır. İlgili kurallar [ayrı ekran kuralları](headless-frontend-standartlari.md) dosyasındadır. IC-9, çeviri anahtarlarının İngilizce ve ASCII yazılmasını ister. ASCII, bu örnekte Türkçe harf içermeyen karakter kümesini belirtir.
+GILT, ürünü farklı dil ve bölgelere hazırlama işlerinin ortak adıdır. İlgili kurallar [ayrı ekran kuralları](https://github.com/karacaismail/frappesetup/blob/backend/docs/standartlar/headless-frontend-standartlari.md) dosyasındadır. IC-9, çeviri anahtarlarının İngilizce ve ASCII yazılmasını ister. ASCII, bu örnekte Türkçe harf içermeyen karakter kümesini belirtir.
 
 AJA-1309 kaynak işinde GILT için müşteri onayının kayıtlı olmadığı belirtilir. Bu eksiklik, kuralı değiştirme izni değildir.
 
 Örneğin takım IC-9 içindeki İngilizce anahtar şartını kaldırmak istesin. PO bu öneriyi müşteriye sunar. PO müşterinin kararını `KARARLAR.md` dosyasına kaydeder. Müşteri kabul etmeden geliştirici bu değişikliği uygulamaz.
 
-Karar yoksa Committer değişiklik dalını birleştirmez. Bu belge GILT için müşteri onayı vermez. Bu belge mevcut IC-9 kuralını değiştirmez.
+Karar yoksa Committer değişikliği onaylamaz. ProPR bu PR'ı birleştirmez. Bu belge GILT için müşteri onayı vermez. Bu belge mevcut IC-9 kuralını değiştirmez.
 
 ## İnceleme ve kapatma
 

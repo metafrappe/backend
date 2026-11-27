@@ -8,7 +8,7 @@ Geliştirici şu adımları izler:
 
 1. İş tanımını ve kabul ölçütlerini okuyun.
 2. İşte belirtilen kural dosyalarını okuyun.
-3. İlgili kararları [KARARLAR.md](KARARLAR.md) dosyasından okuyun.
+3. İlgili kararları [KARARLAR.md](https://github.com/karacaismail/frappesetup/blob/backend/docs/standartlar/KARARLAR.md) dosyasından okuyun.
 4. İşin gerektirdiği eksik kural dosyalarını belirleyin.
 5. Okuduğunuz dosyaları ilk görev yorumuna yazın.
 6. Uygulayacağınız kodları kaynak dosyadaki biçimiyle yazın.
@@ -35,7 +35,7 @@ Git dalı, değişikliklerin ayrı tutulduğu çalışma koludur. İşin kapsam�
 
 Aşağıdaki yorum yalnız örnektir. Örnek iş, ayrı ekran uygulamasındaki arama alanını düzeltir.
 
-> `docs/standartlar/headless-frontend-standartlari.md` dosyasını okudum.
+> `headless-frontend-standartlari.md` dosyasını okudum.
 > HZ-1 uyarınca önce ortak arama bileşenini inceleyeceğim.
 > TE-1 uyarınca önce hatayı gösteren testi yazacağım.
 > Test, arama temizlendiğinde kayıtların geri gelmesini denetleyecek.
@@ -44,7 +44,7 @@ Aşağıdaki yorum yalnız örnektir. Örnek iş, ayrı ekran uygulamasındaki a
 > Aynı testi yeniden çalıştıracağım.
 > Sonuçları bu göreve yazacağım.
 
-HZ-1 ve TE-1, [ayrı ekran kuralları](headless-frontend-standartlari.md) dosyasında tanımlıdır. Gerçek yorumda geliştirici kendi test komutunu da yazar. Geliştirici çalışma dalını ve ilgili karar kaydını ekler.
+HZ-1 ve TE-1, [ayrı ekran kuralları](https://github.com/karacaismail/frappesetup/blob/backend/docs/standartlar/headless-frontend-standartlari.md) dosyasında tanımlıdır. Gerçek yorumda geliştirici kendi test komutunu da yazar. Geliştirici çalışma dalını ve ilgili karar kaydını ekler.
 
 İş bitince geliştirici [inceleme şablonuyla](review-template.md) denetim ister.
 

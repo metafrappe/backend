@@ -12,7 +12,7 @@ PO şu adımları izler:
 4. Seçtiğiniz dosyaların yollarını iş tanımına yazın.
 5. Uygulanacak kural kodlarını kaynak dosyadan alın.
 6. Her kural için denetlenecek sonucu yazın.
-7. İlgili müşteri kararını [KARARLAR.md](KARARLAR.md) dosyasından bağlayın.
+7. İlgili müşteri kararını [KARARLAR.md](https://github.com/karacaismail/frappesetup/blob/backend/docs/standartlar/KARARLAR.md) dosyasından bağlayın.
 8. Eksik kararları ve beklenen yanıtı açıkça yazın.
 
 Bir iş birden çok kural dosyasını kapsayabilir. PO yalnız dosya adını yazmakla yetinmez. PO geçerli kural kodlarını da belirtir.
@@ -23,10 +23,10 @@ Bir iş birden çok kural dosyasını kapsayabilir. PO yalnız dosya adını yaz
 
 | İşin bölümü | Kural dosyası | Mevcut kod örneği |
 | --- | --- | --- |
-| Frappe içindeki Python kodu | [frappe-python-standartlari.md](frappe-python-standartlari.md) | G-4 |
-| Frappe içindeki Python dışı dosyalar | [frappe-python-disi-standartlari.md](frappe-python-disi-standartlari.md) | J-1 |
-| Frappe dışında çalışan ekran uygulaması | [headless-frontend-standartlari.md](headless-frontend-standartlari.md) | HZ-1 |
-| Telefon uygulaması | [mobile.md](mobile.md) | KP-1 |
+| Frappe içindeki Python kodu | [frappe-python-standartlari.md](https://github.com/karacaismail/frappesetup/blob/backend/docs/standartlar/frappe-python-standartlari.md) | G-4 |
+| Frappe içindeki Python dışı dosyalar | [frappe-python-disi-standartlari.md](https://github.com/karacaismail/frappesetup/blob/backend/docs/standartlar/frappe-python-disi-standartlari.md) | J-1 |
+| Frappe dışında çalışan ekran uygulaması | [headless-frontend-standartlari.md](https://github.com/karacaismail/frappesetup/blob/backend/docs/standartlar/headless-frontend-standartlari.md) | HZ-1 |
+| Telefon uygulaması | [mobile.md](https://github.com/karacaismail/frappesetup/blob/backend/docs/standartlar/mobile.md) | KP-1 |
 
 Bu kodlar örnektir. PO işin gerektirdiği diğer kuralları da seçer. PO mevcut kodları değiştirmez veya yeni kod uydurmaz.
 
@@ -51,7 +51,7 @@ Bu örnek gerçek bir işin tamamlandığını göstermez. Örnek işte kullanı
 
 PO iş tanımına şu bilgileri yazar:
 
-- Kural dosyası `docs/standartlar/frappe-python-standartlari.md` dosyasıdır.
+- Kural dosyası `frappe-python-standartlari.md` dosyasıdır.
 - G-4 bu işe uygulanır.
 - Kullanıcı hedef kaydı seçtiği için `ignore_permissions=True` kullanılmaz.
 - Test, yetkisiz kullanıcının seçilen kaydı değiştiremediğini doğrular.

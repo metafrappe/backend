@@ -23,7 +23,7 @@ Commit, Git içindeki değişiklik kaydıdır. QA ve Committer aynı son commit'
 
 ## Standart akış
 
-Bu akış [AJA-1548](/AJA/issues/AJA-1548) kararından gelir. Her iş şu 7 adımla ilerler:
+Bu akış AJA-1548 kararından gelir. Her iş şu 7 adımla ilerler:
 
 1. Geliştirici işi yerel dalda yapar. Dal güncel `origin/main` ucundan açılır.
 2. Geliştirici önce düşen testi yazar. Sonra kodu yazar.
@@ -35,7 +35,7 @@ Bu akış [AJA-1548](/AJA/issues/AJA-1548) kararından gelir. Her iş şu 7 adı
 
 Birleştirme kapıları birleştirmenin parçasıdır. Ajan dalı kendisi birleştirirse bu kapılar koşmaz. Örneğin CI denetimi atlanır.
 
-Kaynak: müşteri kararı, 27 Kasım 2026 Cuma günü.
+Müşteri bu kararı 27 Kasım 2026 Cuma günü verdi.
 
 ## Yorum şablonu
 
@@ -66,7 +66,7 @@ QA şu satırı yazar:
 
 | Kural kodu | Kaynak dosya | Sonuç | Kanıt veya gerekçe |
 | --- | --- | --- | --- |
-| G-4 | [frappe-python-standartlari.md](frappe-python-standartlari.md) | uygun değil | Kullanıcının seçtiği kayıtta `ignore_permissions=True` kullanılıyor. |
+| G-4 | [frappe-python-standartlari.md](https://github.com/karacaismail/frappesetup/blob/backend/docs/standartlar/frappe-python-standartlari.md) | uygun değil | Kullanıcının seçtiği kayıtta `ignore_permissions=True` kullanılıyor. |
 
 Committer aynı aykırılığı kendi yorumuna yazar. ProPR bu PR'ı birleştirmez. Geliştirici izin atlamasını düzeltir. QA düzeltmeyi yeniden dener.
 

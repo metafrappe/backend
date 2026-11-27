@@ -10,9 +10,13 @@ The module uses only the standard library, so the API layer and notifications sh
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+
+_CALENDAR_DAY = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 
 
 class AmbiguousLocalTimeError(ValueError):
@@ -42,7 +46,7 @@ class CalendarDay:
 
 	@classmethod
 	def parse(cls, raw: str) -> CalendarDay:
-		if not isinstance(raw, str) or len(raw) != 10:
+		if not isinstance(raw, str) or _CALENDAR_DAY.fullmatch(raw) is None:
 			raise ValueError(f"Calendar day must be YYYY-MM-DD: {raw!r}")
 		return cls(date.fromisoformat(raw))
 

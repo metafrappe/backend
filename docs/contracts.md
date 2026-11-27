@@ -406,6 +406,28 @@ Keycloak'taki “Organization” kaydı Press'teki “Team” kaydına karşıl�
 - Kullanıcı Keycloak'ta kapatılınca ya da silinince Press kullanıcıyı da kapatır. Kullanıcının Press API anahtarları geçersiz olur.
 - Misafir istek sınırı istemcinin gerçek adresine bağlıdır. Üretimdeki ara sunucu `X-Forwarded-For` başlığının üzerine yazar. Ara sunucu ayarı depoda durur.
 
+### Operatör ve personel girişi (O-63)
+
+SA-1, SA-2 ve SA-3 için mevcut Keycloak dönüş uçları kullanılır.
+Yeni hesap açılmaz. Önceden bağlı kimlik gerekir.
+İnsan hesabı ve servis hesabı ayrı tutulur.
+Grup yolu `/platform-operator` olur.
+Roller doğrulanmış `realm_access.roles` alanından alınır.
+
+Press, genel mali yazma uçlarını kişisel fatura hesabıyla sınırlar.
+İç faturalama yolları kendi izin denetimini korur.
+Destek istekleri kişisel hesap adıyla kaydedilir.
+İstek gövdesi ve gizli anahtar denetim kaydına girmez.
+
+Operasyon sitesi personel girişini ayrı ayarla açar.
+Helpdesk sürümü sabitlenmemişse personel girişi reddedilir.
+İlk destek girişinde `HD Agent` kaydı açılır.
+Destek rolünün adı `Agent` olur.
+Son rol kaldırılırsa eski roller temizlenir. Giriş reddedilir.
+Temizlik, başarısız girişin geri almasıyla kaybolmaz.
+Yönetilen personel hesapları rol profili kullanamaz.
+[Devir notu](handoff/operator-identity.md) ayarları ve canlı kabul denemelerini açıklar.
+
 ## 7. `identity_sync`
 
 - Keycloak olaylarını alır. Olay kaynağı şudur: Keycloak'a bir olay dinleyici eklentisi kurulur. Eklenti kullanıcı ve yönetim olaylarını imzalı olarak `identity_sync` servisinin `/v1/events` ucuna gönderir. Eklentinin lisansı Apache-2.0 ya da MIT olur. Seçim T-2 karar notuna yazılır (Proje kaydı O-11).

@@ -212,6 +212,10 @@ def complete_callback(code: str | None, state: str | None, error: str | None = N
 		# O-25: an employee idle for the limit authenticates again; the open Keycloak cookie does not count.
 		return build_login_url(record.get("redirect_to") or None, force_login=True)["login_url"]
 	_lock_identity_for_sign_in(settings.issuer, claims, user)
+	if frappe.conf.get("platform_staff_login") in (True, 1):
+		from platform_core.identity.staff import synchronize_staff
+
+		synchronize_staff(user, claims)
 	# Frappe opens the session before the account is rechecked. Defer both activity markers.
 	frappe.flags.identity_sign_in_pending = True
 	try:
@@ -293,6 +297,10 @@ def _close_new_session() -> None:
 
 def resolve_user(issuer: str, claims: dict) -> str:
 	"""Finds the Frappe user for `(iss, sub)`. Creates the first link only with a verified e-mail."""
+	if frappe.conf.get("platform_staff_login") in (True, 1):
+		from platform_core.identity.staff import resolve_staff_user
+
+		return resolve_staff_user(issuer, claims)
 	subject = claims.get("sub")
 	if not isinstance(subject, str) or not subject.strip():
 		raise SignInRefusedError(

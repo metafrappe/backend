@@ -167,8 +167,12 @@ def keycloak_callback(state: str | None = None, code: str | None = None) -> None
 		return
 	keycloak_sid = claim(claims, "sid")
 	try:
-		link = bind_identity(claims)
-		ensure_personal_team(link.user)
+		from press_tr.press_identity.operators import bind_operator
+
+		link = bind_operator(claims)
+		if link is None:
+			link = bind_identity(claims)
+			ensure_personal_team(link.user)
 	except (frappe.QueryDeadlockError, frappe.QueryTimeoutError):
 		raise Conflict(_("Concurrent account update. Start sign-in again.", context="press_tr"))
 	except (frappe.DuplicateEntryError, frappe.UniqueValidationError):

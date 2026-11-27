@@ -49,5 +49,26 @@ class CommitIdentityTests(unittest.TestCase):
         self.assertNotIn("backend/PROJECT-RECORD.md", text)
 
 
+class AutoMergeLabelTests(unittest.TestCase):
+    """frappesetup #71: the auto-merge label goes on only after approval; backend has no CI yet."""
+
+    def test_review_template_has_the_auto_merge_section(self):
+        text = read(TEMPLATE)
+        self.assertIn("## `auto-merge` etiketi", text)
+        self.assertIn("Etiket, PR'a konan kısa bir işarettir. ProPR, `auto-merge` etiketli PR'ı birleştirir.", text)
+        self.assertIn("1. QA ve Committer onay verince PR'a `auto-merge` etiketi konur.", text)
+        self.assertIn("2. Etiket onaydan önce konmaz.", text)
+        self.assertIn(
+            "3. Backend deposunda CI henüz yoktur. CI gelmeden backend'de hiçbir PR'a `auto-merge` etiketi konmaz. "
+            "CI işi AJA-1528 kapsamındadır.",
+            text,
+        )
+        # The section sits between the 7 step flow and the merge gate note, as in the source.
+        self.assertLess(text.index("7. Hiçbir ajan `main` dalına"), text.index("## `auto-merge` etiketi"))
+        self.assertLess(text.index("## `auto-merge` etiketi"), text.index("Birleştirme kapıları birleştirmenin parçasıdır."))
+        # Paperclip issue links do not work in this repository (same rule as PR 11).
+        self.assertNotIn("(/AJA/issues/", text)
+
+
 if __name__ == "__main__":
     unittest.main()

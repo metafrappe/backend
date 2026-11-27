@@ -10,7 +10,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
-KEY, SECRET = "k1a2b3c4d5e6f70", "s9z8y7x6w5v4u31"
+KEY, SECRET = "k1a2b3c4d5e6f70", "s9z8y7x6w5v4u31"  # gitleaks:allow (synthetic test value)
 # Sahte gizli değerler çalışma anında birleştirilir: depoda tarayıcıların tanıdığı tam kalıp bulunmaz.
 FAKE_PRIVATE_KEY = "-----BEGIN OPENSSH " + "PRIVATE KEY-----\nAAAA\n-----END OPENSSH " + "PRIVATE KEY-----"
 FAKE_GITHUB_TOKEN = "ghp_" + "SECRETSECRET123"
@@ -90,7 +90,7 @@ class FakePress:
                                                        "created_on": "2026-10-01"}}}
         self.backups = {"school.example.test": [
             {"name": "BKP-1", "creation": "2020-01-01 00:00:00.000000", "status": "Success", "with_files": 0,
-             "offsite": 0, "database_size": 1000, "database_url": "https://example.test/signed?token=abc123def456"}]}
+             "offsite": 0, "database_size": 1000, "database_url": "https://example.test/signed?token=abc123def456"}]}  # gitleaks:allow (synthetic test value)
         self.error_logs = []
         self.settings = {"suspend_builds": 0, "use_new_deploy_flow": 0, "use_agent_job_callbacks": 1,
                          "enable_mcp": 0, "log_server": None, "monitor_server": None, "build_server": "f1-build",

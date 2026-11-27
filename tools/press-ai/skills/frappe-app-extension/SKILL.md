@@ -61,7 +61,7 @@ olayla ifade edilemiyorsa.
    İnsan onayı ayrı terminalde:
 
    ```sh
-   python3 -I packages/press-ai/server.py approve <öneri-kimliği> --config <yapılandırma-yolu>
+   python3 -I tools/press-ai/server.py approve <öneri-kimliği> --config <yapılandırma-yolu>
    ```
 
 6. `proposal_get` `approved` ise `app_apply` bir kez; sonra `app_check` yeniden.

@@ -345,4 +345,4 @@ class ProposalStore:
 
 
 def approval_command(proposal_id: str) -> str:
-    return "python3 -I packages/press-ai/server.py approve {} --config <config.json>".format(proposal_id)
+    return "python3 -I tools/press-ai/server.py approve {} --config <config.json>".format(proposal_id)

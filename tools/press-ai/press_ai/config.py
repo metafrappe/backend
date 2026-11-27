@@ -22,7 +22,7 @@ _TOP_KEYS = {"press", "workspace", "approval", "references", "contracts_dir"}
 
 
 def _repo_root() -> str:
-    """Paketin içinde bulunduğu depo kökü (packages/press-ai → iki üst dizin); depo değilse paketin kendisi.
+    """Paketin içinde bulunduğu depo kökü (tools/press-ai → iki üst dizin); depo değilse paketin kendisi.
 
     Secret ve onay durumu bu kökün altına yazılamaz; paket başka yere kopyalandığında geniş bir üst
     dizin (ör. ev dizini) yanlışlıkla yasaklı sayılmasın diye kök yalnız bir depo işaretiyle kabul edilir."""

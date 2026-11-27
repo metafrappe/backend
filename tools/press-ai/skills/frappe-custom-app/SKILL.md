@@ -69,7 +69,7 @@ Kullanma: ERPNext, HRMS, CRM gibi resmi uygulamanın davranışını değiştirm
 4. `app_propose_change {app_path, change}`: dosya planını, diff'i ve sha256'yı göster; dur. İnsan onayı ayrı terminalde:
 
    ```sh
-   python3 -I packages/press-ai/server.py approve <öneri-kimliği> --config <yapılandırma-yolu>
+   python3 -I tools/press-ai/server.py approve <öneri-kimliği> --config <yapılandırma-yolu>
    ```
 
 5. `proposal_get`: yalnız `approved` ise `app_apply` bir kez. Taban dosya hash'i değiştiyse apply reddedilir; yeniden

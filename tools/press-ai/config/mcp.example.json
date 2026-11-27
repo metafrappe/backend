@@ -4,7 +4,7 @@
       "command": "python3",
       "args": [
         "-I",
-        "/ABSOLUTE/PATH/frappesetup/packages/press-ai/server.py",
+        "/ABSOLUTE/PATH/backend/tools/press-ai/server.py",
         "serve",
         "--config",
         "/ABSOLUTE/PATH/press-ai.json"

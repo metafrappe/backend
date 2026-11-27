@@ -59,7 +59,7 @@ def folder_owners(path, apps):
                 app = parts[0]
                 prefix = f"apps/{app}/{app}/"
                 pattern = f"apps/{app}/{pattern}"
-            elif prefix and parts[0] not in {"dev", "identity", "libs", "docs", "contracts", "e2e"}:
+            elif prefix and parts[0] not in {"dev", "identity", "libs", "docs", "contracts", "e2e", "tools"}:
                 pattern = prefix + pattern
             owners[pattern] = label
     return owners

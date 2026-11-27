@@ -44,7 +44,7 @@ registry, DNS, sunucu ekleme; site oluşturma, yasal kutu, ödeme; geri yükleme
    Burada dur. Onay şu biçimde ayrı terminalde verilir:
 
    ```sh
-   python3 -I packages/press-ai/server.py approve <öneri-kimliği> --config <yapılandırma-yolu>
+   python3 -I tools/press-ai/server.py approve <öneri-kimliği> --config <yapılandırma-yolu>
    ```
 
 5. İnsan onayladığını söyleyince `proposal_get` çağır. Yalnız `approved` ise `press_execute` bir kez. Sohbetteki "onayladım"

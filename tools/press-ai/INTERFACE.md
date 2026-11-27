@@ -1,6 +1,6 @@
 # press-ai paylaşılan arayüzü
 
-Bu dosya `packages/press-ai` paketinin parçaları arasındaki sözleşmedir: operasyon kontratı biçimi,
+Bu dosya `tools/press-ai` paketinin parçaları arasındaki sözleşmedir: operasyon kontratı biçimi,
 sabit kimlikler, MCP araç adları, skill/agent adları ve yetki sınırı. Runtime (`press_ai/`) ve testler
 bu dosyaya göre doğrular; bir kimlik veya alan değişecekse önce burası değişir.
 
@@ -15,7 +15,7 @@ bu dosyaya göre doğrular; bir kimlik veya alan değişecekse önce burası de�
 | `press_ai/`, `server.py` | MCP stdio runtime ve insan onay CLI'si (Python 3.9+, yalnız stdlib) |
 | `tests/`, `config/` | Birim/güvenlik/senaryo testleri, sahte Press sunucusu, örnek yapılandırma |
 
-Kod MIT (`LICENSE`); `LICENSE-CONTENT` (CC BY 4.0) yalnız sitenin `src/content/` ve `src/data/` içeriğini kapsar.
+Kod MIT lisanslıdır. Lisans dosyası depo kökündeki `LICENSE` dosyasıdır.
 Lisanssız kaynaktan (pressguide: LICENSE yok, aynı yazar;
 frappe/skills: LICENSE yok) metin kopyalanmaz; yol + commit ile atıf yapılır. Gizli değer, müşteri ya da kişisel veri yazılmaz.
 
@@ -157,7 +157,7 @@ Press mutasyonları (öneri → insan onayı → yürütme → izleme):
 `Backup Site` / `Migrate Site` / `Install App on Site` işini site iş listesinden bulur. `press.api.site.jobs` `Undelivered`
 durumunu `Pending` olarak gösterir.
 
-Uygulanan işlemlerin `params` şeması runtime kodundadır (`python3 packages/press-ai/server.py schemas` basar); kontrattaki
+Uygulanan işlemlerin `params` şeması runtime kodundadır (`python3 tools/press-ai/server.py schemas` basar); kontrattaki
 `params` alanı bununla birebir aynı olmalıdır (test denetler).
 
 Press okuma/analiz (`press_read`, `press_triage_build`, `press_track`): `team.context`, `release_group.list`, `release_group.get`,
@@ -263,7 +263,7 @@ Sunucu adı `press-ai`; Claude Code araç öneki `mcp__press-ai__`.
 | `app_apply` | `{proposal_id}` | insan onaylı öneriyi workspace'e atomik yazar; taban hash değiştiyse reddeder |
 
 Onay aracı yoktur. `confirm`, `approved`, `force` gibi alanlar hiçbir şemada yoktur ve reddedilir. İnsan onayı ayrı terminalde
-`python3 -I packages/press-ai/server.py approve <proposal_id> --config <yol>` ile verilir (TTY zorunlu; `APPROVE <digest12>`,
+`python3 -I tools/press-ai/server.py approve <proposal_id> --config <yol>` ile verilir (TTY zorunlu; `APPROVE <digest12>`,
 çift onayda ayrıca `<FİİL> <hedef>`). Onay ekranı yazılacak içeriği önerideki istekten üretir ve denetim/bidi karakterlerini
 kaçışlar. Onay sunucuyla aynı OS hesabıyla yazılır: bu bir hız kesicidir, OS veya kriptografik sınır değildir. Ayrı onaylayıcı
 hesabı desteklenmez (`approval.approver_uid` reddedilir). Onay süresi önerinin süresini aşamaz. Yürütme aynı (işlem, hedef)
@@ -280,7 +280,7 @@ kimlik değerleri maskelenir ve gizli değer gibi görünen metin `contains_secr
 `add_test {doctype, target_frappe}`, `write_file {path, content, purpose, expected_sha256}` (`expected_sha256` var olan
 dosyada zorunlu, yeni dosyada `null`).
 
-CLI: `python3 packages/press-ai/server.py serve | approve | reject | proposals | check-contract | call --config <yol>`.
+CLI: `python3 tools/press-ai/server.py serve | approve | reject | proposals | check-contract | call --config <yol>`.
 `check-contract` kontratı doğrular ve kapsam özetini JSON olarak basar.
 
 ## Skills ve agents

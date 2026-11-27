@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""press-ai giriş noktası. Önerilen çağrı: `python3 -I packages/press-ai/server.py serve --config <yol>`.
+"""press-ai giriş noktası. Önerilen çağrı: `python3 -I tools/press-ai/server.py serve --config <yol>`.
 
 `-I` ortam değişkenlerini ve kullanıcı site-packages'ını yok sayar; paket dizini burada açıkça eklenir.
 """

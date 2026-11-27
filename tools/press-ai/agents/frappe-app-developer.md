@@ -48,7 +48,7 @@ izlersin.
 3. `app_propose_change`; diff ve sha256'yı döndür, onay komutunu göster ve dur:
 
    ```sh
-   python3 -I packages/press-ai/server.py approve <öneri-kimliği> --config <yapılandırma-yolu>
+   python3 -I tools/press-ai/server.py approve <öneri-kimliği> --config <yapılandırma-yolu>
    ```
 
 4. Sonraki çağrıda `proposal_get`; `approved` ise `app_apply`; ardından `app_check`. Taban değiştiyse yeniden oku, yeni öneri.

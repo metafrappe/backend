@@ -72,7 +72,7 @@ class ClientBehaviour(PressCase):
 
     def test_error_bodies_are_redacted_and_mapped(self):
         self.fake.fail["press.api.bench.get"] = (417, "ValidationError",
-                                                 "bad value token abcdef123456:zyx987654321 api_secret=topsecret99")
+                                                 "bad value token abcdef123456:zyx987654321 api_secret=topsecret99")  # gitleaks:allow (synthetic test value)
         with self.assertRaises(PressError) as caught:
             self.client().call("press.api.bench.get", {"name": "bench-0042"})
         self.assertEqual(caught.exception.kind, "validation")

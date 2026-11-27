@@ -58,15 +58,15 @@ engellenmez; ikisi de önizlemede not/uyarı olarak görünür. Secret, `.git` v
 3. MCP istemcisine ekleyin (örnek `config/mcp.example.json`; Codex için aynı komut `[mcp_servers.press-ai]` altında).
    Bu repo hiçbir istemciye kendiliğinden kaydolmaz.
 4. Skill ve agent'lar Claude Code plugin'i olarak yüklenir (`.claude-plugin/plugin.json`): oturumluk
-   `claude --plugin-dir packages/press-ai`. Doğrulama: `claude plugin validate packages/press-ai --strict` ve
-   `claude --plugin-dir packages/press-ai plugin details press-ai` (4 skill, 4 agent; MCP sunucusu plugin'e gömülü değildir,
+   `claude --plugin-dir tools/press-ai`. Doğrulama: `claude plugin validate tools/press-ai --strict` ve
+   `claude --plugin-dir tools/press-ai plugin details press-ai` (4 skill, 4 agent; MCP sunucusu plugin'e gömülü değildir,
    3. adımla ayrı kaydedilir). Kalıcı kullanım için `skills/*` ve `agents/*` kendi `.claude/skills` ve `.claude/agents`
    dizinine kopyalanabilir; o durumda skill'lerin `../../references/` bağlantıları kopyalanmazsa `contract_get` esastır.
 
 ```sh
-python3 -I packages/press-ai/server.py serve --config ~/.config/press-ai/press-ai.json
-python3 -I packages/press-ai/server.py approve <proposal_id> --config ~/.config/press-ai/press-ai.json   # insan, TTY
-python3 -I packages/press-ai/server.py proposals --config ~/.config/press-ai/press-ai.json
+python3 -I tools/press-ai/server.py serve --config ~/.config/press-ai/press-ai.json
+python3 -I tools/press-ai/server.py approve <proposal_id> --config ~/.config/press-ai/press-ai.json   # insan, TTY
+python3 -I tools/press-ai/server.py proposals --config ~/.config/press-ai/press-ai.json
 ```
 
 ## Akış ve sonuç dili
@@ -79,15 +79,15 @@ işlemlerdir; deploy önerisi build Success ve tüm adımlar Success olmadan olu
 ## Doğrulama
 
 ```sh
-python3 -I -m unittest discover -s packages/press-ai/tests
-PRESSGUIDE_DATA=<pressguide>/src/data python3 -I packages/press-ai/server.py check-contract \
+python3 -I -m unittest discover -s tools/press-ai/tests
+PRESSGUIDE_DATA=<pressguide>/src/data python3 -I tools/press-ai/server.py check-contract \
   --guide "$PRESSGUIDE_DATA/guide.json" --sitemap "$PRESSGUIDE_DATA/press-sitemap.json"
 ```
 
-Testler yerel sahte Press'e karşı koşar; birim testleri ve `check-contract` (pressguide verisi olmadan) depodaki `ci.yml` ve
-`deploy.yml` kapısında da koşar. Canlı Press ve gerçek MCP istemcisi oturumu `not_run`dır. Kontrat frappe/press `ebf3e22` (develop) kaynağına göre statik doğrulanmıştır;
+Testler yerel sahte Press'e karşı koşar. Kapsam tablosu `docs/press-ai/coverage.md` dosyasındadır.
+Tabloyu `python3 -I tools/press-ai/server.py coverage-markdown` üretir. Birim testi tablonun güncel olduğunu denetler.
+Bu depoda bu testleri koşan bir CI işi henüz yoktur. Canlı Press ve gerçek MCP istemcisi oturumu `not_run`dır. Kontrat frappe/press `ebf3e22` (develop) kaynağına göre statik doğrulanmıştır;
 kurulu Press'in sürümü farklıysa uç nokta farkı `press_not_found` olarak görünür.
 
-Lisans: kod MIT (`LICENSE`). `LICENSE-CONTENT` (CC BY 4.0) yalnız sitenin `src/content/` ve `src/data/` içeriğini ve
-bunlardan üretilen sayfaları kapsar; indirme ZIP'lerinde iki dosya da bulunur. Üçüncü taraf kaynaklar yalnız yol ve
+Lisans: kod MIT lisanslıdır. Lisans dosyası depo kökündeki `LICENSE` dosyasıdır. Üçüncü taraf kaynaklar yalnız yol ve
 commit ile atıflanır, kod kopyalanmaz.

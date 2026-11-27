@@ -32,7 +32,7 @@ press-operations skill'inin kurallarını izlersin.
 3. Ön koşulları karşılanıyorsa `press_propose`; önizlemeyi ve onay komutunu döndür, dur:
 
    ```sh
-   python3 -I packages/press-ai/server.py approve <öneri-kimliği> --config <yapılandırma-yolu>
+   python3 -I tools/press-ai/server.py approve <öneri-kimliği> --config <yapılandırma-yolu>
    ```
 
 4. Sonraki çağrıda: `proposal_get`; `approved` ise `press_execute` bir kez; `press_track` ile terminal duruma kadar izle.

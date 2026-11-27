@@ -18,16 +18,16 @@ Makinece okunur operasyon kontratı. Biçim ve sabit kimlikler `../INTERFACE.md`
 
 ## Statüler ve sınırlar
 
-- `implemented` yalnız runtime izin listesindeki 43 işlemde bulunur (Press 32, uygulama geliştirme 11); `params` şeması `python3 -I packages/press-ai/server.py schemas` çıktısıyla birebir aynıdır.
+- `implemented` yalnız runtime izin listesindeki 43 işlemde bulunur (Press 32, uygulama geliştirme 11); `params` şeması `python3 -I tools/press-ai/server.py schemas` çıktısıyla birebir aynıdır.
 - `read_only`: eylemi insan yapar, MCP sonucu uygulanan okumalarla doğrular. `planned`: kaynak doğrulandı, bilinçli olarak uygulanmadı. `unsupported`: MCP yetkisi dışında (SSH, GoDaddy, ödeme/yasal kabul, yıkıcı işlem, Press kod değişikliği); `owner_handoff` sahibini ve kabul ölçütünü yazar.
 - Doğrulama statiktir: `frappe/press` develop `ebf3e22`, `frappe/frappe` version-15 `b0b5b99` ve version-16 `6b450a1` dal uçları. Kurulu canlı Press'in commit'i bilinmiyor; her işlemde `verification.live` değeri `not_run`'dır.
 - Sitemap düğüm kimlikleri yalnız UI konumu için atıftır; 11 729 düğümün hiçbiri işlev testi değildir ve düğüm sayısı işlem sayısı değildir.
-- Kurulumdan kayıt adı, IP, alan adı, kişisel veri veya secret yazılmaz. Kaynak koddan metin kopyalanmaz; yol + satır aralığı ile atıf yapılır. Depo lisansları (`LICENSE`, `LICENSE-CONTENT`) değiştirilmedi.
+- Kurulumdan kayıt adı, IP, alan adı, kişisel veri veya secret yazılmaz. Kaynak koddan metin kopyalanmaz; yol + satır aralığı ile atıf yapılır. Depo lisansı (`LICENSE`) değiştirilmedi.
 
 ## Doğrulama
 
 ```sh
-python3 -I packages/press-ai/server.py check-contract --guide <pressguide>/src/data/guide.json --sitemap <pressguide>/src/data/press-sitemap.json
+python3 -I tools/press-ai/server.py check-contract --guide <pressguide>/src/data/guide.json --sitemap <pressguide>/src/data/press-sitemap.json
 ```
 
 Komut kılavuz sırasını, sitemap kimliklerini, kaynak kimliklerini, makine ön koşullarını, izleme problarını ve `implemented` ↔ runtime eşitliğini denetler; çıkış kodu 1 hata olduğunu gösterir.

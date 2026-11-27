@@ -3621,5 +3621,140 @@
     "reason": "Fixed git grep arguments read tracked files without a shell. The path comes from the checked-out test location; Git resolves through the trusted test runner PATH.",
     "owner": "deploy",
     "ignoreUntil": "2027-02-22"
+  },
+  {
+    "rule": "B105",
+    "file": "tools/press-ai/tests/fake_press.py",
+    "code": "\"build_token\": \"bt-secret-0001\"}",
+    "statementSha256": "9d1b708306c2850503357907adee0d15f7a873d7f56f8166ebcdc8c13006cac9",
+    "reason": "Fake Press test server returns a dummy build token. No real secret.",
+    "owner": "press-ai",
+    "ignoreUntil": "2027-02-27"
+  },
+  {
+    "rule": "B105",
+    "file": "tools/press-ai/tests/test_app.py",
+    "code": "secret_like = (\"import frappe\\n\\n\\ndef client():\\n\\tsettings = frappe.get_single('Clean Settings')\\n\"",
+    "statementSha256": "576ecead38c008a38dc62b91d263e94023d4f81248dcad49dda7879f0abd7ca1",
+    "reason": "Test input that must be rejected as a secret-like literal. No real secret.",
+    "owner": "press-ai",
+    "ignoreUntil": "2027-02-27"
+  },
+  {
+    "rule": "B105",
+    "file": "tools/press-ai/tests/test_core.py",
+    "code": "{\"source\": \"env\", \"key_env\": \"PRESS_AI_TEST_KEY\", \"secret_env\": \"PRESS_AI_TEST_SECRET\"}))",
+    "statementSha256": "c80b4df12d14ecf7b61ef822049db1d73f8069053a750caee47dd922ea20fb7d",
+    "reason": "Test names environment variables only. No secret value.",
+    "owner": "press-ai",
+    "ignoreUntil": "2027-02-27"
+  },
+  {
+    "rule": "B108",
+    "file": "tools/press-ai/tests/test_app.py",
+    "code": "for app_path in (\"../evil\", \"clean_app/../../evil\", \"/tmp/evil\"):",
+    "statementSha256": "1a8b3f45262e6dcb5a0c6b759daa5ac045a1cccb7b68622fc3231b01b5196925",
+    "reason": "Test proves that an absolute /tmp app path is rejected.",
+    "owner": "press-ai",
+    "ignoreUntil": "2027-02-27"
+  },
+  {
+    "rule": "B404",
+    "file": "tools/press-ai/press_ai/credentials.py",
+    "code": "import subprocess",
+    "statementSha256": "51fb82e631da1ad4601b6eb0680fdf522b8d498c85382f7601aa0d97124d6193",
+    "reason": "Import for the fixed macOS keychain lookup.",
+    "owner": "press-ai",
+    "ignoreUntil": "2027-02-27"
+  },
+  {
+    "rule": "B404",
+    "file": "tools/press-ai/tests/test_transport.py",
+    "code": "import subprocess",
+    "statementSha256": "51fb82e631da1ad4601b6eb0680fdf522b8d498c85382f7601aa0d97124d6193",
+    "reason": "Test starts the local stdio MCP server.",
+    "owner": "press-ai",
+    "ignoreUntil": "2027-02-27"
+  },
+  {
+    "rule": "B603",
+    "file": "tools/press-ai/press_ai/credentials.py",
+    "code": "result = subprocess.run(",
+    "statementSha256": "5211213dcc0133c6fe6886033864cdefe8f8cdafe0cd9b2604c1c9de95d18442",
+    "reason": "Fixed absolute security binary with argument list, no shell, timeout.",
+    "owner": "press-ai",
+    "ignoreUntil": "2027-02-27"
+  },
+  {
+    "rule": "B603",
+    "file": "tools/press-ai/tests/test_transport.py",
+    "code": "result = subprocess.run([sys.executable, \"-I\", SERVER, \"schemas\"], stdout=subprocess.PIPE, timeout=30)",
+    "statementSha256": "24631ba84dab4c07480668881eec3a82974803acf165cb9affae142affba90d7",
+    "reason": "Test starts the local stdio MCP server with sys.executable, no shell.",
+    "owner": "press-ai",
+    "ignoreUntil": "2027-02-27"
+  },
+  {
+    "rule": "B603",
+    "file": "tools/press-ai/tests/test_transport.py",
+    "code": "return subprocess.run([sys.executable, \"-I\", SERVER, *args, \"--config\", self.config_path],",
+    "statementSha256": "8db72f68ca76971c1f7475202539343a499d94d15231f0e914d7799120163a52",
+    "reason": "Test starts the local stdio MCP server with sys.executable, no shell.",
+    "owner": "press-ai",
+    "ignoreUntil": "2027-02-27"
+  },
+  {
+    "rule": "B603",
+    "file": "tools/press-ai/tests/test_transport.py",
+    "code": "self.proc = subprocess.Popen([sys.executable, \"-I\", SERVER, \"serve\", \"--config\", config_path],",
+    "statementSha256": "146e5a54efdbe6d966269269351ceea2752daddec51766fdcd0c4e87828619b6",
+    "reason": "Test starts the local stdio MCP server with sys.executable, no shell.",
+    "owner": "press-ai",
+    "ignoreUntil": "2027-02-27"
+  },
+  {
+    "rule": "B608",
+    "file": "tools/press-ai/tests/fixtures/apps/school_ext/school_ext/api.py",
+    "code": "return frappe.db.sql(f\"select name from `tabStudent Record` where student = '{student}'\")",
+    "statementSha256": "b65fa062d18dc6bbf9e3c53d291048279df9e5e61efe61b89f8e1ac3db7f3f31",
+    "reason": "Deliberately unsafe fixture that the static app scanner must report.",
+    "owner": "press-ai",
+    "ignoreUntil": "2027-02-27"
+  },
+  {
+    "rule": "B608",
+    "file": "tools/press-ai/tests/test_app.py",
+    "code": "concat = head + \"def run(x):\\n\\treturn frappe.db.sql(\\\"select name from tabLead where email_id='\\\" + x + \\\"'\\\")\\n\"",
+    "statementSha256": "3d2326c170f59c3823733476e9209b7a552cc65db875f21306055eafabb8e42c",
+    "reason": "Unsafe SQL text is test input that must be rejected, never executed.",
+    "owner": "press-ai",
+    "ignoreUntil": "2027-02-27"
+  },
+  {
+    "rule": "B608",
+    "file": "tools/press-ai/tests/test_app.py",
+    "code": "safe = head + \"def run(x):\\n\\treturn frappe.db.sql(\\\"\\\"\\\"select name from tabLead where email_id=%s\\\"\\\"\\\", (x,))\\n\"",
+    "statementSha256": "1491611a00f670e798a1a6f36ccb4478e18c2ad14e1c9bd091fc4888eecdc0dc",
+    "reason": "Unsafe SQL text is test input that must be rejected, never executed.",
+    "owner": "press-ai",
+    "ignoreUntil": "2027-02-27"
+  },
+  {
+    "rule": "B608",
+    "file": "tools/press-ai/tests/test_app.py",
+    "code": "triple = head + \"def run(x):\\n\\treturn frappe.db.sql(\\\"\\\"\\\"select name from tabLead where email_id='%s'\\\"\\\"\\\" % x)\\n\"",
+    "statementSha256": "76fe18a152acd2e65f08c80c85544184f556d5dc2c5500778377dd81ebe5e3bd",
+    "reason": "Unsafe SQL text is test input that must be rejected, never executed.",
+    "owner": "press-ai",
+    "ignoreUntil": "2027-02-27"
+  },
+  {
+    "rule": "B613",
+    "file": "tools/press-ai/tests/test_app.py",
+    "code": "proposal = self.propose(\"clean_app/events/rules.py\", self.LOGIC + \"# ‮gnp.exe\\n\")",
+    "statementSha256": "ea81e3611dd2817209cb1032f9ee21339e53e94b1979e622808c06d51e27b8eb",
+    "reason": "Test proves that bidirectional control characters are shown safely.",
+    "owner": "press-ai",
+    "ignoreUntil": "2027-02-27"
   }
 ]

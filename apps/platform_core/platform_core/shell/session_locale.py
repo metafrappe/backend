@@ -17,10 +17,10 @@ from zoneinfo import ZoneInfo
 import frappe
 from frappe.utils import get_system_timezone
 
+from platform_core.market_gate import open_markets
+
 # Decision 44: British English when the user and the tenant have no language.
 DEFAULT_LANGUAGE_TAG = "en-GB"
-# Until the product owner announces the list, only TR is open (AJA-1732).
-OPEN_MARKETS = ("TR",)
 # Currency of a market. A market without a row gives no currency.
 MARKET_CURRENCIES = {"TR": "TRY", "DE": "EUR", "GB": "GBP"}
 # Regions whose road distances use miles. Every other region uses the metric system.
@@ -37,7 +37,8 @@ COUNTRY = re.compile(r"^[A-Z]{2}$")
 def get_locale(user: str) -> dict:
 	"""Locale of the session as the contract's Locale component. Reads only."""
 	language_tag, language, region = _language(user)
-	markets = list(OPEN_MARKETS)
+	# One list for the bootstrap and the purchase gate: `config/open_markets.json` (AJA-1932).
+	markets = open_markets()
 	market = _market(user, markets)
 	return {
 		"language_tag": language_tag,

@@ -16,6 +16,7 @@ class ModelHttpTypesTests(unittest.TestCase):
 		self.enterContext(patch.object(frappe.local, "request", object(), create=True))
 		self.enterContext(patch.object(frappe.local, "response", frappe._dict(), create=True))
 		self.enterContext(patch.object(frappe.local, "db", Mock(), create=True))
+		self.enterContext(patch.object(model.step_up, "require"))
 		self.enterContext(patch.object(model.policy, "require_session"))
 		self.enterContext(patch.object(model.policy, "require_user"))
 		self.enterContext(

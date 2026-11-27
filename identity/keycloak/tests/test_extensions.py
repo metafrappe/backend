@@ -133,9 +133,11 @@ class LiveExtensionTest(unittest.TestCase):
     def test_browser_flow_has_passkey_condition_and_otp(self):
         yurutmeler = admin(f"/authentication/flows/{AKIS}/executions", self.admin_token).json()
         saglayicilar = {y.get("providerId"): y for y in yurutmeler}
-        self.assertEqual(saglayicilar["auth-otp-form"]["requirement"], "ALTERNATIVE")
-        self.assertEqual(saglayicilar["conditional-credential"]["requirement"], "REQUIRED")
-        self.assertEqual(saglayicilar["webauthn-authenticator"]["requirement"], "ALTERNATIVE")
+        # The flow has several steps of the same kind. Each TOTP step is optional among the second factors.
+        # A strong key step is REQUIRED only in the open enrollment branch (tests/test_admin_strong_key.py).
+        self.assertTrue(all(y["requirement"] == "ALTERNATIVE" for y in yurutmeler if y.get("providerId") == "auth-otp-form"))
+        self.assertTrue(all(y["requirement"] == "REQUIRED" for y in yurutmeler if y.get("providerId") == "conditional-credential"))
+        self.assertIn("ALTERNATIVE", {y["requirement"] for y in yurutmeler if y.get("providerId") == "webauthn-authenticator"})
         self.assertNotIn(MAGIC_LINK_AUTHENTICATOR, saglayicilar)
         self.assertEqual(saglayicilar["auth-username-password-form"]["requirement"], "REQUIRED")
 

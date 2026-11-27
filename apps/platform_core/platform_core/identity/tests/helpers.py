@@ -208,6 +208,8 @@ def fake_exchange(token: str | None = None, **token_response):
 		return {
 			"id_token": token,
 			"access_token": "fake-access-token",
+			# Keycloak returns a refresh token to the confidential tenant client (G-163 item 3 keeps it encrypted).
+			"refresh_token": "fake-refresh-token",
 			"token_type": "Bearer",
 			**token_response,
 		}
@@ -425,3 +427,4 @@ def ensure_role_profile(name: str, roles: list[str]) -> str:
 		doc.append("roles", {"role": role})
 	doc.insert(ignore_permissions=True)
 	return doc.name
+

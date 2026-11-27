@@ -221,12 +221,28 @@ class ComposeFileTest(unittest.TestCase):
         self.assertIn("    image: fs-kimlik-realm-event-sink:${FS_STACK_IMAGE_TAG:-dev}", compose.splitlines())
 
 
+class DescriptionLengthTest(unittest.TestCase):
+    def test_descriptions_fit_the_database_column(self):
+        # Keycloak stores these descriptions in varchar(255) columns. A longer one stops the realm import
+        # and the server (PostgreSQL "value too long for type character varying(255)").
+        realm = read_realm()
+        items = [("flow", f["alias"], f.get("description", "")) for f in realm["authenticationFlows"]]
+        items += [("role", r["name"], r.get("description", "")) for r in realm["roles"]["realm"]]
+        for kind, name, description in items:
+            with self.subTest(kind=kind, name=name):
+                self.assertLessEqual(len(description), 255)
+
+
 class ExampleUserTest(unittest.TestCase):
     def test_imported_users_receive_the_same_default_role_as_new_users(self):
         default_role = read_realm()["defaultRole"]["name"]
+        # G-163: the sample administrators also carry the administrator roles (tests/test_admin_strong_key.py).
+        extra_roles = {"platform-admin", "strong-key-enrollment"}
         for user in read_users()["users"]:
             with self.subTest(username=user["username"]):
-                self.assertEqual(user.get("realmRoles"), [default_role])
+                roles = user.get("realmRoles")
+                self.assertEqual(roles[0], default_role)
+                self.assertLessEqual(set(roles[1:]), extra_roles)
 
     def test_example_users_are_in_separate_file_with_example_test_domain(self):
         request_body = read_users()

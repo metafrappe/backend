@@ -6,6 +6,7 @@ from uuid import uuid7
 import frappe
 from frappe import _
 from frappe.model.docstatus import DocStatus
+from platform_core.version_check import check_version
 from pydantic import StringConstraints
 
 from hrms_tr.access import DOCTYPE
@@ -129,12 +130,13 @@ def pending_leave(
 	for operation in ("read", "write", "submit"):
 		doc.check_permission(operation)
 	check_not_own_leave(doc, decision)
-	if expected_version is not None and str(doc.modified) != expected_version:
+	if expected_version is not None:
 		if decision == "reject":
 			message = _("The leave application changed. Open it again before rejecting.", context="hrms_tr")
 		else:
 			message = _("The leave application changed. Open it again before approving.", context="hrms_tr")
-		frappe.throw(message, frappe.TimestampMismatchError)
+		# The contract's conflict reply: 409 and VersionConflictError (contracts/idempotency.md, section 7).
+		check_version(doc, expected_version, message)
 	if doc.docstatus != DocStatus.draft() or doc.status != "Open":
 		if decision == "reject":
 			message = _("Only open draft leave applications can be rejected.", context="hrms_tr")
@@ -167,11 +169,11 @@ def cancel(name: str, *, expected_version: str) -> dict[str, str]:
 	doc = frappe.get_doc(DOCTYPE, name, for_update=True)
 	doc.check_permission("read")
 	doc.check_permission("cancel")
-	if str(doc.modified) != expected_version:
-		frappe.throw(
-			_("The leave application changed. Open it again before cancelling.", context="hrms_tr"),
-			frappe.TimestampMismatchError,
-		)
+	check_version(
+		doc,
+		expected_version,
+		_("The leave application changed. Open it again before cancelling.", context="hrms_tr"),
+	)
 	if not doc.docstatus.is_submitted():
 		frappe.throw(
 			_("Only submitted leave applications can be cancelled.", context="hrms_tr"),

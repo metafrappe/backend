@@ -7,6 +7,7 @@ from unittest.mock import Mock, patch
 import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, today
+from platform_core.version_check import VersionConflictError
 
 from hrms_tr import leave, retention
 from hrms_tr.api import approve_leave, cancel_leave, get_home_summary, get_leave_approver, reject_leave
@@ -95,8 +96,9 @@ class ApprovalEndpointTest(TestCase):
 			fake.get_doc.return_value = doc
 			fake.TimestampMismatchError = frappe.TimestampMismatchError
 			fake.throw.side_effect = raise_permission_error
-			with self.assertRaises(frappe.TimestampMismatchError):
+			with self.assertRaises(VersionConflictError) as error:
 				reject_leave("LEAVE-STALE-0001", "2026-11-22 12:00:00")
+		self.assertEqual(error.exception.http_status_code, 409)
 		fake.get_doc.assert_called_once_with("Leave Application", "LEAVE-STALE-0001", for_update=True)
 		for operation in ("read", "write", "submit"):
 			doc.check_permission.assert_any_call(operation)
@@ -215,9 +217,9 @@ class ApprovalEndpointTest(TestCase):
 			fake.get_doc.return_value = doc
 			fake.TimestampMismatchError = frappe.TimestampMismatchError
 			fake.throw.side_effect = raise_permission_error
-			with self.assertRaises(frappe.TimestampMismatchError) as error:
+			with self.assertRaises(VersionConflictError) as error:
 				approve_leave("LEAVE-STALE-0001", "2026-11-22 12:00:00")
-		self.assertEqual(error.exception.http_status_code, 417)
+		self.assertEqual(error.exception.http_status_code, 409)
 		fake.get_doc.assert_called_once_with("Leave Application", "LEAVE-STALE-0001", for_update=True)
 		doc.submit.assert_not_called()
 		self.assertEqual(doc.status, "Open")

@@ -149,7 +149,22 @@ Var olan bir kaydı değiştiren uç sürüm koşulu alır.
 
 `VersionConflictError` yeni bir sınıftır. Ortak katman bu sınıfı tanımlar. Sınıf Frappe'nin `TimestampMismatchError` sınıfından türer. Sınıfın `http_status_code` değeri 409'dur.
 
-`hrms_tr` izin uçları bugün düz `TimestampMismatchError` hatası verir. Bu hatanın kodu 417'dir. `hrms_tr` bu uçlarda `VersionConflictError` sınıfına geçer. Geçiş bitene kadar istemci iki hata adını da çakışma sayar.
+Sınıf `platform_core/version_check.py` dosyasındadır. Aynı dosyada iki yardımcı vardır:
+
+- `check_version` kilitli kaydın sürümünü denetler.
+- `update_with_version` kaydı kilitler, yazma yetkisini ve sürümü denetler, sonra kaydeder.
+
+Kabul edilen düzenlemenin yanıtında kaydın yeni sürümü vardır. Yanıtın alanları `name` ve `version` olur.
+
+Ret yanıtında `conflict` adlı bir alan vardır. İstemci çakışmayı bu alanla gösterir. Alanın içinde şunlar vardır:
+
+- `code` alanı hata adını taşır. Değeri `VersionConflictError` olur.
+- `doctype` alanı kaydın türünü, `name` alanı kaydın adını taşır.
+- `current_version` alanı kaydın son sürümünü taşır.
+
+Yanıtta kaydın alanları yoktur. İstemci kaydın son halini okuma ucuyla yükler.
+
+`hrms_tr` izin uçları eskiden düz `TimestampMismatchError` hatası veriyordu. Bu hatanın kodu 417'dir. AJA-1751 ile onay, geri çevirme ve iptal uçları `VersionConflictError` sınıfına geçti. Eski istemciler 417 kodunu bekleyebilir. Bu yüzden istemci bir süre daha iki hata adını da çakışma sayar.
 
 Kullanıcı şunu görür:
 

@@ -223,6 +223,27 @@ runpane report --state <ready|blocked|failed|done> --summary-file <durum dosyas�
 - Seçenekleri soru metnine parantezle yazmayın. Pane bu soruyu reddeder.
 - Sorunun beklemediği işi sürdürün.
 
+## Birleştirme kapıları
+
+Kapı, birleştirmeden önce koşan denetimdir. Committer her PR'ı birleştirmeden önce bu kapıları koşar. Kapı 1 koduyla çıkarsa bulgu vardır. Kapı 2 koduyla çıkarsa denetim bitmemiştir. İki durumda da PR birleşmez.
+
+1. Kapı 4b, kural kopyası eşitliği (AJA-1344, AJA-1561):
+
+   ```bash
+   python3 -I scripts/standards-copy-check.py --copies ~/.claude/skills/coding-standards/references
+   ```
+
+   - Betik `docs/standards/` klasörünü ortak kural klasörüyle karşılaştırır.
+   - Eşleme `docs/standards/kopyalar.json` dosyasındadır.
+   - Klasöre eklenen her dosyayı bu eşlemeye yazın. Dosya kuralsa `copies` listesine girer. Dosya kural değilse `notRules` listesine girer.
+   - Betiğin testi eşlenmemiş dosyayı da yakalar. Testi şöyle koşun:
+
+     ```bash
+     python3 -I -m unittest discover -s tests -p 'test_*.py'
+     ```
+
+   - Kapı fark bulursa ortak klasörü kendiniz değiştirmeyin. Farkı göreve yazın.
+
 ## Yazım
 
 - Belgeleri ve raporları yalın Türkçe yazın. Kısa ve tam cümle kurun.

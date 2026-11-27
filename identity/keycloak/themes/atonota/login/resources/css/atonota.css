@@ -1087,6 +1087,18 @@
   animation-timing-function: var(--at-motion-easing-standard);
 }
 
+/*
+ * Açılışta renk geçişi çalışmaz (AJA-1293). Koyu tema sınıfı sayfa çizildikten sonra gelebilir.
+ * atonota-focus.js açılış bitince html öğesine data-at-motion işaretini koyar. Ondan önce süre sıfırdır.
+ * JavaScript kapalıysa işaret gelmez. O zaman renkler geçişsiz değişir, hover ve odak yine görünür.
+ */
+:root:not([data-at-motion]) *,
+:root:not([data-at-motion]) *::before,
+:root:not([data-at-motion]) *::after {
+  /* !important: temel temanın satır içi ve bileşen geçişleri de açılışta durmalıdır. */
+  transition-duration: var(--at-motion-duration-instant) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .login-pf *,
   .login-pf *::before,

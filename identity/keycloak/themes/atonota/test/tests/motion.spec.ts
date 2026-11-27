@@ -30,6 +30,8 @@ const collectMotion = (page: Page) =>
 for (const name of ['sign-in', 'totp-setup', 'passkey-sign-in', 'sign-in-method']) {
   test(`${name}: her geçiş onaylı eğriyi ve sınırlı süreyi kullanır`, async ({ page }) => {
     await screen(name).open(page);
+    // Açılışta geçiş süresi sıfırdır (AJA-1293). Ölçüm açılış bitince yapılır.
+    await expect(page.locator('html')).toHaveAttribute('data-at-motion', '');
     const motion = await collectMotion(page);
     const wrong = motion.filter((item) => item.easing.split(/,(?![^(]*\))/).some((part) => part.trim() !== EASE));
     expect(wrong, 'onaysız eğri').toEqual([]);
@@ -46,6 +48,8 @@ for (const name of ['sign-in', 'totp-setup', 'passkey-sign-in', 'sign-in-method'
 test('azaltılmış hareket tercihinde geçiş ve animasyon kalkar', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await screen('sign-in').open(page);
+  // Açılış kipi de süreyi sıfırlar. Ölçüm açılış bitince yapılır. Yoksa bu test tercihi sınamaz.
+  await expect(page.locator('html')).toHaveAttribute('data-at-motion', '');
   const motion = await collectMotion(page);
   expect(motion.filter((item) => item.seconds > 0.011)).toEqual([]);
 });

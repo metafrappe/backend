@@ -86,6 +86,7 @@ Görsel dilin ana kararları şunlardır:
 - Odak çizgisi yalnız klavye kipinde görünür. Kipi `Tab` ve `Shift+Tab` açar. Fare ve dokunma kipi kapatır. Kipi `login/resources/js/atonota-focus.js` yönetir.
 - Köşesi yuvarlak kutunun tek kenarına renkli çizgi konmaz.
 - Hareket eğrisi `cubic-bezier(.65, 0, .35, 1)` olur. Kullanıcı azaltılmış hareket isterse geçişler kalkar.
+- Sayfa açılırken renk geçişi çalışmaz. Koyu tema renkleri ilk çizimde son değerindedir. `atonota-focus.js` açılış bitince `html` öğesine `data-at-motion` işaretini koyar. Hover ve odak geçişleri bu işaretten sonra çalışır. JavaScript kapalıysa renkler geçişsiz değişir.
 - Dil seçimi işletim sisteminin açılır listesi değildir. Dil seçimi kartın altındaki bağlantı listesidir.
 
 ## İletiler
@@ -293,6 +294,7 @@ npx playwright test
 | `tests/screens-text.spec.ts` | Yedi ekranda Türkçe metin, düğme adları ve bağlantı adları |
 | `tests/locale.spec.ts` | Türkçe varsayılan dil, dil bağlantıları ve ileti anahtarları |
 | `tests/motion.spec.ts` | Hareket eğrisi, süre, azaltılmış hareket ve stil kaynağı denetimi |
+| `tests/opening-motion.spec.ts` | Açılışta renk geçişi olmaması, beklemeden axe denetimi ve açılıştan sonra hover geçişi |
 | `tests/accessibility.spec.ts` | axe denetimi, açık ve koyu tema |
 | `tests/email.spec.ts` | E-posta şablonları ve Mailpit |
 | `tests/account.spec.ts` | Hesap konsolu: yerleşim, odak, hareket, axe, Türkçe iletiler ve token eşliği |

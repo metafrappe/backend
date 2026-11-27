@@ -20,7 +20,7 @@ class TranslationChecksTests(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.repository = Path(temporary.name)
         subprocess.run(["git", "init", "--quiet", self.repository], check=True)
-        self.root = self.repository / "backend"
+        self.root = self.repository
 
     def write(self, path, text):
         file = self.root / path

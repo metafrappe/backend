@@ -19,7 +19,7 @@ class DependencyChecksTests(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.repository = Path(temporary.name)
         subprocess.run(["git", "init", "--quiet", self.repository], check=True)
-        self.root = self.repository / "backend"
+        self.root = self.repository
 
     def write(self, relative, content):
         path = self.root / relative

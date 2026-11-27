@@ -43,7 +43,7 @@ from platform_core.access.tests.base import (
 
 SMALL = {"calls": 50, "employees": 12, "records": 40}
 PERF_SITE = "perf-access.localhost"
-# The limits of rule O-31 in the project record (`backend/PROJE-KAYDI.md`): p95 of a read
+# The limits of rule O-31 in the project record (`PROJE-KAYDI.md`): p95 of a read
 # endpoint at most 500 ms, p95 of a write endpoint at most 1 second. They are written here on
 # purpose and not taken from the measurement code, so a changed limit in that code shows.
 O31_READ_LIMIT_MS = 500

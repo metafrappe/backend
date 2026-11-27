@@ -14,7 +14,7 @@ if __package__:
 else:
 	from contract_json import parse_json
 
-CONTRACT = Path("backend/contracts/platform_core-shell.openapi.yaml")
+CONTRACT = Path("contracts/platform_core-shell.openapi.yaml")
 SNAPSHOT = Path(__file__).resolve().parents[2] / "tests" / "shell_contract_components.json"
 BOOTSTRAP = "/api/method/platform_core.api.shell.get_bootstrap"
 METADATA = "/api/method/platform_core.api.meta.get_doctype"

@@ -19,7 +19,7 @@ COMPOSE = E2E.parent / "dev/compose.identity-sync.yaml"
 COMPOSE_ORGANIZATION = re.search(r'"organization":"([a-z0-9-]+)"', COMPOSE.read_text()).group(1)
 # A fresh value per run, so no credential literal sits in the source.
 ADMIN_VALUE = uuid4().hex
-# AJA-1074: the shared review password comes from the Git-ignored backend/e2e/.env file.
+# AJA-1074: the shared review password comes from the Git-ignored e2e/.env file.
 REVIEW_VALUE = "inceleme-" + uuid4().hex[:12]
 
 LOCAL = {
@@ -56,7 +56,7 @@ class ReviewAccountListTest(unittest.TestCase):
         # AJA-1074: the public repository carries no password. The note points to the local file.
         self.assertNotIn("password", data)
         self.assertIn("E2E_REVIEW_PASSWORD", data["note"])
-        self.assertIn("backend/e2e/.env", data["note"])
+        self.assertIn("e2e/.env", data["note"])
         accounts = {account["username"]: account for account in data["accounts"]}
         self.assertEqual(set(accounts), {
             "inceleme-panel@example.test",
@@ -168,7 +168,7 @@ class ReviewAccountListTest(unittest.TestCase):
         self.assertIn("http://localhost:5180", first)
         self.assertIn("inceleme-panel@example.test", first)
         self.assertIn("E2E_REVIEW_PASSWORD", first)
-        self.assertIn("backend/e2e/.env", first)
+        self.assertIn("e2e/.env", first)
         self.assertNotIn("`password` alan", readme)
 
     def test_the_readme_describes_the_tenant_administrator_with_the_tenant_admin_role(self):
@@ -298,7 +298,7 @@ class ReviewPasswordTest(unittest.TestCase):
         lines = [line for line in template if line.startswith("E2E_REVIEW_PASSWORD=")]
         self.assertEqual(len(lines), 1)
         self.assertTrue(lines[0].partition("=")[2].startswith("degistir-"))
-        # A fresh backend/e2e/.env gets a random value. The template value never reaches Compose.
+        # A fresh e2e/.env gets a random value. The template value never reaches Compose.
         scope = stack()
         self.assertTrue(lines[0].partition("=")[2].startswith(scope["SECRET_PREFIXES"]))
         self.assertNotIn("E2E_REVIEW_PASSWORD", scope["default_settings"]())

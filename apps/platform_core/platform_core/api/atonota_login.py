@@ -1,7 +1,7 @@
 """`atonota_login` endpoints: action decisions (G-161, G-166) and the verification inbox (G-164).
 
 The Frappe links are in `platform_core.identity.atonota.decision_api` and `.verification_api`. The rules are in the
-`atonota_login` package. Contract: `backend/contracts/platform_core-identity.openapi.yaml`, tag `atonota-login`.
+`atonota_login` package. Contract: `contracts/platform_core-identity.openapi.yaml`, tag `atonota-login`.
 """
 
 from typing import Any

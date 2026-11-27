@@ -22,7 +22,7 @@ class NamingGateTests(unittest.TestCase):
         self.addCleanup(workspace.cleanup)
         self.root = Path(workspace.name)
         subprocess.run(["git", "init", "-q", "-b", "main", str(self.root)], check=True)
-        self.app = self.root / "backend/apps/platform_core"
+        self.app = self.root / "apps/platform_core"
         self.package = self.app / "platform_core"
         self.write(self.package / "modules.txt", "Platform Core\n")
         self.write(
@@ -42,7 +42,7 @@ class NamingGateTests(unittest.TestCase):
         return status, {finding["rule"] for finding in findings}
 
     def gate_findings(self, *arguments):
-        subprocess.run(["git", "-C", str(self.root), "add", "backend"], check=True)
+        subprocess.run(["git", "-C", str(self.root), "add", "."], check=True)
         result = subprocess.run(
             [sys.executable, str(CHECK), "--root", str(self.root), "--json", *arguments],
             text=True,
@@ -70,7 +70,7 @@ class NamingGateTests(unittest.TestCase):
             "// __('Giriş')\nconst caption = __('Giris yapin');\n",
         )
         self.write(
-            self.root / "backend/contracts/example.openapi.yaml",
+            self.root / "contracts/example.openapi.yaml",
             "openapi: 3.1.0\ninfo:\n  summary: Kayit getir\n  description: >-\n"
             "    Alan bilgisi dönülür.\n  title: Giriş\n",
         )
@@ -108,7 +108,7 @@ class NamingGateTests(unittest.TestCase):
 
     def test_source_text_ignores_markdown_code_without_hiding_turkish_prose(self):
         self.write(
-            self.root / "backend/contracts/example.openapi.yaml",
+            self.root / "contracts/example.openapi.yaml",
             "openapi: 3.1.0\ninfo:\n"
             "  summary: Read `x-durum` and `yalniz-onay-katmani`.\n"
             "  description: >-\n"
@@ -200,18 +200,18 @@ class NamingGateTests(unittest.TestCase):
             json.dumps([{"old": "odak_kaydi", "new": "focus_record", "type": "identifier"}]),
         )
         self.write(
-            self.root / "backend/libs/sample.py",
+            self.root / "libs/sample.py",
             "def read_record(record):\n    return record.yeni_musteri_talebi\n",
         )
         self.write(
-            self.root / "backend/identity/view.ts",
+            self.root / "identity/view.ts",
             "// const musteriTalebi = 1;\n"
             "const caption = 'odak_kaydi';\n"
             "const yeniOdak = record.yeniMusteri;\n"
             "const matchingText = /Müşteri Talebi/;\n",
         )
         self.write(
-            self.root / "backend/identity/page.html",
+            self.root / "identity/page.html",
             '<p id="musteri-talebi" class="normal yeni-odak">Müşteri Talebi</p>\n'
             "<p title=\"The example uses id='musteri-talebi'\">Müşteri Talebi</p>\n",
         )
@@ -239,9 +239,9 @@ class NamingGateTests(unittest.TestCase):
         self.assertEqual(self.run_gate(), (1, {"doctype-copy"}))
 
     def test_changed_files_mode_checks_only_changed_files(self):
-        unchanged = self.root / "backend/dev/unchanged.py"
+        unchanged = self.root / "dev/unchanged.py"
         self.write(unchanged, "kayit = 1\n")
-        subprocess.run(["git", "-C", str(self.root), "add", "backend"], check=True)
+        subprocess.run(["git", "-C", str(self.root), "add", "."], check=True)
         subprocess.run(
             [
                 "git",
@@ -261,14 +261,14 @@ class NamingGateTests(unittest.TestCase):
                 "GIT_COMMITTER_EMAIL": "35493655+karacaismail@users.noreply.github.com",
             },
         )
-        self.write(self.root / "backend/dev/changed.py", "giris = 1\n")
+        self.write(self.root / "dev/changed.py", "giris = 1\n")
         status, findings = self.gate_findings("--changed-files")
         self.assertEqual(status, 1)
         self.assertEqual([Path(item["path"]).name for item in findings], ["changed.py"])
 
     def test_arrow_callback_regex_is_not_treated_as_code_names(self):
         self.write(
-            self.root / "backend/identity/security.spec.ts",
+            self.root / "identity/security.spec.ts",
             "const matches = lines.filter((line) => /[çğıöşüÇĞİÖŞÜ]|Kullanım|Yalnız/.test(line));\n"
             "const kullanım = matches.length;\n",
         )

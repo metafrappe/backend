@@ -1,7 +1,7 @@
 """The product name and the brand domain come from one setting file (AJA-1053).
 
-backend/brand.env holds the two values. No other tracked file may write them out,
-except the paths in backend/brand-exclusions.txt. The test reads the values from
+brand.env holds the two values. No other tracked file may write them out,
+except the paths in brand-exclusions.txt. The test reads the values from
 brand.env, so this file never writes them itself.
 
 Technical names stay as they are and do not match: the package name uses an
@@ -202,8 +202,8 @@ class RepositoryBrandTests(unittest.TestCase):
         if hits:
             self.fail(
                 f"Ürün adı ya da alan adı ayar dışında {len(hits)} satırda yazılı. "
-                "Değeri backend/brand.env dosyasından okuyun ya da yolu "
-                "backend/brand-exclusions.txt listesine nedeniyle ekleyin.\n"
+                "Değeri brand.env dosyasından okuyun ya da yolu "
+                "brand-exclusions.txt listesine nedeniyle ekleyin.\n"
                 + "\n".join(hits)
             )
 

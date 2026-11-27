@@ -2,7 +2,7 @@
 
 The test needs a running local stack. It never starts one. Point it at the tenant site:
 
-    FS_TENANT_URL=http://tenant1.localhost:7401 python3 -m unittest backend/e2e/tests/test_login_providers_http.py -v
+    FS_TENANT_URL=http://tenant1.localhost:7401 python3 -m unittest e2e/tests/test_login_providers_http.py -v
 
 Without `FS_TENANT_URL` every test is skipped. The test sends only a few requests, so it stays far
 below the rate limit of 30 requests per minute. Every request is a guest request: no cookie.

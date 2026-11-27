@@ -4,7 +4,7 @@
 #   set      names of the non-empty settings (common_site_config.json counts for every site)
 #   differs  fixed settings (settings.py site-fixed) that hold another value
 # No value leaves the container. remote/settings.py compares the names with
-# backend/deploy/settings/tenant-site.production.env.example.
+# deploy/settings/tenant-site.production.env.example.
 # A value written as <...> is a placeholder from the list and counts as not set.
 import json
 import os

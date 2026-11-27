@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd "$(dirname "${BASH_SOURCE[0]}")/../../.."
-security_dir=backend/dev/security
+cd "$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
+security_dir=dev/security
 if [[ $# -gt 1 || ( $# -eq 1 && "$1" != --self-test ) ]]; then
     printf '%s\n' 'Usage: history-scan [--self-test]' >&2
     exit 2

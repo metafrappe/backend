@@ -4,13 +4,13 @@ import { expect, test, type Page } from "@playwright/test";
 
 const START = "/api/method/platform_core.api.auth.start_login";
 
-// The product name comes from PRODUCT_NAME or from backend/brand.env (AJA-1061).
+// The product name comes from PRODUCT_NAME or from brand.env (AJA-1061).
 // The site must use the same value in its identity_brand_name setting.
 function productName(): string {
 	if (process.env.PRODUCT_NAME) return process.env.PRODUCT_NAME;
 	const text = readFileSync(resolve(__dirname, "../../../../../../brand.env"), "utf-8");
 	const line = text.split("\n").find((row) => row.startsWith("PRODUCT_NAME="));
-	if (!line) throw new Error("backend/brand.env has no PRODUCT_NAME value");
+	if (!line) throw new Error("brand.env has no PRODUCT_NAME value");
 	return line.slice("PRODUCT_NAME=".length).trim();
 }
 

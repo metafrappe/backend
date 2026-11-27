@@ -1,6 +1,6 @@
 """Shared helpers for tests that need the pinned Ansible on a Python 3.14 interpreter.
 
-Set PRESS_TEST_ANSIBLE_PYTHON to an interpreter that has backend/dev/press/ansible-requirements.txt
+Set PRESS_TEST_ANSIBLE_PYTHON to an interpreter that has dev/press/ansible-requirements.txt
 installed, and PRESS_TEST_PRESS_SOURCE to a clean Press checkout at the pinned tag. Inside the
 disposable bench both are env/bin/python and apps/press.
 """
@@ -12,7 +12,7 @@ import unittest
 from pathlib import Path
 
 PRESS_DEV = Path(__file__).resolve().parent
-REPO = PRESS_DEV.parents[2]
+REPO = PRESS_DEV.parents[1]
 PYTHON = os.environ.get("PRESS_TEST_ANSIBLE_PYTHON")
 PRESS_SOURCE = os.environ.get("PRESS_TEST_PRESS_SOURCE")
 

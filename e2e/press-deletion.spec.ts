@@ -3,7 +3,7 @@ import { required } from './local';
 import { bearer, closeSession, fixtureEmail, keycloakReaderToken, requestPressDeletion, resource, sites } from './press-session';
 
 // MVP test 2, row 5e: the account deletion chain from Press down to the HRMS TR employee record.
-// Fixture: `backend/e2e/stack seed-deletion` (docs: backend/e2e/README.md). Both tests use one fixture:
+// Fixture: `e2e/stack seed-deletion` (docs: e2e/README.md). Both tests use one fixture:
 // the negative test only reads, the positive test consumes the account.
 const REDACTED = '[REDACTED]';
 const ANONYMIZE_METHOD = '/api/method/platform_core.api.identity.anonymize_user';
@@ -66,7 +66,7 @@ async function expectTenantAnonymized(request: APIRequestContext, { email, emplo
 
 test.describe('Press account deletion with HRMS TR', () => {
   test.skip(() => process.env.E2E_PRESS_DELETION !== '1',
-    'Requires the stack deletion fixture: backend/e2e/stack seed-deletion.');
+    'Requires the stack deletion fixture: e2e/stack seed-deletion.');
 
   test('a sync service that skips the tenant step cannot pass the tenant checks', async ({ request }) => {
     // The fresh fixture is the tenant exactly as a skipped tenant step would leave it:

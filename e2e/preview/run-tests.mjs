@@ -103,7 +103,7 @@ function withoutSyncSecret(settings) {
 
 async function runPlaywright(label, args, reporter = 'list', settings = env) {
   const child = spawn(join(worktree, 'node_modules', '.bin', 'playwright'), [
-    'test', '-c', 'backend/e2e/playwright.config.ts', '--reporter=' + reporter,
+    'test', '-c', 'e2e/playwright.config.ts', '--reporter=' + reporter,
     '--output=' + join(previewDir, 'playwright-output', label), ...args,
   ], { cwd: worktree, env: settings });
   const output = [];

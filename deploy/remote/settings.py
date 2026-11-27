@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Production setting lists and their check on the server (blocker E-4).
 
-Each secret file on the server has one list in backend/deploy/settings/<name>.production.env.example.
+Each secret file on the server has one list in deploy/settings/<name>.production.env.example.
 A list line is KEY=<form of the value>. A comment line just above a key may carry a tag:
   # [isteğe bağlı] ...   the key may be absent (optional)
   # [sabit] ...          the server value must equal the listed value (fixed)
 remote/apply runs "check-files" before it changes anything and "check-sites" before it stops the
 running release. The check prints file paths and key names, never a value.
-Design: backend/docs/dagitim/ortamlar.md. Python 3.9+, standard library only.
+Design: docs/dagitim/ortamlar.md. Python 3.9+, standard library only.
 
 Usage:
   settings.py check-files <env> <lists folder> --etc <folder> --press 0|1 --offsite 0|1

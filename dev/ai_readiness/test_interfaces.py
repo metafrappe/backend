@@ -56,6 +56,25 @@ class InterfaceInventoryTests(unittest.TestCase):
         self.assertEqual(result.stderr, "")
         return result.stdout
 
+    def test_tools_folder_keeps_its_own_path_after_an_app_folder(self):
+        sys.path.insert(0, str(GATE.parent))
+        self.addCleanup(sys.path.remove, str(GATE.parent))
+        from interfaces import folder_owners
+
+        self.write(
+            "OWNERS.md",
+            """
+            ## Klasörler ve sahipleri
+
+            | Klasör | İçerik | Sahip iş |
+            | --- | --- | --- |
+            | `apps/sample_app/sample_app/cards/`, `tools/press-ai/` | Cards and tools | cards-owner |
+            """,
+        )
+        owners = folder_owners(self.root / "OWNERS.md", {"sample_app"})
+        self.assertEqual(owners.get("tools/press-ai/"), "cards-owner", owners)
+        self.assertNotIn("apps/sample_app/sample_app/tools/press-ai/", owners)
+
     def test_lists_methods_hooks_events_and_owners(self):
         self.write(f"{APP}/api/cards.py", "import frappe\n@frappe.whitelist()\ndef read(): pass")
         self.write(f"{APP}/cards/events.py", "def update(): pass\ndef clear(): pass")

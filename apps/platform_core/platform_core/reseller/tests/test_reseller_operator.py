@@ -2,7 +2,7 @@
 
 Written before the code (D-2). The reseller side is tested in `access/tests/test_role_reseller_*.py`.
 These tests add the operator side and the input checks. They send real requests through the
-WSGI application of Frappe (D-6) and run with `backend/dev/bin/test platform_core`.
+WSGI application of Frappe (D-6) and run with `dev/bin/test platform_core`.
 
 All people and tenants are made up. Every address ends with `@example.test`.
 """
@@ -33,7 +33,7 @@ TENANT_ADMIN = "pr.kiraci.833@example.test"
 CUSTOMER = "musteri-833.example.test"
 
 
-@unittest.skipIf(frappe is None, "Frappe is not installed: the HTTP tests run with backend/dev/bin/test")
+@unittest.skipIf(frappe is None, "Frappe is not installed: the HTTP tests run with dev/bin/test")
 class TestResellerOperatorHttp(IntegrationTestCase):
 	@classmethod
 	def setUpClass(cls):

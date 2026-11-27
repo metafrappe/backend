@@ -1,4 +1,4 @@
-# OSV exceptions for backend/deploy/images/press-requirements.lock.txt only (review 2, small finding 2).
+# OSV exceptions for deploy/images/press-requirements.lock.txt only (review 2, small finding 2).
 # scans.py uses this file only when it scans the Press lock. Other locks use osv-exceptions.toml,
 # so a wcmatch in another lock is still reported. test_scans.py checks that wcmatch is only here.
 # Each [[IgnoredVulns]] entry must have an id and a reason that opens with "Owner: <role>.".

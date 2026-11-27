@@ -6,7 +6,7 @@ rejects an open leave with the same rules as `approve_leave`.
 
 The rule tests at the top need no site. The request tests go through the WSGI application of
 Frappe with a real session and need a test site with HRMS TR and platform_core installed:
-`backend/dev/bin/test hrms_tr --module hrms_tr.tests.test_home_summary`.
+`dev/bin/test hrms_tr --module hrms_tr.tests.test_home_summary`.
 All people, companies and records are made up.
 """
 
@@ -39,7 +39,7 @@ DOCTYPE = "Leave Application"
 REJECT = "/api/method/hrms_tr.api.reject_leave"
 SUMMARY = "/api/method/hrms_tr.api.get_home_summary"
 # Required fields of each part, as `contracts/hrms_tr.openapi.yaml` states them.
-# `backend/dev/hrms/test_contract.py` checks that the contract says the same.
+# `dev/hrms/test_contract.py` checks that the contract says the same.
 SUMMARY_PARTS = {"pending_approvals", "problems", "recent_changes", "counts"}
 PENDING_FIELDS = {
 	"name",

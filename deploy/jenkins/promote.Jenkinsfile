@@ -1,11 +1,11 @@
-// Manual promotion, rollback and resume of any release kind. Design: backend/docs/dagitim/ortamlar.md.
+// Manual promotion, rollback and resume of any release kind. Design: docs/dagitim/ortamlar.md.
 //
 // Two Jenkins jobs run this file, each in its own folder with its own keys:
 //   atonota-delivery/atonota-promote  keys alpha and beta: promote to beta, roll back or resume alpha or beta
 //   atonota-release/atonota-promote   keys beta, rc and prod: promote to rc or prod, roll back or resume rc or prod
 // A request for an environment whose key the folder does not hold fails at its first ssh step.
-// Jenkins setup (DevOps owner): Pipeline job, SCM karacaismail/frappesetup branch */main,
-// script path backend/deploy/jenkins/promote.Jenkinsfile, no trigger.
+// Jenkins setup (DevOps owner): Pipeline job, SCM metafrappe/backend branch */main,
+// script path deploy/jenkins/promote.Jenkinsfile, no trigger.
 //
 // Promotion moves the release that is current and healthy in the previous environment. The server
 // only names that release: the files deployed are the copy that Jenkins archived when it built the
@@ -31,17 +31,17 @@ def useStash() {
 // Returns the id of the release to move. Leaves the archived copy in archive/release.
 def checkSource(String source, String target, String job) {
     sshagent(credentials: ["atonota-deploy-ssh-${source}"]) {
-        sh "rm -rf server && backend/deploy/bin/fetch-current ${source} ${params.KIND} server"
+        sh "rm -rf server && deploy/bin/fetch-current ${source} ${params.KIND} server"
     }
     // check refuses a build field that is not a whole number before it is used below.
-    sh "python3 -I backend/deploy/release.py check server/release.json --env ${source}"
-    def build = sh(returnStdout: true, script: 'python3 -I backend/deploy/release.py field server/release.json build').trim()
+    sh "python3 -I deploy/release.py check server/release.json --env ${source}"
+    def build = sh(returnStdout: true, script: 'python3 -I deploy/release.py field server/release.json build').trim()
     sh 'rm -rf archive'
     copyArtifacts(projectName: job, selector: specific(build), filter: 'release/**', target: 'archive',
         fingerprintArtifacts: true)
-    sh 'python3 -I backend/deploy/release.py same-release archive/release/release.json server/release.json'
-    sh "python3 -I backend/deploy/release.py promote-check archive/release/release.json --target ${target} --source-record server/source-record.json"
-    return sh(returnStdout: true, script: 'python3 -I backend/deploy/release.py field archive/release/release.json release_id').trim()
+    sh 'python3 -I deploy/release.py same-release archive/release/release.json server/release.json'
+    sh "python3 -I deploy/release.py promote-check archive/release/release.json --target ${target} --source-record server/source-record.json"
+    return sh(returnStdout: true, script: 'python3 -I deploy/release.py field archive/release/release.json release_id').trim()
 }
 
 pipeline {
@@ -72,7 +72,7 @@ pipeline {
                     env.APPROVERS = params.ENVIRONMENT == 'prod' ? 'atonota-release-managers' : 'atonota-deployers'
                     checkout scm
                 }
-                stash name: 'deploy', includes: 'backend/deploy/**'
+                stash name: 'deploy', includes: 'deploy/**'
             }
         }
         stage('Prepare promotion') {
@@ -114,8 +114,8 @@ pipeline {
                         }
                         env.DEPLOYING = params.ENVIRONMENT
                         sshagent(credentials: ["atonota-deploy-ssh-${params.ENVIRONMENT}"]) {
-                            sh "backend/deploy/bin/deploy ${params.ENVIRONMENT} archive/release"
-                            sh "backend/deploy/bin/health ${params.ENVIRONMENT} archive/release"
+                            sh "deploy/bin/deploy ${params.ENVIRONMENT} archive/release"
+                            sh "deploy/bin/health ${params.ENVIRONMENT} archive/release"
                         }
                         env.DEPLOYING = ''
                     }
@@ -127,7 +127,7 @@ pipeline {
                         // Roll back only when the deployment itself started, and only that release.
                         if (env.DEPLOYING == params.ENVIRONMENT) {
                             sshagent(credentials: ["atonota-deploy-ssh-${params.ENVIRONMENT}"]) {
-                                sh "backend/deploy/bin/rollback ${params.ENVIRONMENT} ${params.KIND} --failed ${env.RELEASE_ID}"
+                                sh "deploy/bin/rollback ${params.ENVIRONMENT} ${params.KIND} --failed ${env.RELEASE_ID}"
                             }
                         }
                     }
@@ -155,7 +155,7 @@ pipeline {
                 useStash()
                 lock(resource: "atonota-${params.ENVIRONMENT}") {
                     sshagent(credentials: ["atonota-deploy-ssh-${params.ENVIRONMENT}"]) {
-                        sh "backend/deploy/bin/rollback ${params.ENVIRONMENT} ${params.KIND}${params.ACTION == 'rollback-restore' ? ' --restore-backup' : ''}"
+                        sh "deploy/bin/rollback ${params.ENVIRONMENT} ${params.KIND}${params.ACTION == 'rollback-restore' ? ' --restore-backup' : ''}"
                     }
                 }
             }
@@ -168,11 +168,11 @@ pipeline {
                 lock(resource: "atonota-${params.ENVIRONMENT}") {
                     script {
                         sshagent(credentials: ["atonota-deploy-ssh-${params.ENVIRONMENT}"]) {
-                            sh "rm -rf resumed && backend/deploy/bin/resume ${params.ENVIRONMENT} resumed"
+                            sh "rm -rf resumed && deploy/bin/resume ${params.ENVIRONMENT} resumed"
                             env.RELEASE_ID = sh(returnStdout: true,
-                                script: 'python3 -I backend/deploy/release.py field resumed/release.json release_id').trim()
+                                script: 'python3 -I deploy/release.py field resumed/release.json release_id').trim()
                             env.DEPLOYING = params.ENVIRONMENT
-                            sh "backend/deploy/bin/health ${params.ENVIRONMENT} resumed"
+                            sh "deploy/bin/health ${params.ENVIRONMENT} resumed"
                         }
                         env.DEPLOYING = ''
                     }
@@ -185,7 +185,7 @@ pipeline {
                         // health check after it rolls back, as after a promotion.
                         if (env.DEPLOYING == params.ENVIRONMENT) {
                             sshagent(credentials: ["atonota-deploy-ssh-${params.ENVIRONMENT}"]) {
-                                sh "backend/deploy/bin/rollback ${params.ENVIRONMENT} backend --failed ${env.RELEASE_ID}"
+                                sh "deploy/bin/rollback ${params.ENVIRONMENT} backend --failed ${env.RELEASE_ID}"
                             }
                         }
                     }

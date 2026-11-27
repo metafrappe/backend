@@ -11,10 +11,10 @@ RUN git init apps/press \
     && git -C apps/press checkout --detach FETCH_HEAD \
     && test "$(git -C apps/press rev-parse HEAD)" = "$PRESS_REVISION"
 ENV PRESS_TEST_EXPECTED_REVISION=$PRESS_REVISION
-COPY --chown=frappe backend/dev/press/probe-requirements.txt /opt/press-probe/
+COPY --chown=frappe dev/press/probe-requirements.txt /opt/press-probe/
 RUN uv pip install --python env/bin/python -r /opt/press-probe/probe-requirements.txt \
     && uv pip install --python env/bin/python --no-deps -e apps/press
-COPY --chown=frappe backend/dev/press/test_unpatched_runtime.py backend/dev/press/provisioning_probe.yml /opt/press-probe/
+COPY --chown=frappe dev/press/test_unpatched_runtime.py dev/press/provisioning_probe.yml /opt/press-probe/
 ENV PRESS_TEST_UNPATCHED_BENCH=/home/frappe/frappe-bench
 ENTRYPOINT []
 CMD ["env/bin/python", "-B", "/opt/press-probe/test_unpatched_runtime.py"]

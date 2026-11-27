@@ -1,8 +1,8 @@
 """Static contract of the reseller records and endpoints (G-169, G-170, AJA-833).
 
 Written before the code (D-2). The tests read files only, so they run without Frappe:
-`python3 -I -m unittest discover -s backend/apps/platform_core/platform_core/reseller/tests
--t backend/apps/platform_core -p 'test_reseller_contract.py'`
+`python3 -I -m unittest discover -s apps/platform_core/platform_core/reseller/tests
+-t apps/platform_core -p 'test_reseller_contract.py'`
 """
 
 from __future__ import annotations

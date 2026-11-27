@@ -59,7 +59,8 @@ class TestPasswordSessionSettings(FrappeAPITestCase):
 
 	def setUp(self):
 		super().setUp()
-		frappe.db.set_single_value("System Settings", WRONG)
+		# Frappe adds `modified` and `modified_by` to the dict it gets, so pass a copy.
+		frappe.db.set_single_value("System Settings", dict(WRONG))
 		h.refresh()
 
 	def test_policy_lists_every_g43_setting(self):

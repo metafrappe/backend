@@ -41,8 +41,7 @@ class FrappeKeycloakAlignmentTest(unittest.TestCase):
         cls.clients = {c["clientId"]: c for c in read_realm()["clients"]}
 
     def test_frappe_idle_limit_matches_every_employee_client(self):
-        settings = self.policy["SYSTEM_SETTINGS"]
-        self.assertEqual(_hh_mm_seconds(settings["session_expiry"]), self.policy["IDLE_SECONDS"])
+        self.assertEqual(_hh_mm_seconds(self.policy["SYSTEM_SETTINGS_IDLE_TIMEOUT"]), self.policy["IDLE_SECONDS"])
         for client_id in EMPLOYEE_CLIENTS:
             with self.subTest(client=client_id):
                 idle = self.clients[client_id]["attributes"]["client.session.idle.timeout"]

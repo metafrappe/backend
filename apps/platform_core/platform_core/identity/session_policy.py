@@ -1,6 +1,10 @@
-"""Session lifetime rules (PROJE-KAYDI.md O-25).
+"""Session lifetime and password rules (PROJE-KAYDI.md O-25, requirement G-43).
 
 - The Frappe cookie session ends after 1 hour without activity, for employees and customers.
+- The Frappe cookie session also ends 24 hours after sign-in, even with activity (G-43). Frappe has no
+  setting for a total lifespan, so `before_request` checks the session `creation` time. Both limits
+  match the Keycloak employee clients (identity/keycloak/realm/platform-realm.json).
+- `apply` also writes the G-43 password, lock-out, reset and share-key settings into System Settings.
   Frappe reads the idle limit from System Settings `session_expiry` (frappe/sessions.py:523) and checks
   it on every resume, in the cache (frappe/sessions.py:373) and in the database fallback
   (frappe/sessions.py:499). `apply` writes the limit on install and on every migrate.
@@ -18,12 +22,25 @@ import re
 import time
 
 import frappe
-from frappe.utils import now_datetime, time_diff_in_seconds
+from frappe.utils import cint, cstr, now_datetime, time_diff_in_seconds
 
 # System Settings validates hh:mm. Frappe's session parser expects hh:mm:ss.
 SYSTEM_SETTINGS_IDLE_TIMEOUT = "01:00"
 IDLE_TIMEOUT = f"{SYSTEM_SETTINGS_IDLE_TIMEOUT}:00"
 IDLE_SECONDS = 3600
+MAX_LIFESPAN_SECONDS = 86400
+# G-43: every System Settings value written on install and migrate.
+SYSTEM_SETTINGS = {
+	"session_expiry": SYSTEM_SETTINGS_IDLE_TIMEOUT,
+	"enable_password_policy": 1,
+	"minimum_password_score": "3",
+	"allow_consecutive_login_attempts": 5,
+	"allow_login_after_fail": 300,
+	"logout_on_password_reset": 1,
+	"reset_password_link_expiry_duration": 900,
+	"password_reset_limit": 3,
+	"document_share_key_expiry": 7,
+}
 ACTIVITY_PREFIX = "kimlik_activity"
 AUTH_TIME_LEEWAY = 30
 BACKGROUND_HEADER = "X-Platform-Background"
@@ -37,11 +54,25 @@ BACKGROUND_METHOD_PREFIXES = (
 )
 
 
+def _differs(current, wanted) -> bool:
+	if isinstance(wanted, int):
+		return cint(current) != wanted
+	return cstr(current) != wanted
+
+
 def apply() -> None:
-	"""Writes the idle limit into System Settings. Called by `after_install` and `after_migrate`."""
-	if frappe.db.get_single_value("System Settings", "session_expiry") != SYSTEM_SETTINGS_IDLE_TIMEOUT:
-		# V-1 exception: a single field of a single DocType, no validation side effects are wanted here.
-		frappe.db.set_single_value("System Settings", "session_expiry", SYSTEM_SETTINGS_IDLE_TIMEOUT)
+	"""Writes the G-43 settings into System Settings. Called by `after_install` and `after_migrate`.
+
+	Only values that differ are written, so a second run changes nothing.
+	"""
+	changes = {
+		field: wanted
+		for field, wanted in SYSTEM_SETTINGS.items()
+		if _differs(frappe.db.get_single_value("System Settings", field), wanted)
+	}
+	if changes:
+		# V-1 exception: plain fields of a single DocType, no validation side effects are wanted here.
+		frappe.db.set_single_value("System Settings", changes)
 		frappe.clear_cache()
 
 
@@ -103,8 +134,14 @@ def _idle_limit_reached(sid: str) -> bool:
 	return not created_at or time_diff_in_seconds(now_datetime(), created_at) >= IDLE_SECONDS
 
 
+def _lifespan_reached() -> bool:
+	"""True 24 hours after sign-in (G-43). Activity does not extend the total lifespan."""
+	created_at = frappe.session.data.get("creation")
+	return bool(created_at) and time_diff_in_seconds(now_datetime(), created_at) >= MAX_LIFESPAN_SECONDS
+
+
 def before_request() -> None:
-	"""Ends a cookie session whose last real activity is older than the idle limit.
+	"""Ends a cookie session that is older than 24 hours or idle for the idle limit.
 
 	Frappe renews `last_updated` on every request, background polling included (frappe/sessions.py:420).
 	This hook measures real activity instead. A request with the session cookie is always checked.
@@ -120,11 +157,16 @@ def before_request() -> None:
 		return
 	if request.cookies.get("sid") != sid:
 		return
-	if _idle_limit_reached(sid):
+	reason = None
+	if _lifespan_reached():
+		reason = "Session lifetime"
+	elif _idle_limit_reached(sid):
+		reason = "Idle timeout"
+	if reason:
 		from frappe.auth import clear_cookies
 		from frappe.sessions import delete_session
 
-		delete_session(sid, user=user, reason="Idle timeout")
+		delete_session(sid, user=user, reason=reason)
 		clear_cookies()
 		frappe.local.session = frappe._dict({"user": "Guest", "sid": "Guest", "data": frappe._dict()})
 		frappe.set_user("Guest")

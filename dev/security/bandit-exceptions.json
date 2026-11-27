@@ -3603,5 +3603,59 @@
     "reason": "The current Python interpreter runs the copied login CLI with isolated mode and test-owned redirect arguments. It renders JSON from temporary brand fixtures without a shell or service access.",
     "owner": "brand-settings",
     "ignoreUntil": "2027-02-22"
+  },
+  {
+    "rule": "B105",
+    "file": "e2e/mcp_oauth/client.py",
+    "code": "\"token_resource\": False,",
+    "statementSha256": "68add076168ce17c1d8ab36c4b6a071634d4bfb788ad58bdbb4f13c43bf26f64",
+    "reason": "The dictionary contains audit result labels and boolean values, not credentials. token_resource starts false until RFC 8707 resource binding is observed.",
+    "owner": "mcp-oauth-client",
+    "ignoreUntil": "2027-02-22"
+  },
+  {
+    "rule": "B106",
+    "file": "e2e/mcp_oauth/client.py",
+    "code": "token_endpoint_auth_method=\"none\",",
+    "statementSha256": "9bc7c40dbfc9b06c567982a4d8b62e61467713b0c96a98b36ab73346f5fa86f8",
+    "reason": "The pre-registered public OAuth client must use token_endpoint_auth_method none. This standard protocol enum is not a client secret; authorization code and PKCE S256 authenticate the exchange.",
+    "owner": "mcp-oauth-client",
+    "ignoreUntil": "2027-02-22"
+  },
+  {
+    "rule": "B105",
+    "file": "e2e/mcp_oauth/client.py",
+    "code": "\"invalid_token_case\": \"tampered_signature\",",
+    "statementSha256": "0400c40761cd7de491513181f5fb16b69a967a1a4f809076faad53e8a579b87f",
+    "reason": "tampered_signature is a fixed result label describing the negative probe. The real token is held only in memory and is never included in this result dictionary.",
+    "owner": "mcp-oauth-client",
+    "ignoreUntil": "2027-02-22"
+  },
+  {
+    "rule": "B105",
+    "file": "e2e/mcp_oauth/tests/test_client.py",
+    "code": "patch.dict(\"os.environ\", {\"MCP_TEST_PASSWORD\": \"fixture-only\"}),",
+    "statementSha256": "25a09cfadb1824a1907a36dcb460d94707136c309d92396a465621f3d5560dbf",
+    "reason": "Synthetic fixture-only password is used exclusively by this unit test with an injected HTTP MockTransport. It is not an account credential and no real HTTP request is sent.",
+    "owner": "mcp-oauth-client",
+    "ignoreUntil": "2027-02-22"
+  },
+  {
+    "rule": "B404",
+    "file": "e2e/mcp_oauth/fixture.py",
+    "code": "import subprocess",
+    "statementSha256": "51fb82e631da1ad4601b6eb0680fdf522b8d498c85382f7601aa0d97124d6193",
+    "reason": "Import for the local MCP OAuth fixture CLI. All process calls go through one run() helper with fixed argument lists and no shell.",
+    "owner": "mcp-oauth-client",
+    "ignoreUntil": "2027-02-22"
+  },
+  {
+    "rule": "B603",
+    "file": "e2e/mcp_oauth/fixture.py",
+    "code": "return subprocess.run(args, **kwargs)",
+    "statementSha256": "1518fd0789b4c81ecd6d7c101924fb873375228a9e3a4ccd95ab101182804e4d",
+    "reason": "Single process entry point of the local MCP OAuth fixture. Callers pass fixed docker, ssh and Python argument lists built from validated settings, or the command the local user gives to the lock subcommand; no shell is used and secrets travel on stdin or in the child environment, never in arguments.",
+    "owner": "mcp-oauth-client",
+    "ignoreUntil": "2027-02-22"
   }
 ]

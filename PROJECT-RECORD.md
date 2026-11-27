@@ -435,6 +435,26 @@ Proje sahibi 22 Kasım 2026 Pazar günü şöyle yazdı: “Herşeyi onaylıyoru
   - Eklerin listesi ve test adımları [devir notundadır](docs/handoff/press-tr-extension-test.md).
   - Bu karar önce O-54 numarasını taşıyordu. O-54 ile O-61 arasındaki numaralar başka kararlara verildi. Karar 25 Kasım 2026 Çarşamba günü O-62 oldu.
 
+- **O-64. Yerel dış MCP kanıtında resmî Python SDK kullanılır.**
+  - Karar 23 Kasım 2026 Pazartesi günü alındı. Görev AJA-57 kapsamındadır.
+  - İstemci `mcp==1.29.0` sürümüdür. Lisansı MIT olarak yayımlanmıştır.
+  - Bu sürüm mevcut sunucunun `2025-11-25` MCP protokolünü destekler.
+  - SDK keşfi, giriş kodunu ve PKCE denetimini yürütür. Araç çağrısını da SDK yapar.
+  - SDK, istemci geliştirmek için hazır bir kitaplıktır. PKCE, giriş kodunun başka istemcide kullanılmasını önler.
+  - MCP Inspector da düşünüldü. Tekrar koşan Python betiği bu görevde daha az araç gerektirir.
+  - Yeni paket yalnız test ortamına kurulur. Frappe uygulamasının bağımlılıkları değişmez.
+  - Doğrudan sürüm `requirements.txt` dosyasındadır. Çözülen sürümler `requirements.lock.txt` dosyasındadır.
+  - Kitaplığın bakımı resmî MCP Python SDK ekibindedir. Sürüm değişince yerel akış tekrar denenir.
+  - Geri dönüş, bu test istemcisini kaldırmaktır. Üretimde OAuth ayarı açılmaz.
+  - Test tam realm kopyasını kullanır. Üç MCP istemcisi yalnız ayrı test ortamında açılır.
+  - Test hesabı uydurma veridir. Giriş formunu HTTP ile doldurmak tarayıcı kanıtı sayılmaz.
+  - Parola, giriş kodu ve belirteç sonuç kaydına yazılmaz. Belirteçler bellekte tutulur.
+  - Çalıştırma yolu [yerel istemci belgesindedir](e2e/mcp_oauth/README.md).
+  - Bandit dört sabit değeri sır sandı. Değerler protokol ayarı ve test etiketidir.
+  - İstisnalar yalnız ilgili satır ve işlem özetiyle eşleşir. Tarama ve kurallar açık kalır.
+  - İstisnaların sahibi `mcp-oauth-client` işidir. Bitiş 22 Şubat 2027 Pazartesi günüdür.
+  - Bu karar önce O-57 numarasını taşıyordu. O-57 ile O-63 arasındaki numaralar başka kararlara verildi. Karar 27 Kasım 2026 Cuma günü O-64 oldu.
+
 ## Karar sitesine işlenecek farklar
 
 Backend kararları karar sitesinin bazı maddelerini değiştirdi. Site ayrı bir işte, kendi denetimleriyle güncellenir. Farklar şunlardır:

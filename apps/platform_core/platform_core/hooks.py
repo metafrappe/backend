@@ -53,6 +53,9 @@ override_whitelisted_methods = {
 	"frappe.desk.search.search_widget": "platform_core.access.link_search.search_widget",
 	# Link validation hands a search function from the request to the same search.
 	"frappe.client.validate_link_and_fetch": "platform_core.access.link_search.validate_link_and_fetch",
+	# The realtime server asks this before a socket joins a room. The list room of a governed type
+	# would show a narrowed user the names of hidden records (G-121).
+	"frappe.realtime.has_permission": "platform_core.access.realtime.has_permission",
 }
 
 # Identity: Frappe idle timeout of 1 hour (O-25, identity/session_policy.py).

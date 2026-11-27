@@ -36,6 +36,8 @@ tags:
     description: Role permission rows (G-62). They change the site settings.
   - name: search
     description: Link search. Read-only. Replaces two Frappe endpoints at their own address.
+  - name: realtime
+    description: Room check of the realtime server. Read-only. Replaces one Frappe endpoint at its own address.
 paths:
   /platform_core.api.access.explain_permission:
     get:
@@ -858,9 +860,67 @@ paths:
         "417":
           description: Invalid input.
 
+  /platform_core.access.realtime.has_permission:
+    get:
+      x-frappe-original: [frappe.realtime.has_permission]
+      tags: [realtime]
+      operationId: realtimeRoomCheck
+      summary: Room check of the realtime server behind the access rules.
+      description: |
+        The engine puts this function in place of `frappe.realtime.has_permission`. The realtime
+        server calls `/api/method/frappe.realtime.has_permission` before a socket joins a room.
+        The address and the inputs do not change. POST is accepted too, with the same inputs in the body.
+
+        A record name asks for the record room. Frappe's check runs, and the record hook of the
+        engine answers it. An empty name asks for the list room of the document type. On a governed
+        document type the list room is open only to a user with a read rule of scope `all` and no
+        filters. Frappe sends the name of every changed record and the user who changed it to that
+        room. It does not change any record. G-121, decision note section 9.
+      security:
+        - frappeSession: []
+        - {}
+      parameters:
+        - name: doctype
+          in: query
+          required: true
+          description: Document type of the room.
+          schema: {type: string}
+        - name: name
+          in: query
+          required: true
+          description: Record name for the record room. Empty for the list room.
+          schema: {type: string}
+        - name: ptype
+          in: query
+          required: false
+          description: Permission type to check. The default is `read`.
+          schema: {type: string, default: read}
+      responses:
+        "200":
+          description: The socket may join the room.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: boolean
+                    const: true
+        "401":
+          $ref: "#/components/responses/SessionExpired"
+        "403":
+          description: |
+            No permission on the record, no role permission on the document type, or the list
+            room of a governed document type for a user whose rules hide some records.
+        "417":
+          description: Invalid input.
+        "429":
+          description: Too many room checks from one user or one guest address in a minute.
+
 x-replaced-endpoints:
   description: |
-    The engine puts its own function in place of three Frappe endpoints: the two search endpoints and link validation.
+    The engine puts its own function in place of four Frappe endpoints: the two search endpoints, link validation and the realtime room check.
     The addresses do not change. The client uses the same address and the same inputs.
     The changed behaviour is below. This is a behaviour change of an existing endpoint.
   endpoints:
@@ -873,6 +933,9 @@ x-replaced-endpoints:
     - path: /api/method/frappe.client.validate_link_and_fetch
       replaced_by: platform_core.access.link_search.validate_link_and_fetch
       methods: [GET, POST]
+    - path: /api/method/frappe.realtime.has_permission
+      replaced_by: platform_core.access.realtime.has_permission
+      methods: [GET, POST]
   behaviour:
     - The caller must have `select` or `read` permission on the searched document type. Otherwise the endpoint returns 403.
     - Frappe's standard search does not change. The result passes through the list rule and the field level.
@@ -883,6 +946,7 @@ x-replaced-endpoints:
     - On a document type that is not governed, a custom search runs with Frappe's usual behaviour.
     - An unknown input name is rejected. The wrappers accept every input of the Frappe function they replace. A test compares the two.
     - "`search_link` keeps the browser cache header of Frappe's endpoint: 60 seconds."
+    - "Realtime room check: a record room keeps Frappe's check. The list room of a governed type is open only to a user whose read rule has scope `all` and no filters. Other users get 403, and their list does not refresh by itself."
     - "Not covered: `frappe.contacts.doctype.address.address.address_query` calls the search from Python for the “Address” type. It matters only if “Address” is governed and an app also sets a `standard_queries` function for it."
 
 x-hooks:

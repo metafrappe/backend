@@ -137,6 +137,37 @@ def list_criterion(doctype: str, user: str) -> Criterion | None:
 	return any_rule(applicable, doctype, user, table_column(doctype))
 
 
+FILE = "File"
+
+
+def attachment_criterion(user: str) -> Criterion | None:
+	"""The list condition for files: an attachment of a governed record is listed only when the record is.
+
+	Frappe's own file condition asks only whether the user may read the attached document type
+	(`frappe/core/doctype/file/file.py:1128`). Returns `None` when no document type is governed.
+	"""
+	governed = [doctype for doctype in rules.active_rules() if doctype != FILE]
+	if not governed:
+		return None
+	file = frappe.qb.DocType(FILE)
+	parts = [file.attached_to_doctype.isnull() | file.attached_to_doctype.notin(governed)]
+	for doctype in governed:
+		table = frappe.qb.DocType(doctype)
+		visible = frappe.qb.from_(table).select(table.name).where(list_criterion(doctype, user))
+		parts.append((file.attached_to_doctype == doctype) & file.attached_to_name.isin(visible))
+	return Criterion.any(parts)
+
+
+def stored_record_visible(doctype: str, name: str | None, user: str) -> bool:
+	"""The read decision on a stored record. A missing record is not visible."""
+	applicable = rules.applicable(doctype, user, "read")
+	if not applicable or not name:
+		return False
+	criterion = any_rule(applicable, doctype, user, table_column(doctype))
+	row = stored_row(doctype, name, {"ok": criterion}, [])
+	return bool(row and row.ok)
+
+
 def rule_fields(applicable: list[dict]) -> list[str]:
 	"""The fields the rules look at. They are read to see whether they changed."""
 	fields = []

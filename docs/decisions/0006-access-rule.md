@@ -355,6 +355,10 @@ Aynı sonuç iki şeye dayanır. Birincisi tek değerlendiricidir (6. bölüm). 
 | Bağlantı araması, özel işlevle | Uygulamanın arama işlevi | Kurallı türde reddedilir | `desk/search.py:133` |
 | Sorgu raporu | Raporun kendi SQL'i | Kanca çalışmaz. Rapor kapısı karar verir. | `desk/query_report.py:968` |
 | Hazır rapor dosyası | Özel dosya indirme | Kurallı veride kapalıdır | `core/doctype/file/file.py:976` |
+| Dosya ve ekler | Dosya kaydı, dosya listesi, özel dosya indirme | Ek, bağlı kaydın kuralına uyar | `core/doctype/file/file.py:1088`, `:1128` |
+| Arka plan işleri | İş, kuyruğa koyan kullanıcı adına çalışır | Kayıt ve liste kancası | `utils/background_jobs.py:179`, `:251` |
+| Realtime olayları | Realtime sunucusunun oda denetimi | Kayıt odası kayıt kancasını sorar. Kurallı türün liste odası daraltılmış kullanıcıya kapalıdır. | `realtime/__init__.py:126` |
+| Global arama | Her sonuç için `frappe.has_permission` | Kayıt kancası | `utils/global_search.py:538` |
 | Sistem kodu | `frappe.get_all`, ham SQL | **Kanca çalışmaz** | `__init__.py:1400` |
 
 ### Sorgu raporu açığı
@@ -559,14 +563,20 @@ Bu yüzden iki önlem vardır:
 
 Bu tarama yalnız `platform_core` paketini kapsar. Başka uygulamaların kodu taranmaz.
 
-### Kapsanmayan yüzeyler
+### Sonradan sınanan yüzeyler
 
-Şu yüzeyler bu turda sınanmaz. Hepsi durum dosyasında `not_run` olarak yazılır.
+İlk turda dört yüzey sınanmadı. Bunlar dosya ve ekler, arka plan işleri, realtime olayları ve global aramaydı.
 
-- Dosya ve ekler,
-- arka plan işleri,
-- anlık bildirimler (“realtime”),
-- genel arama.
+AJA-2280 işi 28 Kasım 2026 Cumartesi günü bu yüzeylere ret testi ekledi. PDF indirme yollarına da ayrı test eklendi. Artık test edilmemiş veri yüzeyi kalmadı.
+
+Bütün yüzeylerin tek matrisi `docs/evidence/g121-access-surface-matrix.md` dosyasındadır. Matriste her yüzeyin Frappe yolu ve test dosyası vardır.
+
+Testler iki açık buldu:
+
+- Dosya listesi gizli kayıtların eklerini gösteriyordu. Motor artık ekleri bağlı kaydın kuralıyla süzer.
+- Realtime liste odası gizli kayıtların adlarını yayıyordu. Kurallı türün liste odası artık yalnız bütün kayıtları gören kullanıcıya açıktır.
+
+İki düzeltmenin ayrıntısı matris belgesindedir.
 
 ## 10. Paylaşılmış kayıt kuralı nasıl etkiler?
 
@@ -715,12 +725,17 @@ Beklenen sonuçlar bu nottan, sözleşmeden ve karar sitesinden gelir (D-1).
 | `test_report_rules.py` | Rapor kuralları: hazır rapor, sorgu raporu, betik raporu, zamanlanmış e-posta raporu. | R-9, kararlar A, B, C, E |
 | `test_rule_cache.py` | Kural değişen istekte kısmi ve tam geri alma. | R-9 |
 | `test_auto_email_report.py` | Zamanlanmış e-posta raporu: herkese kapalı olması, zamanlayıcı ve migrate temizliği. | R-9, D-6 |
+| `test_file_surface.py` | Gizli kaydın eki açılmaz ve listelenmez. | G-121 |
+| `test_background_job_surface.py` | Arka plan işi kullanıcının kuralıyla çalışır. | G-121 |
+| `test_global_search_surface.py` | Global arama gizli kaydı döndürmez. | G-121 |
+| `test_pdf_surface.py` | PDF ve yazdırma yolları gizli kaydı reddeder. | G-121 |
 
 Güvenlik kapısı uç testlerini modülün yanında ister. Bu yüzden iki dosya daha vardır:
 
 - `api/test_access.py` dört ucun misafir ve yabancı veri reddini sınar.
 - `access/test_reports.py` sorgu raporu kapısını sınar.
 - `access/test_link_search.py` bağlantı araması süzgecini sınar.
+- `access/test_realtime.py` realtime oda denetimini sınar.
 
 Testler önce kancalar kapalıyken çalıştırıldı. 83 testten 80'i beklenen nedenle başarısız oldu (D-2). Örneğin çalışan bütün kayıtları gördü ve başkasının kaydı 200 döndü. Kancalar açılınca testler geçti.
 
@@ -850,7 +865,8 @@ Bu bölüm bilerek bırakılan eksikleri sayar (O-3). Orkestratör bu tabloyu pr
 | Rol ve rol izni yönetim uçları | Rol izni yönetim ekranından verilir. | Bu işin sahibi belli değil. | G-62 için sahip atanır ve uçlar yazılır. |
 | Süzgeçte `>`, `<` ve `like` işleçleri | Kural aralık koşulu yazamaz. | Şimdilik ihtiyaç yok (A-5). | İlk gerçek ihtiyaç doğar ve işleç testiyle eklenir. |
 | Kiracı yöneticisi rolü (“Tenant Admin”) | Yönetim uçları “System Manager” ister. | Rol henüz tanımlı değil. | G-62 rolü tanımlar ve uçlar o rolü kabul eder. |
-| Dosya, arka plan işi, anlık bildirim ve genel arama yüzeyleri | Bu yüzeylerde kuralın etkisi sınanmadı. | Bu tur liste, kayıt, rapor ve dışa aktarmayı kapsar. | G-121 her yüzey için gerçek istekli test ekler. |
+| Açık dosyanın içeriği | Web sunucusu açık dosyayı izin sormadan verir. Dosya kaydı ise kurala uyar. | Frappe'nin davranışıdır. | Kurallı kayıtların ekleri özel dosya olarak yüklenir. |
+| Daraltılmış kullanıcının canlı liste yenilemesi | Liste kendiliğinden yenilenmez. Kullanıcı listeyi elle yeniler. | Liste odası gizli kayıtların adlarını taşır. | Kurala göre süzülen bir liste olayı yazılır. |
 | “Address” türünde `address_query` yolundaki arama | Özel arama işlevi kapıdan geçmeden çalışabilir. Yol yalnız türe kural ve `standard_queries` işlevi birlikte yazılırsa açılır. | Bugün ikisi de yok. Kodda `BORC(scale)` ile işaretli. | “Address” türüne ilk kural yazılmadan önce uç sarılır. |
 | Seçenek değerlerinin Türkçesi (`own`, `team` gibi) | Yönetim ekranında beş seçenek İngilizce görünebilir. | Çeviri dosyası ortaktır. Bağlamsız `all` satırı bütün uygulamayı etkiler. | Çeviri sahibi bağlamlı satır yolunu belirler. |
 | Kanban panosunun sütun sayısı | Kural dışı kayıtların sayısı görünebilir. | Frappe'nin davranışıdır ve bu tur sınamadı. | Bir test davranışı doğrular. Doğruysa pano kurallı türde kapatılır. |
@@ -1031,14 +1047,14 @@ Giriş matrisi testi bu tabloyu gerçek istekle sınar (`access/tests/test_entry
 | --- | --- | --- |
 | `permission_query_conditions` | `platform_core.access.hooks.query_conditions`, bütün türler için | Liste sorgusuna kural koşulunu ekler. |
 | `has_permission` | `platform_core.access.hooks.has_permission`, bütün türler için | Tek kayıtta kuralı uygular. |
-| `override_whitelisted_methods` | `frappe.desk.search.search_link`, `frappe.desk.search.search_widget`, `frappe.client.validate_link_and_fetch` | Üç Frappe ucunun yerine motorun sarmalayıcısı çalışır. |
+| `override_whitelisted_methods` | `frappe.desk.search.search_link`, `frappe.desk.search.search_widget`, `frappe.client.validate_link_and_fetch`, `frappe.realtime.has_permission` | Dört Frappe ucunun yerine motorun sarmalayıcısı çalışır. |
 | `extend_doctype_class` | `access.reports.GuardedReport`, `GuardedPreparedReport`, `GuardedAutoEmailReport`, `GuardedFile` | Sırasıyla “Report”, “Prepared Report”, “Auto Email Report”, “File” türlerini genişletir. |
 | `doc_events` | `platform_core.access.rules.clear_cache` | “Role” ve “DocType” olaylarında kural listesini unutur. Olaylar `on_trash` ve `after_rename` olur. |
 | `after_install`, `after_migrate` | `platform_core.access.reports.switch_off_governed_auto_email_reports` | Kurallı veriye dokunan e-posta raporlarını kapatır. |
 | `before_job` | `platform_core.access.reports.refuse_prepared_report_job` | Sıradaki hazır rapor işini reddeder. |
 | `website_user_allowed_methods` | `platform_core.api.access.get_access_summary`, `platform_core.api.access.explain_permission` | Website User özet ucunu çağırabilir. Açıklama ucunu yalnız “Tenant Admin” rolüyle çağırır. |
 
-Tam bağlar `platform_core/hooks.py` dosyasındadır. Kısa sınıf adlarının modülü `platform_core.access.reports` olur. Sınıf eklerinin yöntemleri `super()` çağrısını korur. Üç uç sarmalayıcısı `platform_core.access.link_search` modülündedir. Sarmalayıcı adları Frappe uçlarının son adıyla aynıdır.
+Tam bağlar `platform_core/hooks.py` dosyasındadır. Kısa sınıf adlarının modülü `platform_core.access.reports` olur. Sınıf eklerinin yöntemleri `super()` çağrısını korur. Üç arama sarmalayıcısı `platform_core.access.link_search` modülündedir. Realtime oda denetimi `platform_core.access.realtime` modülündedir. Sarmalayıcı adları Frappe uçlarının son adıyla aynıdır.
 
 ### Platform kancaları
 

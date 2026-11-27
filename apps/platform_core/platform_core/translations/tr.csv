@@ -1012,3 +1012,4 @@ Support URL,Destek bağlantısı,PLT Help Topic
 Optional HTTPS URL or same-site relative path. Leave blank when unavailable.,HTTPS adresini veya site içindeki yolu yazın. Bağlantı yoksa alanı boş bırakın.,PLT Help Topic
 Help links must use HTTPS or a same-site relative path.,Yardım bağlantılarında HTTPS adresi veya site içindeki yol kullanılmalıdır.,
 A valid component identifier is required.,Geçerli bir bileşen kimliği yazın.,
+Live list updates of {0} are closed: Access Rules hide some of its records from you.,{0} için canlı liste güncellemesi kapalıdır. Erişim kuralı bazı kayıtları sizden gizler.,

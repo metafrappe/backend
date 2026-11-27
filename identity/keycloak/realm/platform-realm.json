@@ -14,7 +14,7 @@
     "tr",
     "en"
   ],
-  "defaultLocale": "tr",
+  "defaultLocale": "en",
   "loginTheme": "atonota",
   "accountTheme": "atonota",
   "adminTheme": "keycloak.v2",

@@ -85,8 +85,14 @@ required_apps = ["press"]
 # before_install = "press_tr.install.before_install"
 # AJA-421: the setup step opens the "Recovery Reviewer" role only when it is missing.
 # The role is not a fixture: Frappe rewrites every fixture on each migrate (AJA-857).
-after_install = ["press_tr.press_identity.recovery.ensure_reviewer_role"]
-after_migrate = ["press_tr.press_identity.recovery.ensure_reviewer_role"]
+after_install = [
+	"press_tr.press_identity.recovery.ensure_reviewer_role",
+	"press_tr.pricing_schema.sync_pricing_fields",
+]
+after_migrate = [
+	"press_tr.press_identity.recovery.ensure_reviewer_role",
+	"press_tr.pricing_schema.sync_pricing_fields",
+]
 
 # Uninstallation
 # ------------
@@ -288,7 +294,19 @@ doc_events = {
 	},
 	# G-49: Press's own key format check never runs, so press_tr checks it on every Site save.
 	"Site": {"validate": "press_tr.backup_keys.validate_site_keys"},
+	"Site Plan": {
+		"validate": "press_tr.pricing.reject_price_edit",
+		"on_update": "press_tr.pricing.move_subscriptions_on_activation",
+	},
+	"Subscription": {"validate": "press_tr.pricing.reject_early_subscription"},
 }
-extend_doctype_class = {"Account Request": ["press_tr.press_identity.accounts.AccountRequestPolicy"]}
+extend_doctype_class = {
+	"Account Request": ["press_tr.press_identity.accounts.AccountRequestPolicy"],
+	"Site Plan": ["press_tr.pricing.SitePlanPricing"],
+}
+
+override_whitelisted_methods = {
+	"press.api.site.get_site_plans": "press_tr.pricing.get_panel_plans",
+}
 
 ai_write_closed_doctypes = ["PTR Identity Link", "PTR Keycloak Session"]

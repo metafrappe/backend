@@ -221,7 +221,7 @@ class PriceRevisionTest(unittest.TestCase):
     def test_application_registers_install_and_save_hooks(self):
         with patch.object(sys, "path", [str(APP), *sys.path]):
             hooks = importlib.import_module("press_tr.hooks")
-        self.assertEqual(hooks.after_install, "press_tr.pricing_schema.sync_pricing_fields")
+        self.assertIn("press_tr.pricing_schema.sync_pricing_fields", hooks.after_install)
         self.assertEqual(hooks.after_migrate, hooks.after_install)
         self.assertEqual(
             hooks.doc_events["Site Plan"]["on_update"], "press_tr.pricing.move_subscriptions_on_activation"

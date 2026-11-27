@@ -179,3 +179,11 @@ class StandardsPr66Tests(unittest.TestCase):
         text = standards_text("KARARLAR.md")
         self.assertIn("#### Kod yorumlarının dili", text)
         self.assertIn("Kod yorumları da İngiliz İngilizcesiyle yazılır.", text)
+
+
+class StandardsPr78Tests(unittest.TestCase):
+    """frappesetup PR #78: Decision 47, ProPR merges the pull requests (AJA-1672)."""
+
+    def test_decision_record_has_decision_47(self):
+        text = standards_text("KARARLAR.md")
+        self.assertIn("### Karar 47. Backend dalı GitHub'da olacak, PR'ları ProPR birleştirecek", text)

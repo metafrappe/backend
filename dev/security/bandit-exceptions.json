@@ -3603,5 +3603,41 @@
     "reason": "The current Python interpreter runs the copied login CLI with isolated mode and test-owned redirect arguments. It renders JSON from temporary brand fixtures without a shell or service access.",
     "owner": "brand-settings",
     "ignoreUntil": "2027-02-22"
+  },
+  {
+    "rule": "B105",
+    "file": "e2e/mcp_oauth/client.py",
+    "code": "\"token_resource\": False,",
+    "statementSha256": "68add076168ce17c1d8ab36c4b6a071634d4bfb788ad58bdbb4f13c43bf26f64",
+    "reason": "The dictionary contains audit result labels and boolean values, not credentials. token_resource starts false until RFC 8707 resource binding is observed.",
+    "owner": "mcp-oauth-client",
+    "ignoreUntil": "2027-02-22"
+  },
+  {
+    "rule": "B106",
+    "file": "e2e/mcp_oauth/client.py",
+    "code": "token_endpoint_auth_method=\"none\",",
+    "statementSha256": "9bc7c40dbfc9b06c567982a4d8b62e61467713b0c96a98b36ab73346f5fa86f8",
+    "reason": "The pre-registered public OAuth client must use token_endpoint_auth_method none. This standard protocol enum is not a client secret; authorization code and PKCE S256 authenticate the exchange.",
+    "owner": "mcp-oauth-client",
+    "ignoreUntil": "2027-02-22"
+  },
+  {
+    "rule": "B105",
+    "file": "e2e/mcp_oauth/client.py",
+    "code": "\"invalid_token_case\": \"tampered_signature\",",
+    "statementSha256": "0400c40761cd7de491513181f5fb16b69a967a1a4f809076faad53e8a579b87f",
+    "reason": "tampered_signature is a fixed result label describing the negative probe. The real token is held only in memory and is never included in this result dictionary.",
+    "owner": "mcp-oauth-client",
+    "ignoreUntil": "2027-02-22"
+  },
+  {
+    "rule": "B105",
+    "file": "e2e/mcp_oauth/tests/test_client.py",
+    "code": "patch.dict(\"os.environ\", {\"MCP_TEST_PASSWORD\": \"fixture-only\"}),",
+    "statementSha256": "25a09cfadb1824a1907a36dcb460d94707136c309d92396a465621f3d5560dbf",
+    "reason": "Synthetic fixture-only password is used exclusively by this unit test with an injected HTTP MockTransport. It is not an account credential and no real HTTP request is sent.",
+    "owner": "mcp-oauth-client",
+    "ignoreUntil": "2027-02-22"
   }
 ]

@@ -1,0 +1,2 @@
+# Test client only. Application/runtime dependencies are unchanged.
+mcp==1.29.0

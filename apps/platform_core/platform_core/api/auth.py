@@ -7,8 +7,8 @@ import frappe
 from frappe import _
 from frappe.rate_limiter import rate_limit
 
-from platform_core.identity import csrf_token, login_accounts, provider_setup, sign_in, sign_out
-from platform_core.identity.exceptions import InvalidRedirect, KeycloakLoginNotConfigured
+from platform_core.identity import csrf_token, helpers, login_accounts, provider_setup, sign_in, sign_out
+from platform_core.identity.exceptions import InvalidInput, InvalidRedirect, KeycloakLoginNotConfigured
 from platform_core.identity.safe_errors import safe_errors
 from platform_core.shell.http import no_store, require_session
 
@@ -52,12 +52,37 @@ def get_login_url(redirect_to: str | None = None) -> dict:
 @frappe.whitelist(allow_guest=True, methods=["GET"])  # nosemgrep: frappe-missing-permission
 @_render_browser_rate_limit
 @rate_limit(limit=20, seconds=60)
-def start_login(redirect_to: str | None = None, switch_account: int = 0) -> None:
+def start_login(
+	redirect_to: str | None = None,
+	switch_account: int = 0,
+	prompt: str | None = None,
+	max_age: int | None = None,
+	acr_values: str | None = None,
+) -> None:
 	"""Browser entry point of the sign-in: same work as `get_login_url`, then a 302 to Keycloak.
-	The brand button on the tenant `/login` page links here."""
+	The brand button on the tenant `/login` page links here. The re-authentication address of a sensitive
+	operation (G-163) adds `prompt=login`, `max_age=0` and `acr_values`; only those values are accepted."""
 	try:
-		result = sign_in.build_login_url(redirect_to, force_login=switch_account == 1)
-	except (InvalidRedirect, KeycloakLoginNotConfigured) as error:
+		if (
+			prompt not in (None, "", "login")
+			or max_age not in (None, 0)
+			or acr_values
+			not in (
+				None,
+				"",
+				*helpers.ACR_LEVELS,
+			)
+		):
+			frappe.throw(
+				_("The sign-in options are not valid.", context="platform_core.identity"), InvalidInput
+			)
+		result = sign_in.build_login_url(
+			redirect_to,
+			force_login=switch_account == 1 or prompt == "login",
+			acr_values=acr_values or None,
+			max_age=max_age,
+		)
+	except (InvalidRedirect, InvalidInput, KeycloakLoginNotConfigured) as error:
 		frappe.respond_as_web_page(
 			_("Sign-in failed", context="platform_core.identity"),
 			str(error),

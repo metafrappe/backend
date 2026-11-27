@@ -14,6 +14,7 @@ from werkzeug.wrappers import Response
 
 from platform_core.ai import access, agent_token, oauth, proposals, retention, revert
 from platform_core.ai import mcp as mcp_endpoint
+from platform_core.identity import step_up
 
 
 # Checked in `mcp._check_principal` (identity type) and, per tool, by the tool's own permission check.
@@ -65,6 +66,7 @@ def get_proposal(proposal_id: str) -> dict:
 @frappe.whitelist(methods=["POST"])  # nosemgrep: frappe-missing-permission
 def approve_proposal(proposal_id: str, digest: str) -> dict:
 	"""Approve the proposal and execute the action in this request. May be destructive."""
+	step_up.require("platform_core.api.ai.approve_proposal")
 	return proposals.approve(proposal_id, digest)
 
 
@@ -96,6 +98,7 @@ def purge_logs(
 	older_than_days: int = retention.MIN_DAYS, dry_run: bool = True, confirmation_token: str | None = None
 ) -> dict:
 	"""Count records past retention, or delete them with the confirmation token of that count. Destructive."""
+	step_up.require("platform_core.api.ai.purge_logs")
 	return access.human_call(
 		"call",
 		"purge_logs",

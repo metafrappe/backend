@@ -427,4 +427,3 @@ def ensure_role_profile(name: str, roles: list[str]) -> str:
 		doc.append("roles", {"role": role})
 	doc.insert(ignore_permissions=True)
 	return doc.name
-

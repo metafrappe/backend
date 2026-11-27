@@ -217,37 +217,37 @@
         {
           "rule": "frappe-missing-permission",
           "path": "backend/apps/platform_core/platform_core/api/access.py",
-          "line": 13,
+          "line": 14,
           "reason": "Lets only a System User or a “Tenant Admin” call it and checks DocType read permission (G-62). explain() refuses another user's explanation unless the caller is a System Manager."
         },
         {
           "rule": "frappe-missing-permission",
           "path": "backend/apps/platform_core/platform_core/api/access.py",
-          "line": 26,
+          "line": 27,
           "reason": "Checks DocType read permission before returning the session user’s access summary."
         },
         {
           "rule": "frappe-missing-permission",
           "path": "backend/apps/platform_core/platform_core/api/access.py",
-          "line": 50,
+          "line": 53,
           "reason": "Delegates to tenant_admin.list_role_permissions, whose first step require_manager refuses everyone but System Manager, Administrator and “Tenant Admin” (G-62)."
         },
         {
           "rule": "frappe-missing-permission",
           "path": "backend/apps/platform_core/platform_core/api/access.py",
-          "line": 56,
+          "line": 59,
           "reason": "Delegates to tenant_admin.set_role_permission, whose first step require_manager refuses everyone but System Manager, Administrator and “Tenant Admin” (G-62)."
         },
         {
           "rule": "frappe-missing-permission",
           "path": "backend/apps/platform_core/platform_core/api/access.py",
-          "line": 69,
+          "line": 72,
           "reason": "Delegates to tenant_admin.remove_role_permission, whose first step require_manager refuses everyone but System Manager, Administrator and “Tenant Admin” (G-62)."
         },
         {
           "rule": "frappe-missing-permission",
           "path": "backend/apps/platform_core/platform_core/api/access.py",
-          "line": 75,
+          "line": 78,
           "reason": "Refuses unknown query fields, then delegates to permission_log.list_permission_logs, whose first step tenant_admin.require_manager refuses everyone but System Manager, Administrator and “Tenant Admin” (G-62, G-98). Page length is capped at 100. The rows are the Permission Log of this tenant site only."
         },
         {

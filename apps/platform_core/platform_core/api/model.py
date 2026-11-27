@@ -6,6 +6,7 @@ from typing import Literal, NotRequired, TypedDict
 
 import frappe
 
+from platform_core.identity import step_up
 from platform_core.model_gateway import api, connections, gateway, maintenance, policy
 
 
@@ -200,12 +201,14 @@ def reconcile_stale_pending() -> ReconciledPending | ErrorResponse:
 @frappe.whitelist(methods=["POST"])  # nosemgrep: backend.dev.security.fixtures.frappe-missing-permission
 def purge_usage(dry_run: bool = True, preview_token: str | None = None) -> PurgedUsage | ErrorResponse:
 	"""Preview or delete closed usage records beyond the fixed 365-day retention window."""
+	step_up.require("platform_core.api.model.purge_usage")
 	return _respond(maintenance.purge_usage, dry_run, preview_token)
 
 
 @frappe.whitelist(methods=["POST"])  # nosemgrep: backend.dev.security.fixtures.frappe-missing-permission
 def clear_api_credential(api: str) -> ClearedCredential | ErrorResponse:
 	"""Remove the credential of a disabled API connection."""
+	step_up.require("platform_core.api.model.clear_api_credential")
 	return _respond(maintenance.clear_api_credential, api)
 
 
@@ -224,6 +227,7 @@ def save_connection(
 	account_name: str | None = None,
 ) -> SavedConnection | ErrorResponse:
 	"""Save a new API connection from a provider definition. Secrets are stored encrypted."""
+	step_up.require("platform_core.api.model.save_connection")
 	return _respond(connections.save_connection, provider, api_name, fields, account, account_name)
 
 

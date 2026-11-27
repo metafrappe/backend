@@ -8,7 +8,9 @@
       "enabled": true,
       "firstName": "Ayşe",
       "lastName": "Örnek",
-      "realmRoles": ["default-roles-platform"],
+      "realmRoles": [
+        "default-roles-platform"
+      ],
       "credentials": [
         {
           "type": "password",
@@ -24,7 +26,9 @@
       "enabled": true,
       "firstName": "Mehmet",
       "lastName": "Örnek",
-      "realmRoles": ["default-roles-platform"],
+      "realmRoles": [
+        "default-roles-platform"
+      ],
       "credentials": [
         {
           "type": "password",
@@ -40,7 +44,9 @@
       "enabled": true,
       "firstName": "Doğrulanmamış",
       "lastName": "Örnek",
-      "realmRoles": ["default-roles-platform"],
+      "realmRoles": [
+        "default-roles-platform"
+      ],
       "credentials": [
         {
           "type": "password",
@@ -56,7 +62,9 @@
       "enabled": true,
       "firstName": "Totp",
       "lastName": "Örnek",
-      "realmRoles": ["default-roles-platform"],
+      "realmRoles": [
+        "default-roles-platform"
+      ],
       "credentials": [
         {
           "type": "password",
@@ -68,6 +76,106 @@
           "userLabel": "dev-totp",
           "secretData": "{\"value\":\"dev-totp-secret-0123456789\"}",
           "credentialData": "{\"subType\":\"totp\",\"digits\":6,\"counter\":0,\"period\":30,\"algorithm\":\"HmacSHA1\"}"
+        }
+      ]
+    },
+    {
+      "username": "passkey.ornek@example.test",
+      "email": "passkey.ornek@example.test",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Passkey",
+      "lastName": "Örnek",
+      "realmRoles": [
+        "default-roles-platform"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Ornek-Parola-Passkey-2026",
+          "temporary": false
+        },
+        {
+          "type": "webauthn-passwordless",
+          "userLabel": "dev-passkey",
+          "secretData": "{}",
+          "credentialData": "{\"aaguid\":\"00000000-0000-0000-0000-000000000000\",\"credentialId\":\"ERERERERERERERERERERERERERERERERERERERERERE=\",\"credentialPublicKey\":\"pQECAyYgASFYIAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBIlggAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI=\",\"counter\":0,\"attestationStatementFormat\":\"none\",\"transports\":[\"internal\"]}"
+        }
+      ]
+    },
+    {
+      "username": "yonetici.totp@example.test",
+      "email": "yonetici.totp@example.test",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Yönetici",
+      "lastName": "Totp",
+      "realmRoles": [
+        "default-roles-platform",
+        "platform-admin"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Ornek-Parola-Yonetici-Totp-2026",
+          "temporary": false
+        },
+        {
+          "type": "otp",
+          "userLabel": "dev-totp",
+          "secretData": "{\"value\": \"dev-admin-totp-secret-0123\"}",
+          "credentialData": "{\"subType\":\"totp\",\"digits\":6,\"counter\":0,\"period\":30,\"algorithm\":\"HmacSHA1\"}"
+        }
+      ]
+    },
+    {
+      "username": "yonetici.passkey@example.test",
+      "email": "yonetici.passkey@example.test",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Yönetici",
+      "lastName": "Passkey",
+      "realmRoles": [
+        "default-roles-platform",
+        "platform-admin"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Ornek-Parola-Yonetici-Passkey-2026",
+          "temporary": false
+        },
+        {
+          "type": "otp",
+          "userLabel": "dev-totp",
+          "secretData": "{\"value\": \"dev-admin-passkey-totp-0123\"}",
+          "credentialData": "{\"subType\":\"totp\",\"digits\":6,\"counter\":0,\"period\":30,\"algorithm\":\"HmacSHA1\"}"
+        },
+        {
+          "type": "webauthn-passwordless",
+          "userLabel": "dev-admin-passkey",
+          "secretData": "{}",
+          "credentialData": "{\"aaguid\":\"00000000-0000-0000-0000-000000000000\",\"credentialId\":\"IiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiI=\",\"credentialPublicKey\":\"pQECAyYgASFYIAMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDIlggBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=\",\"counter\":0,\"attestationStatementFormat\":\"none\",\"transports\":[\"internal\"]}"
+        }
+      ]
+    },
+    {
+      "username": "yonetici.kayit@example.test",
+      "email": "yonetici.kayit@example.test",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Yönetici",
+      "lastName": "Kayıt",
+      "realmRoles": [
+        "default-roles-platform",
+        "platform-admin",
+        "strong-key-enrollment"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Ornek-Parola-Yonetici-Kayit-2026",
+          "temporary": false
         }
       ]
     }

@@ -884,7 +884,7 @@
         "pkce.code.challenge.method": "S256",
         "client.session.idle.timeout": "3600",
         "client.session.max.lifespan": "86400",
-        "acr.loa.map": "{\"employee\": 1}",
+        "acr.loa.map": "{\"employee\": 1, \"admin\": 2}",
         "default.acr.values": "employee",
         "minimum.acr.value": "employee"
       },
@@ -1255,7 +1255,7 @@
     },
     {
       "alias": "atonota-browser-giris",
-      "description": "The user chooses the password path or the magic link path.",
+      "description": "Level 1 login (password or magic link), then level 2 (ACR admin) when the client asks for it, then the strong key step of a platform administrator on every login (G-163).",
       "providerId": "basic-flow",
       "topLevel": false,
       "builtIn": false,
@@ -1266,6 +1266,20 @@
           "priority": 10,
           "flowAlias": "atonota-browser-level",
           "userSetupAllowed": false
+        },
+        {
+          "authenticatorFlow": true,
+          "requirement": "CONDITIONAL",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "flowAlias": "atonota-browser-admin-level"
+        },
+        {
+          "authenticatorFlow": true,
+          "requirement": "CONDITIONAL",
+          "priority": 30,
+          "userSetupAllowed": false,
+          "flowAlias": "atonota-browser-admin"
         }
       ]
     },
@@ -1294,11 +1308,19 @@
     },
     {
       "alias": "atonota-browser-2fa",
-      "description": "Second factor: asked when the user has set up TOTP or a security key. Skipped after a passkey login.",
+      "description": "Second factor: asked when the user has set up TOTP, a security key or a passkey (AJA-356). Skipped after a passkey login. Skipped for a platform administrator, who meets the strong key step instead (G-163).",
       "providerId": "basic-flow",
       "topLevel": false,
       "builtIn": false,
       "authenticationExecutions": [
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 5,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-user-role",
+          "authenticatorConfig": "atonota-not-platform-admin"
+        },
         {
           "authenticatorFlow": false,
           "requirement": "REQUIRED",
@@ -1327,6 +1349,13 @@
           "priority": 40,
           "userSetupAllowed": false,
           "authenticator": "webauthn-authenticator"
+        },
+        {
+          "authenticatorFlow": false,
+          "requirement": "ALTERNATIVE",
+          "priority": 50,
+          "userSetupAllowed": false,
+          "authenticator": "webauthn-authenticator-passwordless"
         }
       ]
     },
@@ -1356,11 +1385,19 @@
     },
     {
       "alias": "atonota-magic-link-2fa",
-      "description": "Second factor after the magic link. Asks for every strong credential the user already has, including a passkey, so the email alone never opens an account that has a key (G-163).",
+      "description": "Second factor after the magic link. Asks for every strong credential the user already has, including a passkey, so the email alone never opens an account that has a key (G-163). Skipped for a platform administrator, who meets the strong key step instead.",
       "providerId": "basic-flow",
       "topLevel": false,
       "builtIn": false,
       "authenticationExecutions": [
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 5,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-user-role",
+          "authenticatorConfig": "atonota-not-platform-admin"
+        },
         {
           "authenticatorFlow": false,
           "requirement": "REQUIRED",
@@ -1475,7 +1512,7 @@
     },
     {
       "alias": "atonota-post-broker",
-      "description": "Runs after every external platform login. Refuses social sign-in when the user's organization requires corporate sign-in (G-160). Then asks the second factor when the user has set up TOTP or a security key.",
+      "description": "Runs after every external platform login. Refuses social sign-in when the organization requires corporate sign-in (G-160). A platform administrator must present a strong key (G-163). Others give their second factor if set up.",
       "providerId": "basic-flow",
       "topLevel": true,
       "builtIn": false,
@@ -1486,6 +1523,13 @@
           "priority": 5,
           "userSetupAllowed": false,
           "flowAlias": "atonota-post-broker-enterprise"
+        },
+        {
+          "authenticatorFlow": true,
+          "requirement": "CONDITIONAL",
+          "priority": 8,
+          "userSetupAllowed": false,
+          "flowAlias": "atonota-post-broker-admin"
         },
         {
           "authenticatorFlow": true,
@@ -1530,11 +1574,19 @@
     },
     {
       "alias": "atonota-post-broker-2fa",
-      "description": "Second factor of the external provider login.",
+      "description": "Second factor of the external provider login: TOTP, a security key or a passkey. Skipped for a platform administrator, who meets the strong key step instead (G-163).",
       "providerId": "basic-flow",
       "topLevel": false,
       "builtIn": false,
       "authenticationExecutions": [
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 5,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-user-role",
+          "authenticatorConfig": "atonota-not-platform-admin"
+        },
         {
           "authenticatorFlow": false,
           "requirement": "REQUIRED",
@@ -1563,6 +1615,106 @@
           "priority": 40,
           "userSetupAllowed": false,
           "authenticator": "webauthn-authenticator"
+        },
+        {
+          "authenticatorFlow": false,
+          "requirement": "ALTERNATIVE",
+          "priority": 50,
+          "userSetupAllowed": false,
+          "authenticator": "webauthn-authenticator-passwordless"
+        }
+      ]
+    },
+    {
+      "alias": "atonota-post-broker-admin",
+      "description": "Platform administrator after an external provider login (G-163): the strong key or a refusal. Social sign-in never registers a key.",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-user-role",
+          "authenticatorConfig": "atonota-platform-admin"
+        },
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-credential",
+          "authenticatorConfig": "atonota-strong-key-unused"
+        },
+        {
+          "authenticatorFlow": true,
+          "requirement": "CONDITIONAL",
+          "priority": 30,
+          "userSetupAllowed": false,
+          "flowAlias": "atonota-post-broker-admin-key"
+        },
+        {
+          "authenticatorFlow": true,
+          "requirement": "CONDITIONAL",
+          "priority": 40,
+          "userSetupAllowed": false,
+          "flowAlias": "atonota-post-broker-admin-deny"
+        }
+      ]
+    },
+    {
+      "alias": "atonota-post-broker-admin-key",
+      "description": "Asks the administrator's strong key. Runs only when the administrator has one.",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-user-configured"
+        },
+        {
+          "authenticatorFlow": false,
+          "requirement": "ALTERNATIVE",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "authenticator": "webauthn-authenticator"
+        },
+        {
+          "authenticatorFlow": false,
+          "requirement": "ALTERNATIVE",
+          "priority": 30,
+          "userSetupAllowed": false,
+          "authenticator": "webauthn-authenticator-passwordless"
+        }
+      ]
+    },
+    {
+      "alias": "atonota-post-broker-admin-deny",
+      "description": "Refuses an administrator without a strong key after an external provider login.",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-sub-flow-executed",
+          "authenticatorConfig": "atonota-broker-admin-key-not-run"
+        },
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "authenticator": "deny-access-authenticator"
         }
       ]
     },
@@ -1610,6 +1762,269 @@
           "priority": 20,
           "flowAlias": "atonota-browser-method",
           "userSetupAllowed": false
+        }
+      ]
+    },
+    {
+      "alias": "atonota-browser-admin-level",
+      "description": "Level 2 (ACR admin, G-163). Only a passkey or a hardware key; never TOTP. Max age 0: every request for ACR admin meets the key again.",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-level-of-authentication",
+          "authenticatorConfig": "atonota-admin-loa"
+        },
+        {
+          "authenticatorFlow": true,
+          "requirement": "CONDITIONAL",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "flowAlias": "atonota-browser-admin-level-key"
+        },
+        {
+          "authenticatorFlow": true,
+          "requirement": "CONDITIONAL",
+          "priority": 30,
+          "userSetupAllowed": false,
+          "flowAlias": "atonota-browser-admin-level-deny"
+        }
+      ]
+    },
+    {
+      "alias": "atonota-browser-admin-level-key",
+      "description": "Asks the strong key the user has. Runs only when the user has one.",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-user-configured"
+        },
+        {
+          "authenticatorFlow": false,
+          "requirement": "ALTERNATIVE",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "authenticator": "webauthn-authenticator"
+        },
+        {
+          "authenticatorFlow": false,
+          "requirement": "ALTERNATIVE",
+          "priority": 30,
+          "userSetupAllowed": false,
+          "authenticator": "webauthn-authenticator-passwordless"
+        }
+      ]
+    },
+    {
+      "alias": "atonota-browser-admin-level-deny",
+      "description": "Refuses level 2 for a user without a strong key.",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-sub-flow-executed",
+          "authenticatorConfig": "atonota-level-key-not-run"
+        },
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "authenticator": "deny-access-authenticator"
+        }
+      ]
+    },
+    {
+      "alias": "atonota-browser-admin",
+      "description": "Platform administrator (G-163): a strong key on every login, whatever level the client asked for. Skipped when a strong key was already used in this login.",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-user-role",
+          "authenticatorConfig": "atonota-platform-admin"
+        },
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-credential",
+          "authenticatorConfig": "atonota-strong-key-unused"
+        },
+        {
+          "authenticatorFlow": true,
+          "requirement": "CONDITIONAL",
+          "priority": 30,
+          "userSetupAllowed": false,
+          "flowAlias": "atonota-browser-admin-key"
+        },
+        {
+          "authenticatorFlow": true,
+          "requirement": "CONDITIONAL",
+          "priority": 40,
+          "userSetupAllowed": false,
+          "flowAlias": "atonota-browser-admin-enrollment"
+        },
+        {
+          "authenticatorFlow": true,
+          "requirement": "CONDITIONAL",
+          "priority": 50,
+          "userSetupAllowed": false,
+          "flowAlias": "atonota-browser-admin-deny"
+        }
+      ]
+    },
+    {
+      "alias": "atonota-browser-admin-key",
+      "description": "Asks the administrator's strong key. Runs only when the administrator has one.",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-user-configured"
+        },
+        {
+          "authenticatorFlow": false,
+          "requirement": "ALTERNATIVE",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "authenticator": "webauthn-authenticator"
+        },
+        {
+          "authenticatorFlow": false,
+          "requirement": "ALTERNATIVE",
+          "priority": 30,
+          "userSetupAllowed": false,
+          "authenticator": "webauthn-authenticator-passwordless"
+        }
+      ]
+    },
+    {
+      "alias": "atonota-browser-admin-enrollment",
+      "description": "First key of an administrator, opened by a realm administrator (role strong-key-enrollment). Needs the password, never the email link alone, and no existing key. Asks TOTP if set up; the key registration is required.",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-sub-flow-executed",
+          "authenticatorConfig": "atonota-admin-key-not-run"
+        },
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-user-role",
+          "authenticatorConfig": "atonota-strong-key-enrollment"
+        },
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 30,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-credential",
+          "authenticatorConfig": "atonota-password-used"
+        },
+        {
+          "authenticatorFlow": true,
+          "requirement": "CONDITIONAL",
+          "priority": 40,
+          "userSetupAllowed": false,
+          "flowAlias": "atonota-browser-admin-enrollment-otp"
+        },
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 50,
+          "userSetupAllowed": false,
+          "authenticator": "webauthn-authenticator"
+        }
+      ]
+    },
+    {
+      "alias": "atonota-browser-admin-enrollment-otp",
+      "description": "TOTP before the first key registration, when the administrator has TOTP. TOTP alone never ends the login.",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-user-configured"
+        },
+        {
+          "authenticatorFlow": false,
+          "requirement": "ALTERNATIVE",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "authenticator": "auth-otp-form"
+        }
+      ]
+    },
+    {
+      "alias": "atonota-browser-admin-deny",
+      "description": "Refuses an administrator who has no strong key and no open registration.",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-sub-flow-executed",
+          "authenticatorConfig": "atonota-admin-key-not-run"
+        },
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "authenticator": "conditional-sub-flow-executed",
+          "authenticatorConfig": "atonota-admin-enrollment-not-run"
+        },
+        {
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 30,
+          "userSetupAllowed": false,
+          "authenticator": "deny-access-authenticator"
         }
       ]
     },
@@ -1764,6 +2179,76 @@
       "config": {
         "denyErrorMessage": "atonotaEnterpriseSsoRequired"
       }
+    },
+    {
+      "alias": "atonota-admin-loa",
+      "config": {
+        "loa-condition-level": "2",
+        "loa-max-age": "0"
+      }
+    },
+    {
+      "alias": "atonota-platform-admin",
+      "config": {
+        "condUserRole": "platform-admin",
+        "negate": "false"
+      }
+    },
+    {
+      "alias": "atonota-not-platform-admin",
+      "config": {
+        "condUserRole": "platform-admin",
+        "negate": "true"
+      }
+    },
+    {
+      "alias": "atonota-strong-key-unused",
+      "config": {
+        "credentials": "webauthn##webauthn-passwordless",
+        "included": "false"
+      }
+    },
+    {
+      "alias": "atonota-strong-key-enrollment",
+      "config": {
+        "condUserRole": "strong-key-enrollment",
+        "negate": "false"
+      }
+    },
+    {
+      "alias": "atonota-password-used",
+      "config": {
+        "credentials": "password",
+        "included": "true"
+      }
+    },
+    {
+      "alias": "atonota-level-key-not-run",
+      "config": {
+        "flow_to_check": "atonota-browser-admin-level-key",
+        "check_result": "not-executed"
+      }
+    },
+    {
+      "alias": "atonota-admin-key-not-run",
+      "config": {
+        "flow_to_check": "atonota-browser-admin-key",
+        "check_result": "not-executed"
+      }
+    },
+    {
+      "alias": "atonota-admin-enrollment-not-run",
+      "config": {
+        "flow_to_check": "atonota-browser-admin-enrollment",
+        "check_result": "not-executed"
+      }
+    },
+    {
+      "alias": "atonota-broker-admin-key-not-run",
+      "config": {
+        "flow_to_check": "atonota-post-broker-admin-key",
+        "check_result": "not-executed"
+      }
     }
   ],
   "attributes": {
@@ -1904,6 +2389,18 @@
       {
         "name": "enterprise-sso-required",
         "description": "The user's organization requires corporate sign-in. Social sign-in is refused (G-160). Set by the membership layer, not by the user.",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "platform-admin",
+        "description": "Platform administrator (G-163). Signs in with a passkey or a hardware key on every login; TOTP is not enough. Frappe System Manager users get this role by sync.",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "strong-key-enrollment",
+        "description": "A realm administrator opened the first strong key registration for this platform administrator (G-163). After the password, the user must register a key. Remove the role after the registration.",
         "composite": false,
         "clientRole": false
       }

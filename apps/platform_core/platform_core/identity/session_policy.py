@@ -115,22 +115,37 @@ def before_request() -> None:
 		return
 	sid, user = session.get("sid"), session.get("user")
 	# Important finding 1 in the merge review: check cookie sessions even with an Authorization header.
-	# Token identities (service and mobile) carry no cookie session and have no session id here.
-	if not sid or sid == "Guest" or not user or user == "Guest":
+	# Token identities (service and mobile) carry no session record: their sid is "Guest", or the user
+	# name for Frappe API keys (frappe/auth.py validate_auth_via_api_keys).
+	if not sid or sid == "Guest" or not user or user == "Guest" or sid == user:
 		return
-	if request.cookies.get("sid") != sid:
-		return
+	# G-163 review: Frappe also takes the session id from the `sid` form field (frappe/sessions.py:228).
+	# Such a request is checked like a cookie request.
 	if _idle_limit_reached(sid):
-		from frappe.auth import clear_cookies
-		from frappe.sessions import delete_session
+		end_session(sid, user, "Idle timeout")
+	# G-163 item 3: background requests are checked too. A closed Keycloak session must not stay open here.
+	from platform_core.identity import keycloak_session
 
-		delete_session(sid, user=user, reason="Idle timeout")
-		clear_cookies()
-		frappe.local.session = frappe._dict({"user": "Guest", "sid": "Guest", "data": frappe._dict()})
-		frappe.set_user("Guest")
-		raise frappe.SessionExpired
-	if not is_background_request(request):
+	background = is_background_request(request)
+	if not keycloak_session.ensure_active(sid, session.get("data") or {}, renew=not background):
+		end_session(sid, user, "Keycloak session ended")
+	if not background:
 		mark_activity(sid, user)
+
+
+def end_session(sid: str, user: str, reason: str) -> None:
+	"""Closes the cookie session and answers 401 `SessionExpired` (SZ-8)."""
+	from frappe.auth import clear_cookies
+	from frappe.sessions import delete_session
+
+	from platform_core.identity import keycloak_session
+
+	delete_session(sid, user=user, reason=reason)
+	keycloak_session.forget(sid)
+	clear_cookies()
+	frappe.local.session = frappe._dict({"user": "Guest", "sid": "Guest", "data": frappe._dict()})
+	frappe.set_user("Guest")
+	raise frappe.SessionExpired
 
 
 def check_fresh_authentication(user: str, claims: dict, record: dict) -> str:
@@ -145,12 +160,13 @@ def check_fresh_authentication(user: str, claims: dict, record: dict) -> str:
 	if recently_active(user):
 		return "ok"
 	# Keycloak confirmed a sign-in made during this attempt: that is a fresh authentication.
-	if _fresh_for_attempt(claims, record):
+	if fresh_for_attempt(claims, record):
 		return "ok"
 	return "refuse" if record.get("force_login") else "force"
 
 
-def _fresh_for_attempt(claims: dict, record: dict) -> bool:
+def fresh_for_attempt(claims: dict, record: dict) -> bool:
+	"""Keycloak's `auth_time` is not older than the start of this sign-in attempt (with a small leeway)."""
 	auth_time = claims.get("auth_time")
 	started = record.get("started_at")
 	if type(auth_time) not in (int, float) or type(started) is not int:

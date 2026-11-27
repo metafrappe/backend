@@ -197,6 +197,55 @@ x-site-settings:
         It lives only in the site setting and in the `.env` file. Changing it later makes old deletion records unreadable.
         If it is missing, `anonymize_user`, `provision`, `set_enabled` and `change_email` return 503 `DeletionKeyMissing`.
 
+x-sensitive-operations:
+  description: |
+    Sensitive operations need a fresh and strong sign-in (G-163, item 2).
+    Each listed method calls the step-up check `platform_core.identity.step_up.require` in its first statement.
+    The check reads `keycloak_acr` and `keycloak_auth_time` from the Frappe session record. The Keycloak callback writes both.
+    The request is refused when the sign-in is older than `max_age_seconds`. It is also refused when the `acr` level is lower than `min_acr`.
+    The levels are `employee` (1) and `admin` (2). They come from the `acr.loa.map` setting of the tenant client in Keycloak.
+    A refused request gets 403. The body has `exc_type: ReauthenticationRequired` and `error: reauthentication_required`.
+    The body also has `reauthentication_url`. It is the `start_login` address of this site with `prompt=login`, `max_age=0` and `acr_values`.
+    Requests with a token (an `Authorization` header) carry no session record. They cannot call these methods. They get the same 403.
+    The default limit is 300 seconds. It equals `REAUTHENTICATION_TTL` of the press_tr account deletion.
+    `approve_proposal` needs only `employee`. End users approve their own AI proposals and have no strong key.
+    They still need a sign-in made in the last 300 seconds. A System Manager always has `admin`, which is higher.
+    Known limit: the check guards these methods only. Standard Frappe endpoints can still change the same records.
+    For example, a System Manager can write `Custom DocPerm` or `Property Setter` through `frappe.client.save`.
+    A separate task must decide whether document hooks on those DocTypes need the same check.
+  default_max_age_seconds: 300
+  operations:
+    - method: platform_core.api.access.set_field_level
+      min_acr: admin
+      max_age_seconds: 300
+    - method: platform_core.api.access.set_level_access
+      min_acr: admin
+      max_age_seconds: 300
+    - method: platform_core.api.ai.approve_proposal
+      min_acr: employee
+      max_age_seconds: 300
+    - method: platform_core.api.ai.purge_logs
+      min_acr: admin
+      max_age_seconds: 300
+    - method: platform_core.api.model.save_connection
+      min_acr: admin
+      max_age_seconds: 300
+    - method: platform_core.api.model.clear_api_credential
+      min_acr: admin
+      max_age_seconds: 300
+    - method: platform_core.api.model.purge_usage
+      min_acr: admin
+      max_age_seconds: 300
+  checked_elsewhere:
+    - method: press_tr account deletion
+      note: press_tr checks it itself. Its own re-authentication limit is 300 seconds.
+  not_applicable:
+    - method: platform_core.api.mobile.revoke_user_installations
+      note: |
+        Only the identity-sync service calls this method, with its service token. A person never calls it.
+        A token request cannot pass the step-up check, so the check would stop the revocation of a closed user's phones.
+        The service token check protects this method instead.
+
 x-yerel-giris-kapisi:
   description: |
     While the `kimlik_yalniz_keycloak` setting is 1, the Frappe local sign-in functions are closed.
@@ -380,6 +429,34 @@ paths:
           schema:
             type: integer
             default: 0
+        - name: prompt
+          in: query
+          required: false
+          description: |
+            Only `login` is accepted. Keycloak then asks for the credentials even with an open session.
+            The re-authentication address of a sensitive operation sends it (see `x-sensitive-operations`). Another value returns 400.
+          schema:
+            type: string
+            enum: [login]
+        - name: max_age
+          in: query
+          required: false
+          description: |
+            Only 0 is accepted. Keycloak must confirm a sign-in made during this attempt.
+            The callback refuses the sign-in with 403 when `auth_time` is older than the start of the attempt. Another value returns 400.
+          schema:
+            type: integer
+            enum: [0]
+        - name: acr_values
+          in: query
+          required: false
+          description: |
+            The level of authentication asked from Keycloak. `admin` needs a passkey or a hardware key. Another value returns 400.
+            A user with the System Manager role must come back with `acr=admin`. Otherwise no session opens.
+            The first attempt of such a user restarts with `acr_values=admin`. The restarted attempt is refused with 403 if `acr` is still not `admin`.
+          schema:
+            type: string
+            enum: [employee, admin]
       responses:
         "302":
           description: The flow has started. The browser goes to the Keycloak authorization address.

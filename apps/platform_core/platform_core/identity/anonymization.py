@@ -28,7 +28,7 @@ from frappe.sessions import delete_session, get_sessions_to_clear
 from frappe.utils import now_datetime
 from frappe.utils.password import delete_all_passwords_for
 
-from platform_core.identity import anonymization_scope, provisioning
+from platform_core.identity import anonymization_scope, keycloak_session, provisioning
 from platform_core.identity.exceptions import (
 	DeletionKeyMissing,
 	IdentityConflict,
@@ -199,6 +199,7 @@ def close_sessions(user: str) -> None:
 	while sids := get_sessions_to_clear(user=user, force=True):
 		for sid in sids:
 			delete_session(sid, user=user, reason="Account deleted")
+			keycloak_session.forget(sid)
 
 
 def anonymize_step(issuer: str, subject: str) -> dict:

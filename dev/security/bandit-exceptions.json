@@ -1306,24 +1306,6 @@
   },
   {
     "rule": "B105",
-    "file": "backend/apps/platform_core/platform_core/identity/tests/helpers.py",
-    "code": "\"access_token\": \"fake-access-token\",",
-    "statementSha256": "bca83bdab72b5b668d049ddd3cb5af8890b5b95fa4fefa9c942abe3214f19a01",
-    "reason": "This fixture uses a synthetic credential with a mocked or rejected request.",
-    "owner": "platform-core-kimlik",
-    "ignoreUntil": "2027-02-22"
-  },
-  {
-    "rule": "B105",
-    "file": "backend/apps/platform_core/platform_core/identity/tests/helpers.py",
-    "code": "\"token_type\": \"Bearer\",",
-    "statementSha256": "bca83bdab72b5b668d049ddd3cb5af8890b5b95fa4fefa9c942abe3214f19a01",
-    "reason": "This OAuth response type names the Bearer scheme in a mocked token response.",
-    "owner": "platform-core-kimlik",
-    "ignoreUntil": "2027-02-22"
-  },
-  {
-    "rule": "B105",
     "file": "backend/apps/platform_core/platform_core/identity/tests/test_login_page.py",
     "code": "with h.SiteSettings({\"keycloak_client_secret\": \"\"}):",
     "statementSha256": "f72fed1c2a146f789b8538a7ebb69738e251bd9cb1d8f5028a93ae03f0b53f0c",
@@ -3603,5 +3585,87 @@
     "reason": "The current Python interpreter runs the copied login CLI with isolated mode and test-owned redirect arguments. It renders JSON from temporary brand fixtures without a shell or service access.",
     "owner": "brand-settings",
     "ignoreUntil": "2027-02-22"
+  },
+  {
+    "rule": "B105",
+    "file": "backend/apps/platform_core/platform_core/identity/keycloak_session.py",
+    "code": "\"token_type_hint\": \"refresh_token\",",
+    "statementSha256": "dceb8dd52bc1fa42d368df74666518e396bde488b0b377761bb4960ef35b2218",
+    "reason": "The flagged string is a field name, cache key prefix or OAuth token type hint. It holds no credential; the refresh token itself is encrypted with the site key.",
+    "owner": "platform-core-kimlik",
+    "ignoreUntil": "2027-02-24"
+  },
+  {
+    "rule": "B105",
+    "file": "backend/apps/platform_core/platform_core/identity/keycloak_session.py",
+    "code": "SESSION_TOKEN_FIELD = \"keycloak_refresh_token\"",
+    "statementSha256": "82cbb5f045945277571fe4a1047abef7350e0ed36dc4243e808d783762edfc2d",
+    "reason": "The flagged string is a field name, cache key prefix or OAuth token type hint. It holds no credential; the refresh token itself is encrypted with the site key.",
+    "owner": "platform-core-kimlik",
+    "ignoreUntil": "2027-02-24"
+  },
+  {
+    "rule": "B105",
+    "file": "backend/apps/platform_core/platform_core/identity/keycloak_session.py",
+    "code": "TOKEN_PREFIX = \"kimlik_kc_refresh\"",
+    "statementSha256": "7275cc35db668984d0b5f6ce747149e402d58c1658ced388aa2109f799bdef38",
+    "reason": "The flagged string is a field name, cache key prefix or OAuth token type hint. It holds no credential; the refresh token itself is encrypted with the site key.",
+    "owner": "platform-core-kimlik",
+    "ignoreUntil": "2027-02-24"
+  },
+  {
+    "rule": "B105",
+    "file": "backend/apps/platform_core/platform_core/identity/tests/helpers.py",
+    "code": "\"access_token\": \"fake-access-token\",",
+    "statementSha256": "feced0ace1761f7ec4edcf32a51b1a9e4142bdd39dac86d44b7df16094e35387",
+    "reason": "This fixture uses a synthetic credential with a mocked or rejected request.",
+    "owner": "platform-core-kimlik",
+    "ignoreUntil": "2027-02-24"
+  },
+  {
+    "rule": "B105",
+    "file": "backend/apps/platform_core/platform_core/identity/tests/helpers.py",
+    "code": "\"refresh_token\": \"fake-refresh-token\",",
+    "statementSha256": "feced0ace1761f7ec4edcf32a51b1a9e4142bdd39dac86d44b7df16094e35387",
+    "reason": "This fixture uses a synthetic credential with a mocked or rejected request.",
+    "owner": "platform-core-kimlik",
+    "ignoreUntil": "2027-02-24"
+  },
+  {
+    "rule": "B105",
+    "file": "backend/apps/platform_core/platform_core/identity/tests/helpers.py",
+    "code": "\"token_type\": \"Bearer\",",
+    "statementSha256": "feced0ace1761f7ec4edcf32a51b1a9e4142bdd39dac86d44b7df16094e35387",
+    "reason": "This OAuth response type names the Bearer scheme in a mocked token response.",
+    "owner": "platform-core-kimlik",
+    "ignoreUntil": "2027-02-24"
+  },
+  {
+    "rule": "B105",
+    "file": "backend/apps/platform_core/platform_core/identity/tests/test_session_introspection.py",
+    "code": "200, {\"refresh_token\": RENEWED_TOKEN, \"access_token\": \"fake\", \"token_type\": \"Bearer\"}",
+    "statementSha256": "862b552c590b6cda52785b73fb40830d64f0e27359429294967a0921970019ef",
+    "reason": "The test uses a synthetic refresh token in a mocked Keycloak response.",
+    "owner": "platform-core-kimlik",
+    "ignoreUntil": "2027-02-24",
+    "occurrences": 2
+  },
+  {
+    "rule": "B105",
+    "file": "backend/apps/platform_core/platform_core/identity/tests/test_session_introspection.py",
+    "code": "REFRESH_TOKEN = \"plain-refresh-token-0123456789abcdef\"",
+    "statementSha256": "5590a4d8f6f9c8a4349d971b73d38d10846cdbaa9f6c7d7f9f22a05c78eda013",
+    "reason": "The test uses a synthetic refresh token in a mocked Keycloak response.",
+    "owner": "platform-core-kimlik",
+    "ignoreUntil": "2027-02-24"
+  },
+  {
+    "rule": "B105",
+    "file": "backend/apps/platform_core/platform_core/identity/tests/test_session_introspection.py",
+    "code": "RENEWED_TOKEN = \"renewed-refresh-token-fedcba9876543210\"",
+    "statementSha256": "89440f745de0d9b67da819100fd24509b46ebc7c81688250cdc104f2da4cb886",
+    "reason": "The test uses a synthetic refresh token in a mocked Keycloak response.",
+    "owner": "platform-core-kimlik",
+    "ignoreUntil": "2027-02-24"
   }
 ]

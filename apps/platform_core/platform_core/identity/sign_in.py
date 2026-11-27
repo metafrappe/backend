@@ -22,7 +22,7 @@ from frappe import _
 from frappe.translate import get_all_languages
 from frappe.utils import get_url
 
-from platform_core.identity import helpers, jwks, session_policy, site_settings
+from platform_core.identity import helpers, jwks, keycloak_session, session_policy, site_settings
 from platform_core.identity.exceptions import (
 	InvalidRedirect,
 	KeycloakLoginNotConfigured,
@@ -37,6 +37,8 @@ COOKIE_NAME = "identity_login"
 SECURE_COOKIE_NAME = "__Host-identity_login"
 EXCHANGE_TIMEOUT = 10
 LEEWAY = 30
+# G-163 item 1: users with this role sign in only with `acr=admin` (passkey or hardware key at Keycloak).
+ADMIN_ROLE = "System Manager"
 
 
 class SignInRefusedError(Exception):
@@ -64,10 +66,17 @@ def guard_guest_request(max_bytes: int = helpers.MAX_GUEST_BODY_BYTES) -> None:
 		frappe.throw(_("Request body is too large.", context="platform_core.identity"), PayloadTooLarge)
 
 
-def build_login_url(redirect_to: str | None = None, force_login: bool = False) -> dict:
+def build_login_url(
+	redirect_to: str | None = None,
+	force_login: bool = False,
+	acr_values: str | None = None,
+	max_age: int | None = None,
+) -> dict:
 	"""Builds the Keycloak authorize address and binds the attempt to this browser.
 
 	`force_login` adds `prompt=login`: Keycloak asks for the credentials even with an open session (O-25).
+	`acr_values` asks for a level of authentication, `max_age=0` for a sign-in made during this attempt
+	(G-163). Both are stored with the attempt and checked in the callback.
 	"""
 	guard_guest_request()
 	if redirect_to and not helpers.is_safe_redirect(redirect_to):
@@ -95,6 +104,8 @@ def build_login_url(redirect_to: str | None = None, force_login: bool = False) -
 			"nonce": nonce,
 			"redirect_to": redirect_to or "",
 			"force_login": bool(force_login),
+			"acr_values": acr_values or "",
+			"max_age": max_age,
 			"started_at": int(time.time()),
 		},
 	)
@@ -111,6 +122,8 @@ def build_login_url(redirect_to: str | None = None, force_login: bool = False) -
 			nonce,
 			helpers.code_challenge(code_verifier),
 			prompt="login" if force_login else None,
+			acr_values=acr_values,
+			max_age=max_age,
 		),
 		"brand_name": settings.brand_name,
 		"label": _("Sign in with {0}", context="platform_core.identity").format(settings.brand_name),
@@ -201,7 +214,11 @@ def complete_callback(code: str | None, state: str | None, error: str | None = N
 		) from error
 
 	user = resolve_user(settings.issuer, claims)
+	needs_admin = is_admin(user)
 	decision = session_policy.check_fresh_authentication(user, claims, record)
+	if record.get("max_age") == 0 and not session_policy.fresh_for_attempt(claims, record):
+		# G-163 item 2: a re-authentication for a sensitive operation must be made during this attempt.
+		decision = "refuse"
 	if decision == "refuse":
 		# O-25: the forced attempt must bring an authentication made during that attempt.
 		raise SignInRefusedError(
@@ -210,7 +227,28 @@ def complete_callback(code: str | None, state: str | None, error: str | None = N
 		)
 	if decision == "force":
 		# O-25: an employee idle for the limit authenticates again; the open Keycloak cookie does not count.
-		return build_login_url(record.get("redirect_to") or None, force_login=True)["login_url"]
+		return build_login_url(
+			record.get("redirect_to") or None,
+			force_login=True,
+			acr_values=helpers.ADMIN_ACR if needs_admin else (record.get("acr_values") or None),
+			max_age=record.get("max_age"),
+		)["login_url"]
+	if needs_admin and claims.get("acr") != helpers.ADMIN_ACR:
+		# G-163 item 1: a site administrator needs a strong key. No session opens without `acr=admin`.
+		if record.get("acr_values") == helpers.ADMIN_ACR:
+			raise SignInRefusedError(
+				403,
+				_(
+					"A site administrator must sign in with a passkey or a security key.",
+					context="platform_core.identity",
+				),
+			)
+		return build_login_url(
+			record.get("redirect_to") or None,
+			force_login=bool(record.get("force_login")),
+			acr_values=helpers.ADMIN_ACR,
+			max_age=record.get("max_age"),
+		)["login_url"]
 	_lock_identity_for_sign_in(settings.issuer, claims, user)
 	# Frappe opens the session before the account is rechecked. Defer both activity markers.
 	frappe.flags.identity_sign_in_pending = True
@@ -229,6 +267,8 @@ def complete_callback(code: str | None, state: str | None, error: str | None = N
 		raise
 	adopt_token_locale(user, claims)
 	frappe.local.session.data.update(helpers.session_claims(claims, settings.issuer))
+	# G-163 item 3: the encrypted refresh token lets each cookie request ask Keycloak about its session.
+	frappe.local.session.data.update(keycloak_session.session_values(tokens.get("refresh_token")))
 	frappe.local.session.data["session_expiry"] = session_policy.IDLE_TIMEOUT
 	remember_keycloak_session(claims.get("sid"), frappe.session.sid)
 	# Frappe skips the CSRF check while the session has no token (frappe/auth.py:92). Create it now,
@@ -238,8 +278,14 @@ def complete_callback(code: str | None, state: str | None, error: str | None = N
 	# V-2: the callback is a GET request, and Frappe does not commit GET requests on its own.
 	frappe.db.commit()
 	session_policy.mark_activity(frappe.session.sid, user)
+	keycloak_session.remember_sign_in(frappe.session.sid)
 	frappe.local.cookie_manager.delete_cookie(_cookie_name())
 	return record.get("redirect_to") or settings.panel_url
+
+
+def is_admin(user: str) -> bool:
+	"""G-163 item 1: the System Manager role needs the `admin` level (Keycloak role `platform-admin`)."""
+	return ADMIN_ROLE in frappe.get_roles(user)
 
 
 def adopt_token_locale(user: str, claims: dict) -> None:
@@ -288,6 +334,7 @@ def _close_new_session() -> None:
 	if sid and sid != "Guest":
 		frappe.cache.delete_value(session_policy._session_key(sid))
 		delete_session(sid, reason="Sign-in identity recheck failed")
+		keycloak_session.forget(sid)
 	frappe.set_user("Guest")
 
 

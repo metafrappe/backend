@@ -1012,3 +1012,6 @@ Support URL,Destek bağlantısı,PLT Help Topic
 Optional HTTPS URL or same-site relative path. Leave blank when unavailable.,HTTPS adresini veya site içindeki yolu yazın. Bağlantı yoksa alanı boş bırakın.,PLT Help Topic
 Help links must use HTTPS or a same-site relative path.,Yardım bağlantılarında HTTPS adresi veya site içindeki yol kullanılmalıdır.,
 A valid component identifier is required.,Geçerli bir bileşen kimliği yazın.,
+A site administrator must sign in with a passkey or a security key.,Site yöneticisi geçiş anahtarı ya da güvenlik anahtarıyla oturum açmalıdır.,platform_core.identity
+Sign in again to continue this operation.,Bu işleme devam etmek için yeniden oturum açın.,platform_core.identity
+The sign-in options are not valid.,Oturum açma seçenekleri geçerli değil.,platform_core.identity

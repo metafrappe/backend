@@ -10,10 +10,9 @@ Depo kökünde Python 3.14 kullanır. İlk denemede kapı `advisory` kipinde kal
 Orkestratör, geçiş onayı gelince önce `backend` dalını hazırlar.
 Sürücü `backend` ve `main` kopyalarında Git kaydı oluşturmaz.
 Karar notunun “Orkestratör” bölümündeki komutları kullanın.
-Notu geçişten önce `backend/docs/kararlar/0009-naming-history-fix.md` yolunda bulursunuz.
-Geçişten sonra not `backend/docs/decisions/0009-naming-history-fix.md` yoluna taşınır.
+Not `docs/decisions/0009-naming-history-fix.md` yolundadır.
 O bölüm, belge yamasını, ad betiğini ve denetimleri sırayla çalıştırır.
-Yama `backend/dev/naming/docs-rename.patch` yolundadır.
+Yama `dev/naming/docs-rename.patch` yolundadır.
 Denetim kalırsa taban kaydını oluşturmayın.
 İşçi dalları bu tabanı alınca 2. adımdaki denemeyi çalıştırın.
 
@@ -22,12 +21,12 @@ Denetim kalırsa taban kaydını oluşturmayın.
 Orkestratör depo kökünde şu komutu çalıştırır.
 
 ```sh
-python3.14 -B backend/dev/naming/run_cp2.py > "$PANE_SCRATCH_DIR/cp2-dry.json"
+python3.14 -B dev/naming/run_cp2.py > "$PANE_SCRATCH_DIR/cp2-dry.json"
 ```
 
 Orkestratör rapordaki `backend` ve `head` kayıtlarını kontrol eder.
 Sürücü yalnız Git'te kayıtlı içeriği kopyalar. Bekleyen yerel düzenlemeleri almaz.
-Sürücü `backend/dev/tests` testlerini çalıştırır. Gerekirse test komutunu `--` sonrasına yazın.
+Sürücü `dev/tests` testlerini çalıştırır. Gerekirse test komutunu `--` sonrasına yazın.
 Rapor durma nedenini gösterir. Bir dal eksikse veya test kalırsa sahibi durma nedenini bildirir.
 Sürücü hata varsa 1 koduyla çıkar. Diğer dalların sonucu da aynı raporda kalır.
 Eski modül atfı kalırsa işçi dosya ve satırı adlandırma işine bildirir.
@@ -39,7 +38,7 @@ Kuru çalıştırma kopyaları sonunda silinir.
 Orkestratör denetimler geçince depo kökünde şu komutu çalıştırır.
 
 ```sh
-python3.14 -B backend/dev/naming/run_cp2.py --apply > "$PANE_SCRATCH_DIR/cp2-apply.json"
+python3.14 -B dev/naming/run_cp2.py --apply > "$PANE_SCRATCH_DIR/cp2-apply.json"
 ```
 
 Sürücü Git kayıtlarını geçici kopyalarda oluşturur.

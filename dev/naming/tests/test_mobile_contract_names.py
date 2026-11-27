@@ -48,14 +48,14 @@ class MobileContractNameTests(unittest.TestCase):
         for current_name in (old_name, new_name):
             with self.subTest(current_name=current_name), tempfile.TemporaryDirectory(dir=scratch) as work:
                 root = Path(work)
-                contracts = root / "backend/contracts"
+                contracts = root / "contracts"
                 contracts.mkdir(parents=True)
                 (contracts / current_name).write_text(contract_text(MOBILE_OPERATIONS), encoding="utf-8")
                 unrelated = contracts / "unrelated.openapi.yaml"
                 unrelated_text = contract_text(("mobileV1Activity", "mobilePwaV1Register"))
                 unrelated.write_text(unrelated_text, encoding="utf-8")
                 subprocess.run(["git", "init", "-q", str(root)], check=True)
-                subprocess.run(["git", "-C", str(root), "add", "backend"], check=True)
+                subprocess.run(["git", "-C", str(root), "add", "."], check=True)
                 outcome = subprocess.run(
                     [sys.executable, "-B", str(RENAMER), "--repo", str(root)],
                     check=False,

@@ -6,7 +6,7 @@
     {"id": "retry-limits", "owner": "security-owner", "value": null, "description": "How many verification attempts a person may start."},
     {"id": "verification-data-region", "owner": "compliance-owner", "value": null, "description": "Where the verification provider may keep data."},
     {"id": "guest-actions", "owner": "product-owner", "value": null, "description": "Which actions a person may take without signing in."},
-    {"id": "paid-plan-pricing", "owner": "product-owner", "value": null, "description": "Plan, price and unit of the paid use of the sign-in product (G-166, K-61)."}
+    {"id": "paid-plan-pricing", "owner": "product-owner", "value": "AJA-18: plans.json", "description": "Plan, price and unit of the paid use of the sign-in product (G-166, K-61). The decision is AJA-18. The plans and their monthly prices are in plans.json."}
   ],
   "actions": [
     {
@@ -37,7 +37,8 @@
       "description": "Open a paid plan of the sign-in product for a customer.",
       "controls": [
         {"id": "membership", "applies": true, "required": true, "evidence": "membership", "rules": []},
-        {"id": "pricing", "applies": true, "required": true, "evidence": "pricing-decision", "rules": ["paid-plan-pricing"]}
+        {"id": "pricing", "applies": true, "required": true, "evidence": "pricing-decision", "rules": ["paid-plan-pricing"]},
+        {"id": "payment-card", "applies": true, "required": true, "evidence": "payment-card", "rules": []}
       ]
     },
     {

@@ -865,7 +865,8 @@ The action field must be a non-empty text of at most 140 characters.,İşlem ala
 The action {0} is not allowed now ({1}).,{0} işlemine şu an izin yok ({1}).,platform_core.identity
 A final step cannot run inside a transaction with pending writes.,Bekleyen yazma varken son adım çalışamaz.,platform_core.identity
 The action {0} is not allowed now ({1}: {2}).,{0} işlemine şu an izin yok ({1}: {2}).,platform_core.identity
-Paid plans are not available yet.,Ücretli planlar henüz açık değil.,platform_core.identity
+"The plan {0} passed the gate, but billing is not connected yet. Nothing was written.","{0} planı kapıdan geçti, ama ödeme akışı henüz bağlı değil. Hiçbir kayıt yazılmadı.",platform_core.identity
+The plan field must be a non-empty text of at most 140 characters.,Plan alanı boş olmayan ve en çok 140 karakterlik bir metin olmalıdır.,platform_core.identity
 The corporate provider exception breaks the rule {0}.,Kurumsal sağlayıcı istisnası {0} kuralını bozuyor.,platform_core.identity
 The first record of a provider and organisation supersedes no record.,Sağlayıcı ve kuruluşun ilk kaydı başka bir kaydın yerine geçmez.,platform_core.identity
 This record must supersede the current record {0}.,Bu kayıt geçerli {0} kaydının yerine geçmelidir.,platform_core.identity

@@ -1,0 +1,8 @@
+{
+  "currency": "USD",
+  "plans": [
+    {"id": "starter", "monthlyUsd": 400, "selfService": true, "priceText": null},
+    {"id": "growth", "monthlyUsd": 750, "selfService": true, "priceText": null},
+    {"id": "enterprise", "monthlyUsd": null, "selfService": false, "priceText": "Fiyat için bize ulaşın"}
+  ]
+}

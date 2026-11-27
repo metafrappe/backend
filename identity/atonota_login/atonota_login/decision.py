@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: MIT
 """Action decisions of the Frappe complement layer (G-161, G-166, G-167).
 
+The paid plan step adds a plan check on top of this module (`plans.py`).
+
 Keycloak answers who the person is. This module answers whether the person may take one action
 now. It has no Frappe import: Frappe passes in the evidence it holds (membership, verification
 results) and turns owner tasks into its own task records.
@@ -45,6 +47,8 @@ class Result:
     policy_version: str
     reasons: tuple = ()
     owner_tasks: tuple = field(default=())
+    # What the action is about, for example the plan of "open-paid-plan". None for most actions.
+    subject: object = None
 
 
 def _require_keys(item: object, allowed: set, where: str) -> dict:

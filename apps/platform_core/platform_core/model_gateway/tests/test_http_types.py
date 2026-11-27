@@ -33,6 +33,17 @@ class ModelHttpTypesTests(unittest.TestCase):
 					set(get_type_hints(endpoint)), {*inspect.signature(endpoint).parameters, "return"}
 				)
 
+	def test_usage_summary_checks_doctype_permission_before_read(self):
+		with (
+			patch.object(frappe, "has_permission", return_value=False),
+			patch.object(frappe, "_", side_effect=lambda text: text),
+			patch.object(frappe, "throw", side_effect=frappe.PermissionError),
+			patch.object(model, "_respond") as read,
+			self.assertRaises(frappe.PermissionError),
+		):
+			model.usage_summary()
+		read.assert_not_called()
+
 	def test_whitelist_leaves_invalid_input_to_gateway_policy(self):
 		messages = [{"role": "user", "content": "Fixture"}]
 		for endpoint, arguments, error in (

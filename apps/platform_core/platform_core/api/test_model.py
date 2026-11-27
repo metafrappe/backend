@@ -84,6 +84,72 @@ class TestModelHTTP(unittest.TestCase):
 	def test_complete_guest_denied(self):
 		self.assertEqual(self.complete("guest").status_code, 403)
 
+	def test_usage_summary_guest_denied(self):
+		response = self._maintenance("guest", "usage_summary", {})
+		self.assertEqual(response.status_code, 403)
+		self.assertNotIn("team", response.json())
+
+	def test_usage_summary_foreign_data_denied(self):
+		response = self._maintenance("regular", "usage_summary", {})
+		self.assertEqual(response.status_code, 403)
+		self.assertNotIn("team", response.json())
+
+	def test_usage_summary_manager_reads_local_totals(self):
+		self.assertEqual(self.complete("manager").status_code, 200)
+		response = self._maintenance("manager", "usage_summary", {})
+		self.assertEqual(response.status_code, 200)
+		result = response.json()["message"]
+		self.assertGreater(sum(row["requests"] for row in result["team"]), 0)
+		self.assertTrue(result["users"])
+		self.assertTrue(result["accounts"])
+
+	def test_usage_summary_respects_manager_account_permissions(self):
+		self.assertEqual(self.complete("manager").status_code, 200)
+		user = self.fixture["users"]["manager"]
+		permission = frappe.get_doc(
+			{
+				"doctype": "User Permission",
+				"user": user,
+				"allow": "PLT AI Account",
+				"for_value": self.fixture["first_account"],
+				"apply_to_all_doctypes": 1,
+			}
+		).insert()
+		frappe.db.commit()
+		try:
+			response = self._maintenance("manager", "usage_summary", {})
+			self.assertEqual(response.status_code, 200)
+			result = response.json()["message"]
+			self.assertEqual({row["account"] for row in result["accounts"]}, {self.fixture["first_account"]})
+			self.assertEqual(sum(row["requests"] for row in result["team"]), 1)
+		finally:
+			frappe.delete_doc("User Permission", permission.name)
+			frappe.clear_cache(user=user)
+			frappe.db.commit()
+
+	def test_usage_summary_denies_a_hidden_cost_field(self):
+		setting = frappe.get_doc(
+			{
+				"doctype": "Property Setter",
+				"doctype_or_field": "DocField",
+				"doc_type": "PLT AI Usage Log",
+				"field_name": "cost",
+				"property": "permlevel",
+				"property_type": "Int",
+				"value": "1",
+			}
+		).insert()
+		frappe.clear_cache(doctype="PLT AI Usage Log")
+		frappe.db.commit()
+		try:
+			response = self._maintenance("manager", "usage_summary", {})
+			self.assertEqual(response.status_code, 403)
+			self.assertNotIn("team", response.json())
+		finally:
+			frappe.delete_doc("Property Setter", setting.name)
+			frappe.clear_cache(doctype="PLT AI Usage Log")
+			frappe.db.commit()
+
 	def test_complete_foreign_data_denied(self):
 		self.assertEqual(self.complete("regular").status_code, 403)
 
@@ -800,7 +866,9 @@ class TestModelHTTP(unittest.TestCase):
 		denied = self._maintenance("manager", "clear_api_credential", {"api": name})
 		self.assertEqual(denied.status_code, 417)
 		self.assertEqual(
-			self.request("manager", "PUT", self.resource("PLT AI API", name), json={"enabled": 0}).status_code,
+			self.request(
+				"manager", "PUT", self.resource("PLT AI API", name), json={"enabled": 0}
+			).status_code,
 			200,
 		)
 		cleared = self._maintenance("manager", "clear_api_credential", {"api": name})
@@ -894,7 +962,9 @@ class TestModelHTTP(unittest.TestCase):
 			{"prices_known": 0, "input_price": 0, "output_price": 0},
 		)
 		frappe.db.set_value("PLT AI Account", account, {"has_monthly_budget": 1, "monthly_budget": budget})
-		frappe.db.set_value("PLT AI Model", model, {"prices_known": 1, "input_price": 0, "output_price": 1000})
+		frappe.db.set_value(
+			"PLT AI Model", model, {"prices_known": 1, "input_price": 0, "output_price": 1000}
+		)
 		frappe.db.commit()
 
 		first_dispatched, release_first, second_dispatched = Event(), Event(), Event()

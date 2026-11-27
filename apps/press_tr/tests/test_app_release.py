@@ -14,7 +14,7 @@ APP = Path(__file__).resolve().parents[1]
 REPO = APP.parents[1]
 sys.path.insert(0, str(APP))
 
-from press_tr import app_release  # noqa: E402
+from press_tr import app_release
 
 VALID_PYPROJECT = """
 [project]
@@ -142,7 +142,9 @@ class PyprojectRuleTest(unittest.TestCase):
 		self.assertTrue(paths)
 		for path in paths:
 			with self.subTest(app=path.parent.name):
-				self.assertEqual(app_release.validate_pyproject(path.read_text(encoding="utf-8")), path.parent.name)
+				self.assertEqual(
+					app_release.validate_pyproject(path.read_text(encoding="utf-8")), path.parent.name
+				)
 
 
 if __name__ == "__main__":

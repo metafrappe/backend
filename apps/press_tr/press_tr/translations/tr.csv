@@ -141,3 +141,5 @@ Email address of the account to recover.,Kurtarılacak hesabın e-posta adresi.,
 The request was received. The answer does not show whether an account exists.,İstek alındı. Yanıt hesabın var olup olmadığını göstermez.,press_tr.openapi
 The request had extra fields.,İstekte fazladan alan vardı.,press_tr.openapi
 Recovery request limit reached.,Kurtarma isteği sınırına ulaşıldı.,press_tr.openapi
+Operator access is denied.,Personel erişimi reddedildi.,press_tr
+Financial changes require a billing operator.,Mali kayıtları yalnız fatura görevlisi değiştirebilir.,press_tr

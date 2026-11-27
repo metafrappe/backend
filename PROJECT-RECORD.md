@@ -435,6 +435,44 @@ Proje sahibi 22 Kasım 2026 Pazar günü şöyle yazdı: “Herşeyi onaylıyoru
   - Eklerin listesi ve test adımları [devir notundadır](docs/handoff/press-tr-extension-test.md).
   - Bu karar önce O-54 numarasını taşıyordu. O-54 ile O-61 arasındaki numaralar başka kararlara verildi. Karar 25 Kasım 2026 Çarşamba günü O-62 oldu.
 
+- **O-63. Operatör kimliği ve personel girişi (AJA-98, AJA-2370).**
+  - Bu karar eski depoda O-57 numarasını taşıyordu. O-57 başka karara verildi. Karar 28 Kasım 2026 Cumartesi günü O-63 oldu.
+
+
+SAFe System Architect, AJA-197 görevinde rol eşlemesini belirledi.
+Press insan hesapları, site ayarındaki kimlik bağıyla sınırlandırılır.
+Kod yalnız önceden hazırlanmış hesapları kullanır.
+İnsan hesabı ve servis hesabı aynı listede bulunamaz.
+Personel girişinin sahibi ilgili uygulamanın kimlik modülüdür.
+İki kimlik modülü birbirini çağırmaz.
+Yeni bağımlılık veya uygulama eklenmez.
+Press kancaları kişisel hesabı denetim kaydına yazar.
+Giriş kaydı, Keycloak görev rolünü de tutar.
+Kayıt, istek gövdesini ve gizli anahtarı içermez.
+
+Fatura rolü için özel izinler kurulumda ve güncellemede uygulanır.
+Normal kullanıcının doğrudan mali yazıları istek girişinde reddedilir.
+Press'in iç faturalama kodunun gerekli izinleri korunur.
+Kayıt olayında tüm yazıları reddeden kanca kullanılmaz.
+Böylece normal takım kaydı ve abonelik faturası bozulmaz.
+Gerçek çalışma kanıtı için hazırlık ortamındaki testler yine gerekir.
+
+Operasyon sitesi personel eşlemesi ayrı ayarla açılır.
+Varsayılan kiracı giriş akışı bu ayarı kullanmaz.
+Destek rolünün adı `Agent` olur. `HD Agent` bir kayıt türüdür.
+DevOps sorumlusu, Helpdesk sürümünü imaj kilidinde tam Git kaydıyla sabitler.
+Sürüm sabitlenene kadar personel girişi kapalı kalır.
+Destek rolü kaldırılınca görevli kaydı pasif olur.
+Son personel rolü kaldırılınca sistem giriş isteğini reddeder.
+Sistem önce yalnız bu yetki iptalini veritabanına kaydeder.
+Böylece giriş reddinin geri alma işlemi eski yetkiyi geri getirmez.
+Bu anda iş işlemi ve yeni oturum henüz başlamamıştır.
+Bu dar istisna iki kimlik dönüş yoluyla sınırlıdır.
+Diğer isteklerde erken veritabanı kaydına izin vermez.
+Hiçbir operatöre `System Manager` rolü verilmez.
+İki sınırlı yönetici rolü bu turda ek izin taşımaz.
+[Devir notu](docs/handoff/operator-identity.md) eşlemeyi, kanıtı ve kalan işleri açıklar.
+
 ## Karar sitesine işlenecek farklar
 
 Backend kararları karar sitesinin bazı maddelerini değiştirdi. Site ayrı bir işte, kendi denetimleriyle güncellenir. Farklar şunlardır:

@@ -85,8 +85,14 @@ required_apps = ["press"]
 # before_install = "press_tr.install.before_install"
 # AJA-421: the setup step opens the "Recovery Reviewer" role only when it is missing.
 # The role is not a fixture: Frappe rewrites every fixture on each migrate (AJA-857).
-after_install = ["press_tr.press_identity.recovery.ensure_reviewer_role"]
-after_migrate = ["press_tr.press_identity.recovery.ensure_reviewer_role"]
+after_install = [
+	"press_tr.press_identity.recovery.ensure_reviewer_role",
+	"press_tr.press_identity.operators.install_permissions",
+]
+after_migrate = [
+	"press_tr.press_identity.recovery.ensure_reviewer_role",
+	"press_tr.press_identity.operators.install_permissions",
+]
 
 # Uninstallation
 # ------------
@@ -276,6 +282,8 @@ before_job = ["press_tr.ansible_bridge.activate"]
 auth_hooks = [
 	"press_tr.press_identity.service.authorize_identity_sync",
 	"press_tr.press_identity.request_policy.enforce_guest_allowlist",
+	"press_tr.press_identity.operators.guard_request",
+	"press_tr.press_identity.financial_policy.guard_request",
 ]
 
 before_login = "press_tr.press_identity.request_policy.block_native_login"
@@ -284,7 +292,10 @@ doc_events = {
 	"User": {
 		"on_update": "press_tr.press_identity.accounts.revoke_disabled_user_keys",
 		# AJA-421: only Administrator gives or takes the Recovery Reviewer role.
-		"validate": "press_tr.press_identity.accounts.guard_reviewer_role",
+		"validate": [
+			"press_tr.press_identity.accounts.guard_reviewer_role",
+			"press_tr.press_identity.operators.validate_user_roles",
+		],
 	},
 	# G-49: Press's own key format check never runs, so press_tr checks it on every Site save.
 	"Site": {"validate": "press_tr.backup_keys.validate_site_keys"},

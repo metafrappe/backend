@@ -27,12 +27,6 @@ KEPT = (
     ("dev/security/.gitleaksignore", None, "old commit fingerprints"),
     # This test names the prefix it looks for.
     ("deploy/tests/test_repo_layout.py", None, "the test itself"),
-    # The naming checker in dev/naming still reports paths with the old prefix. The sibling task
-    # changes dev/naming; the gate and its test follow it there (AJA-1587, "Sınır").
-    ("dev/ai_readiness/gate.py", 'path.removeprefix("backend/")', "dev/naming output"),
-    ("dev/ai_readiness/test_gate.py", '"path": f"backend/{APP}/hooks.py"', "dev/naming output"),
-    ("dev/ai_readiness/test_gate.py", 'args.root / "backend/apps/example.py"', "dev/naming output"),
-    ("dev/ai_readiness/test_gate.py", '"path": "backend/apps/example.py"', "dev/naming output"),
 )
 # The docs/standartlar paths change in a later task (AJA-1587, "Sınır").
 KEPT_TEXT = ("backend/docs/standartlar",)

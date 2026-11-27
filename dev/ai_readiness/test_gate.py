@@ -28,7 +28,7 @@ class GateTests(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.repository = Path(temporary.name).resolve()
         subprocess.run(["git", "init", "--quiet", self.repository], check=True)
-        self.root = self.repository / "backend"
+        self.root = self.repository
         self.write(f"{APP}/__init__.py", "")
         self.write(f"{APP}/hooks.py", 'app_name = "sample_app"\n')
 
@@ -397,7 +397,7 @@ class GateTests(unittest.TestCase):
 
     def write_naming_findings(self, *rules):
         records = [
-            {"path": f"backend/{APP}/hooks.py", "line": 1, "rule": rule, "message": f"Review {rule}."}
+            {"path": f"{APP}/hooks.py", "line": 1, "rule": rule, "message": f"Review {rule}."}
             for rule in rules
         ]
         self.write(
@@ -432,7 +432,7 @@ class GateTests(unittest.TestCase):
         self.write("dev/naming/check_names.py", checker.read_text(encoding="utf-8"))
         self.write("dev/naming/rename-map.json", "[]")
         self.write("dev/bin/dev-resources", '#!/usr/bin/env python3\nprint("| Bağlam | Durum |")\n')
-        subprocess.run(["git", "-C", str(self.repository), "add", "backend"], check=True)
+        subprocess.run(["git", "-C", str(self.repository), "add", "."], check=True)
 
         result = self.run_gate("--json")
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -530,9 +530,9 @@ class GateTests(unittest.TestCase):
             parser.add_argument("--json", action="store_true", required=True)
             parser.add_argument("--include-source-text", action="store_true", required=True)
             args = parser.parse_args()
-            assert (args.root / "backend/apps/example.py").is_file()
+            assert (args.root / "apps/example.py").is_file()
             print(json.dumps([{
-                "path": "backend/apps/example.py", "line": 1,
+                "path": "apps/example.py", "line": 1,
                 "rule": "module-name", "message": "Invalid module name."
             }]))
             raise SystemExit(1)

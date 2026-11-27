@@ -18,7 +18,7 @@ class ShellCheckTests(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.repository = Path(temporary.name).resolve()
         subprocess.run(["git", "init", "--quiet", self.repository], check=True)
-        self.root = self.repository / "backend"
+        self.root = self.repository
         (self.root / "apps").mkdir(parents=True)
         self.tools = self.repository / "tools"
         self.tools.mkdir()

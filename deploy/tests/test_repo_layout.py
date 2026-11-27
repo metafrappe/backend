@@ -155,3 +155,18 @@ class StandardsSyncTests(unittest.TestCase):
     def test_naming_report_is_in_docs_standards(self):
         self.assertTrue((ROOT / "docs" / "standards" / "naming_rules_report.md").is_file())
         self.assertIn("(naming_rules_report.md)", standards_text("README.md"))
+
+
+class StandardsPr64Tests(unittest.TestCase):
+    """frappesetup PR #64: radius and security guides, Decisions 45 and 46 (AJA-1672)."""
+
+    def test_radius_and_security_guides_are_in_docs_standards(self):
+        for name in ("radius.md", "frappe-guvenlik-onlemleri.md"):
+            with self.subTest(name=name):
+                self.assertTrue((ROOT / "docs" / "standards" / name).is_file())
+                self.assertIn(f"({name})", standards_text("README.md"))
+
+    def test_decision_record_has_decisions_45_and_46(self):
+        text = standards_text("KARARLAR.md")
+        self.assertIn("### Karar 45. Köşe yuvarlaklığının tek kuralı radius.md yönergesidir", text)
+        self.assertIn("### Karar 46. Güvenlik yönergesi depoda korunur", text)

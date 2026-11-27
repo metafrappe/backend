@@ -71,6 +71,7 @@ Bu dosyanın iki kopyası var. Biri `rules ai` klasöründe, öteki frappesetup 
 24. Kural dosyasının sınırı varsayılan olarak 36.000 bayttır. Özel durumda en çok 39.000 bayttır (Karar 41).
 25. AtonotA Login bağımsız ve ücretli bir üründür. Ürünün geliştirilmesi MVP sonrasıdır (Karar 42).
 26. Varsayılan dil İngiliz İngilizcesidir (`en-GB`). Ölçü birimi kullanıcının ülkesine göre seçilir (Karar 44).
+27. Köşe yuvarlaklığının tek kuralı `radius.md` yönergesidir. Çevreleyen odak halkası yine yasaktır (Karar 45).
 
 ## 20 Kasım 2026 Cuma günü
 
@@ -941,6 +942,62 @@ Karar şu beş kuralı içerir:
 Bu karar, Karar 43'teki varsayılan dili İngilizce yapmayı erteleme hükmünü kaldırır.
 Karar 43'ün GILT altyapısına ilişkin onayı geçerlidir.
 Bu karar üst yapının kapsamını belirlemez.
+
+### Karar 45. Köşe yuvarlaklığının tek kuralı radius.md yönergesidir
+
+Müşteri köşelerin birbirine uymasını istedi. Müşteri bunun için bir yönerge hazırlamıştı. Müşterinin sözü şudur:
+
+> ben dedim ki, apple gibi birbirine uyan, mükemmel köşe radius'lar olsun. bununla ilgili araştırmalar sonucunda md dosyası hazırladım. ... yönerge vermiştim zaten.
+
+Sonuç şudur:
+
+- Köşe yuvarlaklığının tek kuralı `radius.md` yönergesidir. Kopyası bu klasördedir.
+- Yönerge iç içe kutuların köşelerini bir formülle hesaplar. Başlangıç değeri 5 px'tir.
+- Her köşe bu başlangıç değerinden ve aradaki boşluktan hesaplanır.
+- İzin verilen köşe değerleri 0, 3, 5, 7, 9, 13, 17, 21, 25 ve 29 px'tir.
+- Kapsül biçimli öğeler bu listenin dışındadır. Örneğin yuvarlak düğme ve profil resmi kapsüldür.
+- atonota-web `control-size-config.json` dosyasında kart köşesi 10 px'tir. Bu değer bir karar değildir.
+- 10 px değeri dışa aktarılan bir tasarım dosyasından geldi. Yönerge bu değerin önüne geçer.
+- Örneğin 24 px iç boşluklu kart 21 px köşe alır.
+
+Yönergenin bir kısmı uygulanmaz:
+
+- Yönerge iki yerde "özel focus ring" anar. Bu odak halkası kısmı uygulanmaz.
+- Çevreleyen odak halkası müşterinin kalıcı kuralıyla yasaktır.
+- `--r-ring` değeri yalnız Segmented ve Radio.Group sarmalayıcısında kullanılır.
+- Bu istisna `radius.md` dosyasının başında da yazılıdır.
+
+Kaynak iş AJA-1378'dir. Bu kararı AJA-1379 işi yazdı.
+
+### Karar 46. Güvenlik yönergesi depoda korunur
+
+Müşterinin güvenlik yönergesi [frappe-guvenlik-onlemleri.md](frappe-guvenlik-onlemleri.md) dosyasına eklendi.
+Kaynak iş AJA-1387'dir. Bu kararı AJA-1388 işi yazdı.
+
+Sonuç şudur:
+
+- Dört kişi başlığı sırayla “Öneri listesi 1” ile “Öneri listesi 4” arasında adlandırılır.
+- “Tahta” başlığı “Ortak tahta” olur.
+- Başlıklar dışındaki kaynak metin aynen korunur. Metnin gövdesinde kişi adı bulunmadı.
+- README dosyaları güvenlik yönergesine ve köşe yönergesine bağlantı verir.
+- Köşe yönergesi yeniden eklenmez. Karar 45 geçerliliğini korur.
+- Ortak kural klasöründeki iki yönerge, depodaki kopyalarla aynı tutulur.
+- Dosya gereksinimleri anlatır. Dosyanın eklenmesi, güvenlik önlemlerinin uygulandığı anlamına gelmez.
+
+`tests/consistency.spec.ts` iki yönergenin varlığını denetler.
+Test, standart dosyalarında kişi adı biçimindeki kalın başlıkları reddeder.
+Test çıktısında kişi adı yerine dosya adı ve satır numarası gösterilir.
+
+Doğrulama komutları şunlardır:
+
+```bash
+npm run build
+npm run test:e2e -- tests/consistency.spec.ts --project=chromium
+```
+
+Kaynak metindeki uzun cümleler ve terimler aynen koruma şartı nedeniyle değiştirilmedi.
+Kaynağın noktalama işaretleri ve satır sonu boşlukları da korunur.
+Gerçek okurla denenmedi.
 
 ## Modellerin kararları
 

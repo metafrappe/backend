@@ -5,6 +5,6 @@
 # Test: deploy/tests/test_brand_hardcode.py
 brand.env  # Tek kaynak. Değerler burada yazılıdır.
 PROJECT-RECORD.md  # Proje kaydı. Eski kararlar o günkü adla kalır.
-docs/standartlar/KARARLAR.md  # Karar kaydı. Eski kararlar o günkü adla kalır.
+docs/standards/KARARLAR.md  # Karar kaydı. Eski kararlar o günkü adla kalır.
 docs/decisions/  # Mimari karar kayıtları.
 docs/handoff/  # Devir belgeleri.

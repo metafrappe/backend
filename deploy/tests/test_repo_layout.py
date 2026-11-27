@@ -28,8 +28,8 @@ KEPT = (
     # This test names the prefix it looks for.
     ("deploy/tests/test_repo_layout.py", None, "the test itself"),
 )
-# The docs/standartlar paths change in a later task (AJA-1587, "Sınır").
-KEPT_TEXT = ("backend/docs/standartlar",)
+# Text that may keep the old prefix on any line. The rule files moved to docs/standards/ (AJA-1526).
+KEPT_TEXT = ()
 
 
 def old_prefix_lines(text):
@@ -106,3 +106,35 @@ class RepositoryPathTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class StandardsFolderTests(unittest.TestCase):
+    """The rule files sit in docs/standards/ (AJA-1526)."""
+
+    RULE_FILES = (
+        "ACIK-ISLER.md",
+        "KARARLAR.md",
+        "README.md",
+        "SURECLER-VE-SONUCLAR.md",
+        "frappe-python-disi-standartlari.md",
+        "frappe-python-standartlari.md",
+        "headless-frontend-standartlari.md",
+        "mobile.md",
+    )
+
+    def test_decision_record_is_in_docs_standards(self):
+        self.assertTrue((ROOT / "docs" / "standards" / "KARARLAR.md").is_file())
+
+    def test_all_rule_files_are_in_docs_standards(self):
+        for name in self.RULE_FILES:
+            with self.subTest(name=name):
+                self.assertTrue((ROOT / "docs" / "standards" / name).is_file())
+
+    @unittest.skipUnless(shutil.which("git"), "git is not installed")
+    def test_code_files_do_not_name_the_old_folder(self):
+        old = "docs/" + "standartlar"
+        result = subprocess.run(
+            ["git", "grep", "-n", old, "--", "*.py", "*.ts", "*.mjs", "*.json", "*.txt", "*.sh"],
+            cwd=ROOT, capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(result.stdout, "")

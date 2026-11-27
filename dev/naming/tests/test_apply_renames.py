@@ -488,8 +488,8 @@ class RenameTests(unittest.TestCase):
         )
         fixtures = {
             "other/hooks.py": "from app.kimlik import resolve\n",
-            "docs/standartlar/guide.md": "`app.kimlik`\n",
-            "docs/standartlar/fixture.py": "from app.kimlik import resolve\n",
+            "docs/standards/guide.md": "`app.kimlik`\n",
+            "docs/standards/fixture.py": "from app.kimlik import resolve\n",
             "app/translations/tr.csv": "app.kimlik,Identity\n",
             "app/locale/tr.po": 'msgid "app.kimlik"\n',
             "src/docs.md": "`app.kimlik`\n",
@@ -505,7 +505,7 @@ class RenameTests(unittest.TestCase):
                 "old": "app.kimlik",
                 "new": "app.identity",
                 "type": "reference",
-                "paths": ["docs/standartlar/*", "docs/standartlar/*"],
+                "paths": ["docs/standards/*", "docs/standards/*"],
             },
         ]
 

@@ -1,4 +1,4 @@
-"""Regression tests for the non-Python rule self-audit (docs/standartlar/frappe-python-disi-standartlari.md).
+"""Regression tests for the non-Python rule self-audit (docs/standards/frappe-python-disi-standartlari.md).
 
 - W-1, L-3: the guest `/login` page escapes every value. Frappe 16 Jinja does not autoescape.
 - W-8: the page has no inline script body; its script is a served asset.

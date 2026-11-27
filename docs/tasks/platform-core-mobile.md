@@ -1,13 +1,13 @@
 # İş: platform-core-mobil
 
-Bu iş telefon uygulamasının sunucu tarafını kurar. Telefon uygulaması internet yokken de çalışır. Bağlantı gelince sunucuyla eşitlenir. Bu işin kuralları hazırdır. Kurallar `docs/standartlar/mobile.md` dosyasının 13. bölümündedir (AU-1 ile AU-19).
+Bu iş telefon uygulamasının sunucu tarafını kurar. Telefon uygulaması internet yokken de çalışır. Bağlantı gelince sunucuyla eşitlenir. Bu işin kuralları hazırdır. Kurallar `docs/standards/mobile.md` dosyasının 13. bölümündedir (AU-1 ile AU-19).
 
 Önce şu dosyaları okuyun:
 
 1. `backend/AGENTS.md`
 2. `backend/PROJECT-RECORD.md`
 3. `backend/docs/contracts.md`
-4. `docs/standartlar/mobile.md`. Özellikle 7. bölüm (eşitleme) ve 13. bölüm (sunucu önlemleri) önemlidir. Ek B'deki Frappe davranışlarını da okuyun.
+4. `docs/standards/mobile.md`. Özellikle 7. bölüm (eşitleme) ve 13. bölüm (sunucu önlemleri) önemlidir. Ek B'deki Frappe davranışlarını da okuyun.
 
 ## Sahip olduğunuz yerler
 

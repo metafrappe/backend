@@ -123,7 +123,7 @@ Kararlar 22 Kasım 2026 Pazar günü alındı.
 - **D-15. Yalnız Frappe 16.x kullanılır. Kural dosyaları son karardır.** Proje sahibi 22 Kasım 2026 Pazar günü şöyle yazdı: “namin dosyasından frappe 15 ile ilgili talimat gelse bile, tamamen frappe 16.x ile geliştirme yap. frappe 16.x nimetlerinden faydalan.” Ayrıca kural dosyaları için “bunlar son kararım” dedi.
   - Kural dosyalarındaki Frappe 15 uyum notları uygulanmaz. Frappe 16 davranışı esas alınır.
   - Frappe 16'nın hazır özellikleri tercih edilir. Örneğin API v2, `UnitTestCase` ve `IntegrationTestCase`, `extend_doctype_class`, `autoname: UUID` ve `frappe.qb`. Her kullanım Frappe 16.56.0 kaynağında doğrulanır.
-  - Kural dosyaları `docs/standartlar/` klasöründedir. Asıl kopya proje sahibinin `rules ai` klasöründedir. İki kopya aynı tutulur.
+  - Kural dosyaları `docs/standards/` klasöründedir. Asıl kopya proje sahibinin `rules ai` klasöründedir. İki kopya aynı tutulur.
   - Sihirli bağlantı ve Apple ile giriş MVP'ye girer (karar dosyası, 786. satır). Eklenti lisansı Apache-2.0 ya da MIT olur.
 
 - **D-16. 26 Kasım 2026 kararları.** Proje sahibi 26 Kasım 2026 Perşembe günü beş karar verdi:

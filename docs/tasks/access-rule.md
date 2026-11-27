@@ -8,7 +8,7 @@ Bu iş `platform_core` içinde erişim kuralı motorunu kurar. Karar sitesinin K
 2. `backend/PROJECT-RECORD.md`
 3. `backend/docs/contracts.md`
 4. Karar sitesinde `kararlar.md` (K8), `rail-2-gelistirme.md`, `rail-2-yapilandirma.md` ve `yol-haritasi.md`. G-60, G-61, G-62, G-104 ve G-121 maddelerini bulun.
-5. `docs/standartlar/frappe-python-standartlari.md`, özellikle G-2, G-3 ve G-12
+5. `docs/standards/frappe-python-standartlari.md`, özellikle G-2, G-3 ve G-12
 
 ## Sahip olduğunuz yerler
 

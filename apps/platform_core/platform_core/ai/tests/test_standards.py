@@ -1,6 +1,6 @@
 """Rules found by the self-audit against the project's coding standards.
 
-The rule ids are those of `docs/standartlar/`: V-3, V-10, M-1, G-8, G-12, P-1, P-3, A-5, R-7,
+The rule ids are those of `docs/standards/`: V-3, V-10, M-1, G-8, G-12, P-1, P-3, A-5, R-7,
 H-3, H-10, M-8.
 """
 

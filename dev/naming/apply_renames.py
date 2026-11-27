@@ -25,7 +25,7 @@ GIT_PATH = shutil.which("git")
 GIT = str(Path(GIT_PATH).absolute()) if GIT_PATH else None
 
 RULE_TYPES = {"path", "module", "identifier", "setting", "doctype", "reference"}
-EXCLUDED = ("dev/naming", "docs/standartlar")
+EXCLUDED = ("dev/naming", "docs/standards")
 REDIRECTS = {"PROJE-KAYDI.md", "docs/sozlesmeler.md"}
 GLOSSARY_APPS = {
     "press_tr": "apps/press_tr",

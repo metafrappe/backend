@@ -1,4 +1,4 @@
-"""Standards self audit (docs/standartlar/frappe-python-disi-standartlari.md and
+"""Standards self audit (docs/standards/frappe-python-disi-standartlari.md and
 frappe-python-standartlari.md): one test per rule this job did not meet.
 
 Each expected value comes from the rule text, not from the code under test.

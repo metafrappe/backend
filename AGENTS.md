@@ -7,7 +7,7 @@ Bu klasör platformun sunucu kodunu tutar. Deponun kökündeki `AGENTS.md` karar
 1. Bu dosyayı okuyun.
 2. [Proje kaydını](PROJE-KAYDI.md) okuyun. Seviye MVP'dir.
 3. [Sözleşmeleri](docs/sozlesmeler.md) okuyun. Bileşenler bu adlarla konuşur.
-4. Kod standartlarını okuyun. Standartlar `docs/standartlar/` klasöründedir.
+4. Kod standartlarını okuyun. Standartlar `docs/standards/` klasöründedir.
    - Bu dosyalar proje sahibinin son kararıdır (D-15). Yalnız Frappe 16.x kullanın. Dosyalardaki Frappe 15 notlarını uygulamayın. Frappe 16'nın hazır özelliklerini tercih edin.
    - Telefon eşitlemesi ve giriş işinde `mobile.md` dosyasını da okuyun.
    - Python kodunda `frappe-python-standartlari.md` dosyasını uygulayın.
@@ -101,7 +101,7 @@ Bu iki işi DevOps sorumlusu sunucuda kurar. Geliştirme Mac'inde zamanlanmış 
 
 ### Ad dili
 
-Bütün kod adları İngilizce ve yalnız ASCII olur (D-12, proje sahibinin Karar 40'ı). Ayrıntı `docs/standartlar/` içindeki M-8, H-10, F-4, TS-9 ve IC-1 kurallarıdır.
+Bütün kod adları İngilizce ve yalnız ASCII olur (D-12, proje sahibinin Karar 40'ı). Ayrıntı `docs/standards/` içindeki M-8, H-10, F-4, TS-9 ve IC-1 kurallarıdır.
 
 - Yeni dosya, klasör, modül, DocType, alan, Select seçeneği, işlev ve değişken adını İngilizce verin.
 - Görünen metni İngilizce yazın. Python'da `frappe._`, JavaScript'te `__()` kullanın. DocType JSON etiketleri de İngilizce olur. Türkçesi çeviri dosyasına girer.

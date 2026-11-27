@@ -7,7 +7,7 @@ Bu iş Keycloak'ın giriş ve e-posta ekranlarını Atonota markasıyla yeniden 
 1. `backend/AGENTS.md`
 2. `backend/PROJECT-RECORD.md`, özellikle O-1 ve O-4
 3. `backend/docs/contracts.md`, 1 ve 2. bölümler
-4. `docs/standartlar/headless-frontend-standartlari.md` içindeki güvenlik ve erişilebilirlik kuralları
+4. `docs/standards/headless-frontend-standartlari.md` içindeki güvenlik ve erişilebilirlik kuralları
 5. Ortak arayüz rehberleri: `~/.claude/skills/coding-standards/references/adaptive-ui.md`, `adaptive-qa.md`, `ui-motion.md` ve `ai-first-ui.md`
 
 ## Sahip olduğunuz yer

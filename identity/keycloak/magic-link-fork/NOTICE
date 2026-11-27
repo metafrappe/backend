@@ -2,7 +2,7 @@ Atonota changes to cloudflightio/keycloak-magic-link
 
 Upstream: https://github.com/cloudflightio/keycloak-magic-link
 Pinned commit: 7b4ee949a39a7ee953987162479ae1da2c57c3cb
-License: Apache License, Version 2.0 (the upstream LICENSE file).
+License: Apache License, Version 2.0. The LICENSE file next to this one is the upstream LICENSE file.
 
 The image build unpacks the pinned upstream archive and copies the files in
 this folder over it. All other files come unchanged from the upstream archive.

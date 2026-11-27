@@ -8,6 +8,9 @@ code. This module is the thin Frappe layer around it:
 3. It runs the write of a final step only after `Policy.confirm` says "ready" again.
 
 The caller never supplies evidence. Request fields and token roles are not read.
+The paid plan step also checks the plan (`atonota_login.plans`, decision AJA-18).
+The server has no payment card source yet: there is no Team Tier code. So `collect_evidence` never
+gives a "payment-card" proof and no paid plan opens. A card proof must come from a server record.
 Membership is read from the server's `User.user_type` for now. Frappe derives that field from the
 user's desk roles on save, so a desk role on the server record gives membership evidence. This is a
 known debt until the organisation membership record exists (G-160, PROJECT-RECORD.md).
@@ -18,7 +21,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
 import frappe
-from atonota_login import decision
+from atonota_login import decision, plans
 from frappe import _
 
 from platform_core.identity.exceptions import InvalidInput
@@ -35,6 +38,12 @@ class ActionRefused(frappe.PermissionError):
 	"""The decision for the action is not "ready". The message names the decision state."""
 
 	http_status_code = 403
+
+
+class BillingNotConnected(frappe.ValidationError):
+	"""The gate said "ready", but the P2 billing flow is not connected. Nothing is written."""
+
+	http_status_code = 409
 
 
 class PendingWrites(frappe.ValidationError):
@@ -118,10 +127,26 @@ def _judge(action_id: str, user: str) -> decision.Result:
 	return result
 
 
+def _load_plans() -> plans.Plans:
+	return plans.load_plans()
+
+
+def _judge_plan(plan_id: str, user: str) -> decision.Result:
+	now = now_utc()
+	result = plans.judge(_load_policy(), _load_plans(), plan_id, collect_evidence(user, now), now)
+	if result.status == decision.CONFIGURATION_REQUIRED:
+		open_owner_tasks(result)
+	return result
+
+
+def _is_short_text(value: object) -> bool:
+	return isinstance(value, str) and bool(value) and len(value) <= MAX_ACTION_LENGTH
+
+
 def evaluate(action: object) -> dict:
 	"""Decision for the signed-in user. Called by `platform_core.api.atonota_login.evaluate`."""
 	user = _signed_in_user()
-	if not isinstance(action, str) or not action or len(action) > MAX_ACTION_LENGTH:
+	if not _is_short_text(action):
 		frappe.throw(
 			_(
 				"The action field must be a non-empty text of at most 140 characters.",
@@ -141,13 +166,7 @@ def _refuse(result: decision.Result) -> None:
 	)
 
 
-def run_final_step[T](action_id: str, work: Callable[[], T]) -> T:
-	"""Runs `work` only if the action is ready, and still ready at the final check (G-161).
-
-	The final check loads the policy again and collects the evidence again. `Policy.confirm` refuses
-	a result of another action, a changed policy and evidence that is gone. The caller must not hold
-	pending writes: `PendingWrites` is raised before any decision.
-	"""
+def _start_final_step() -> str:
 	user = _signed_in_user()
 	# A refusal below may commit the owner task. That commit must never make a caller's earlier
 	# writes permanent, so the final step starts only in a clean transaction (AJA-264).
@@ -159,31 +178,79 @@ def run_final_step[T](action_id: str, work: Callable[[], T]) -> T:
 			),
 			PendingWrites,
 		)
+	return user
+
+
+def _keep_owner_tasks(earlier: decision.Result) -> None:
+	if earlier.owner_tasks:
+		# The refusal rolls the request back. The owner task must stay (G-167), so it is committed first.
+		frappe.db.commit()  # nosemgrep: frappe-manual-commit
+
+
+def _refuse_final(action_id: str, final: decision.Result) -> None:
+	reason = ", ".join(final.reasons) or final.status
+	frappe.throw(
+		_("The action {0} is not allowed now ({1}: {2}).", context="platform_core.identity").format(
+			action_id, final.status, reason
+		),
+		ActionRefused,
+	)
+
+
+def run_final_step[T](action_id: str, work: Callable[[], T]) -> T:
+	"""Runs `work` only if the action is ready, and still ready at the final check (G-161).
+
+	The final check loads the policy again and collects the evidence again. `Policy.confirm` refuses
+	a result of another action, a changed policy and evidence that is gone. The caller must not hold
+	pending writes: `PendingWrites` is raised before any decision.
+	"""
+	user = _start_final_step()
 	earlier = _judge(action_id, user)
 	if earlier.status != decision.READY:
-		if earlier.owner_tasks:
-			# The refusal rolls the request back. The owner task must stay (G-167), so it is committed first.
-			frappe.db.commit()  # nosemgrep: frappe-manual-commit
+		_keep_owner_tasks(earlier)
 		_refuse(earlier)
 	now = now_utc()
 	final = _load_policy().confirm(earlier, action_id, collect_evidence(user, now), now)
 	if final.status != decision.READY:
-		reason = ", ".join(final.reasons) or final.status
-		frappe.throw(
-			_("The action {0} is not allowed now ({1}: {2}).", context="platform_core.identity").format(
-				action_id, final.status, reason
-			),
-			ActionRefused,
-		)
+		_refuse_final(action_id, final)
 	return work()
 
 
-def _create_paid_plan() -> dict:
-	# The plan record and its price come with the price decision (G-166, K-61). Until then the gate
-	# above never reaches this line, because the "paid-plan-pricing" rule has no value.
-	frappe.throw(_("Paid plans are not available yet.", context="platform_core.identity"), ActionRefused)
+def _hand_to_billing(plan: plans.Plan) -> dict:
+	# Billing uses the P2 commercial flow (AJA-18, decision 9). That flow is not connected to this
+	# endpoint yet, so the passed gate writes nothing and says so. No own payment code is added.
+	frappe.throw(
+		_(
+			"The plan {0} passed the gate, but billing is not connected yet. Nothing was written.",
+			context="platform_core.identity",
+		).format(plan.id),
+		BillingNotConnected,
+	)
 
 
-def open_paid_plan() -> dict:
-	"""Example final step: open a paid plan. Closed until the price decision (G-166)."""
-	return run_final_step("open-paid-plan", _create_paid_plan)
+def open_paid_plan(plan: object = None) -> dict:
+	"""Final step: open the paid plan `plan` for the signed-in user (G-166, AJA-18).
+
+	Starter and Growth need membership and a payment card proof from a server record. Enterprise
+	is opened by a person and is always refused here. The plan and the evidence are checked again
+	right before the write.
+	"""
+	user = _start_final_step()
+	if not _is_short_text(plan):
+		frappe.throw(
+			_(
+				"The plan field must be a non-empty text of at most 140 characters.",
+				context="platform_core.identity",
+			),
+			InvalidInput,
+		)
+	earlier = _judge_plan(plan, user)
+	if earlier.status != decision.READY:
+		_keep_owner_tasks(earlier)
+		_refuse_final(plans.ACTION, earlier)
+	now = now_utc()
+	plan_set = _load_plans()
+	final = plans.confirm(_load_policy(), plan_set, earlier, plan, collect_evidence(user, now), now)
+	if final.status != decision.READY:
+		_refuse_final(plans.ACTION, final)
+	return _hand_to_billing(plan_set.plans[plan])

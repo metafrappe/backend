@@ -23,9 +23,12 @@ def evaluate(action: Any = None) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-def open_paid_plan() -> dict:
-	"""Opens a paid `atonota_login` plan. Closed until the price decision (G-166)."""
-	return decision_api.open_paid_plan()
+def open_paid_plan(plan: Any = None) -> dict:
+	"""Opens the paid `atonota_login` plan `plan` (G-166, AJA-18). Needs a payment card proof.
+
+	`plan` has no narrow type on purpose: the link checks it and answers `InvalidInput` (contract: 400).
+	"""
+	return decision_api.open_paid_plan(plan)
 
 
 # The provider carries no session. The signature over the raw body authorizes the notice.

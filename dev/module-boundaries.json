@@ -66,6 +66,7 @@
     "atonota_login": [
       "atonota_login",
       "atonota_login.decision",
+      "atonota_login.plans",
       "atonota_login.verification_inbox"
     ],
     "platform_core.reseller": [

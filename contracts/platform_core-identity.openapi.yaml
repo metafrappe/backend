@@ -1496,11 +1496,11 @@ paths:
                   value:
                     message:
                       status: configuration_required
-                      action: open-paid-plan
+                      action: guest-action
                       policy_version: 0f3c0b5e2d9a4c1b8e7f6a5d4c3b2a190817263544536271809a8b7c6d5e4f3a
                       reasons: [configuration-required]
                       owner_tasks:
-                        - {rule: paid-plan-pricing, owner: product-owner, action: open-paid-plan}
+                        - {rule: guest-actions, owner: product-owner, action: guest-action}
         "400":
           description: The `action` field is missing, is not text or is longer than 140 characters. The `exc_type` value is `InvalidInput`.
           content:
@@ -1518,27 +1518,56 @@ paths:
     post:
       tags: [atonota-login]
       operationId: atonotaLoginOpenPaidPlan
-      summary: Opens a paid identity product plan. The gate is closed until the price decision (G-166).
+      summary: Opens a paid identity product plan. Needs membership and a payment card (G-166, AJA-18).
       description: |
-        This endpoint is the example final step of an action (G-161).
-        It judges the `open-paid-plan` action, collects the evidence again and calls `Policy.confirm` right before the write.
-        The write runs only when the final check says `ready` again.
-        A policy change between the two checks refuses the action with the reason `policy-changed`.
+        This endpoint is the final step of the `open-paid-plan` action (G-161).
+        It judges the plan, collects the evidence again and checks again right before the write.
 
-        **The gate is closed today.** The `paid-plan-pricing` rule has no value. The price decision is open (G-166, K-61).
-        So every call returns 403 and `ActionRefused`, and the rule owner gets a task.
+        The plans come from the plan decision (AJA-18). They are kept in `atonota_login/policy/plans.json`.
+        That file is the only place with prices. Prices are kept in US dollars (`USD`).
+
+        | Plan | Monthly price | Who opens it |
+        | --- | --- | --- |
+        | `starter` | 400 USD | The customer |
+        | `growth` | 750 USD | The customer |
+        | `enterprise` | No price. The screen says "Fiyat için bize ulaşın". | A person, not this endpoint |
+
+        The order of checks is:
+
+        1. The caller must be signed in. A guest gets 403 and `PermissionError`.
+        2. The `plan` field must be text of 1 to 140 characters. Otherwise the answer is 400 and `InvalidInput`.
+        3. An unknown plan is refused with the reason `unknown-plan`.
+        4. `enterprise` is refused with the reason `not-self-service`.
+        5. A plan without a price gives `configuration_required` and a task for the product owner (G-167).
+           An empty `paid-plan-pricing` rule gives the same result.
+        6. The server needs a membership proof and a payment card proof (Team Tier table).
+           A missing proof is refused with the reason `membership` or `payment-card`.
+        7. The final check runs the same checks again. A changed plan or policy file gives `policy-changed`.
+
+        **No paid plan opens today.** The server has no payment card source yet, because there is no Team Tier code.
+        So the server never holds a `payment-card` proof, and every customer is refused with `payment-card`.
         A system manager or administrator cannot pass the gate. The caller cannot send evidence.
-        A refused call writes no plan record and no billing record.
-        The plan record and its price come with the price decision. This file holds no price, currency or amount.
 
-        The request has no body fields. Extra fields are dropped.
+        A passed gate still writes nothing today. Billing uses the P2 commercial flow, and that flow is not connected here.
+        The answer is then 409 and `BillingNotConnected`.
+        A refused call writes no plan record and no billing record. The lira amount is not computed here (AJA-581).
       security:
         - frappeSession: []
           csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AtonotaPaidPlanRequest"
+            examples:
+              baslangic:
+                summary: Ask for the Starter plan.
+                value: {plan: starter}
       responses:
         "200":
           description: |
-            Not reachable today. The gate is closed. When the price decision closes, this response returns the new plan.
+            Not reachable today. The card source and the P2 billing flow are not connected yet.
           content:
             application/json:
               schema:
@@ -1546,18 +1575,34 @@ paths:
                 required: [message]
                 properties:
                   message: {type: object}
+        "400":
+          description: The `plan` field is missing, is not text or is longer than 140 characters. The `exc_type` value is `InvalidInput`.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FrappeError"}
         "403":
           description: |
             Guest request (`PermissionError`), or the action is refused (`ActionRefused`).
-            The message names the decision state, for example `configuration_required`.
+            The message names the decision state and the reasons, for example `denied: payment-card`.
           content:
             application/json:
               schema: {$ref: "#/components/schemas/FrappeError"}
               examples:
-                kapali:
+                kart_yok:
                   value:
                     exc_type: ActionRefused
-                    exception: "platform_core.identity.atonota.decision_api.ActionRefused: The action open-paid-plan is not allowed now (configuration_required)."
+                    exception: "platform_core.identity.atonota.decision_api.ActionRefused: The action open-paid-plan is not allowed now (denied: payment-card)."
+                kurumsal:
+                  value:
+                    exc_type: ActionRefused
+                    exception: "platform_core.identity.atonota.decision_api.ActionRefused: The action open-paid-plan is not allowed now (denied: not-self-service)."
+        "409":
+          description: |
+            The gate passed, but the P2 billing flow is not connected yet. The `exc_type` value is `BillingNotConnected`.
+            Nothing is written.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FrappeError"}
         "401":
           $ref: "#/components/responses/OturumBitti"
 
@@ -3290,12 +3335,24 @@ components:
           minLength: 1
           maxLength: 140
           description: Id of the action in `actions.json`, for example `place-order` or `open-paid-plan`.
+    AtonotaPaidPlanRequest:
+      type: object
+      required: [plan]
+      description: Other fields are dropped. They cannot name another user or bring evidence.
+      properties:
+        plan:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: |
+            Id of the plan in `plans.json`: `starter`, `growth` or `enterprise`.
+            `enterprise` is always refused here. Another id is refused with `unknown-plan`.
     AtonotaOwnerTask:
       type: object
       additionalProperties: false
       required: [rule, owner, action]
       properties:
-        rule: {type: string, description: Id of the rule that has no value yet.}
+        rule: {type: string, description: "Id of the rule that has no value yet. A plan without a price gives `plan-price-<plan id>`."}
         owner: {type: string, description: Role name of the rule owner, for example `product-owner`.}
         action: {type: string, description: The action that waits for the rule.}
     AtonotaDecision:

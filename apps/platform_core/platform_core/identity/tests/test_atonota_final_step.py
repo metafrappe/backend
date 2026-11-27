@@ -143,7 +143,7 @@ class TestAtonotaFinalStep(IntegrationTestCase):
 		self.assertEqual(self.calls, [])
 
 	def test_pending_write_stops_the_final_step_before_any_decision(self):
-		# The real policy leaves "open-paid-plan" in configuration_required. That path commits the
+		# A refused final step may commit an owner task (configuration_required). That path commits the
 		# owner task. A write made earlier in the request must not become permanent with it.
 		self.loader.return_value = decision.load_policy()
 		mark = f"{WRITE_MARK} {frappe.generate_hash(length=10)}"

@@ -7,7 +7,7 @@ Expected rules, from the requirements:
   decision does not use the role in the token.
 - G-167: a rule without a value keeps the action closed with "configuration required" and
   gives its owner a task. Example values are not product decisions.
-- G-166: no paid plan opens before the price decision closes.
+- G-166: a paid plan needs membership and a payment card (see test_paid_plan_gate.py).
 """
 
 import json
@@ -34,10 +34,14 @@ class ShippedPolicyTest(unittest.TestCase):
 
     def test_every_rule_has_an_owner_and_no_value_yet(self):
         # G-167: the values are product decisions that are still open. The file holds none.
+        # Only the price decision is closed (AJA-18). Its value points to the plan file.
         self.assertTrue(self.policy.rules)
         for rule in self.policy.rules.values():
             self.assertTrue(rule["owner"], rule["id"])
-            self.assertIsNone(rule["value"], rule["id"])
+            if rule["id"] == "paid-plan-pricing":
+                self.assertEqual(rule["value"], "AJA-18: plans.json")
+            else:
+                self.assertIsNone(rule["value"], rule["id"])
 
     def test_g167_named_rules_are_listed(self):
         names = {
@@ -87,10 +91,11 @@ class ShippedPolicyTest(unittest.TestCase):
             self.assertEqual(task["action"], "identity-verification")
             self.assertEqual(task["owner"], self.policy.rules[task["rule"]]["owner"])
 
-    def test_paid_plan_cannot_open_before_the_price_decision(self):
+    def test_paid_plan_needs_a_payment_card(self):
+        # The price decision is closed (AJA-18). A paid plan now needs a card proof (G-166).
         result = self.policy.evaluate("open-paid-plan", evidence(identity=VALID, membership=VALID), NOW)
-        self.assertEqual(result.status, "configuration_required")
-        self.assertEqual([t["rule"] for t in result.owner_tasks], ["paid-plan-pricing"])
+        self.assertEqual(result.status, "denied")
+        self.assertEqual(result.reasons, ("pricing", "payment-card"))
 
     def test_guest_actions_stay_closed(self):
         self.assertEqual(self.policy.evaluate("guest-action", {}, NOW).status, "configuration_required")

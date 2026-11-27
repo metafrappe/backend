@@ -5,8 +5,11 @@ Expected behavior comes from the contract (`contracts/platform_core-identity.ope
 - only a signed-in user may call the endpoints; a guest gets 403 and `PermissionError`,
 - the server collects the evidence from Frappe records; body fields such as `evidence` or `user` change nothing,
 - `configuration_required` opens one task for the rule owner,
-- the paid plan gate stays closed while `paid-plan-pricing` has no value; no role passes it,
-- a refusal writes no plan record and no billing record.
+- the paid plan gate follows the plan decision (AJA-18): Starter and Growth need membership and a
+  payment card, Enterprise is never self-service, an unknown plan is refused,
+- the server has no card source yet (no Team Tier code), so no caller and no role passes the gate,
+- a refusal writes no plan record and no billing record,
+- a passed gate still writes nothing: the P2 billing flow is not connected (`BillingNotConnected`).
 """
 
 import json
@@ -14,6 +17,7 @@ import secrets
 from unittest import mock
 
 import frappe
+from atonota_login import decision
 from frappe.tests import IntegrationTestCase
 from frappe.tests.test_api import make_request
 from frappe.utils import get_test_client
@@ -135,8 +139,10 @@ class TestAtonotaLoginEndpoints(IntegrationTestCase):
 		visitor = self.decision(VISITOR, {"action": "place-order", "evidence": forged})
 		self.assertEqual(visitor["status"], "denied")
 		self.assertEqual(visitor["reasons"], ["membership"])
+		forged["payment-card"] = FAR_FUTURE
 		member = self.decision(MEMBER, {"action": "open-paid-plan", "evidence": forged})
-		self.assertEqual(member["status"], "configuration_required")
+		self.assertEqual(member["status"], "denied")
+		self.assertEqual(member["reasons"], ["pricing", "payment-card"])
 
 	def test_result_follows_the_contract_shape(self):
 		result = self.decision(MEMBER, {"action": "place-order"})
@@ -160,24 +166,33 @@ class TestAtonotaLoginEndpoints(IntegrationTestCase):
 				self.assertEqual(response.json.get("exc_type"), "InvalidInput")
 
 	def test_configuration_required_opens_one_task_for_the_rule_owner(self):
-		first = self.decision(MEMBER, {"action": "open-paid-plan"})
+		first = self.decision(MEMBER, {"action": "guest-action"})
 		self.assertEqual(first["status"], "configuration_required")
 		self.assertEqual(
 			first["owner_tasks"],
-			[{"rule": "paid-plan-pricing", "owner": "product-owner", "action": "open-paid-plan"}],
+			[{"rule": "guest-actions", "owner": "product-owner", "action": "guest-action"}],
 		)
-		self.decision(MEMBER, {"action": "open-paid-plan"})
+		self.decision(MEMBER, {"action": "guest-action"})
 		tasks = owner_tasks()
 		self.assertEqual(len(tasks), 1, tasks)
-		self.assertIn("paid-plan-pricing", tasks[0].description)
+		self.assertIn("guest-actions", tasks[0].description)
 		self.assertIn("product-owner", tasks[0].description)
 		self.assertEqual(tasks[0].role, "System Manager")
 
-	# --- paid plan gate (G-166) ---
+	# --- paid plan gate (G-166, AJA-18) ---
+
+	def open_plan(self, user: str, body: dict | None = None):
+		return self.send(self.login(user), API + "open_paid_plan", body)
+
+	def assert_refused(self, response, state: str):
+		self.assertEqual(response.status_code, 403, response.data[:300])
+		self.assertEqual(response.json.get("exc_type"), "ActionRefused")
+		message = response.json.get("exception", "") + response.json.get("_server_messages", "")
+		self.assertIn(state, message)
 
 	def test_open_paid_plan_guest_denied(self):
 		before = self.counts()
-		response = self.send(get_test_client(use_cookies=True), API + "open_paid_plan")
+		response = self.send(get_test_client(use_cookies=True), API + "open_paid_plan", {"plan": "starter"})
 		self.assertEqual(response.status_code, 403)
 		self.assertEqual(response.json.get("exc_type"), "PermissionError")
 		self.assertEqual(self.counts(), before)
@@ -185,35 +200,82 @@ class TestAtonotaLoginEndpoints(IntegrationTestCase):
 	def test_open_paid_plan_foreign_data_denied(self):
 		# Body fields cannot name another user or bring evidence.
 		before = self.counts()
-		body = {"user": MANAGER, "evidence": {"membership": FAR_FUTURE, "pricing-decision": FAR_FUTURE}}
-		response = self.send(self.login(VISITOR), API + "open_paid_plan", body)
-		self.assertEqual(response.status_code, 403, response.data[:300])
-		self.assertEqual(response.json.get("exc_type"), "ActionRefused")
+		body = {
+			"plan": "starter",
+			"user": MANAGER,
+			"evidence": {"membership": FAR_FUTURE, "payment-card": FAR_FUTURE},
+		}
+		self.assert_refused(self.open_plan(VISITOR, body), "denied")
 		self.assertEqual(self.counts(), before)
 
-	def test_gate_5_open_paid_plan_refuses_while_the_rule_is_empty(self):
-		response = self.send(self.login(MEMBER), API + "open_paid_plan")
-		self.assertEqual(response.status_code, 403, response.data[:300])
-		self.assertEqual(response.json.get("exc_type"), "ActionRefused")
-		message = response.json.get("exception", "") + response.json.get("_server_messages", "")
-		self.assertIn("configuration_required", message)
-		self.assertEqual(len(owner_tasks()), 1)
+	def test_open_paid_plan_needs_a_plan_field(self):
+		for body in ({}, {"plan": ""}, {"plan": 7}, {"plan": "x" * 141}):
+			with self.subTest(body=body):
+				response = self.open_plan(MEMBER, body)
+				self.assertEqual(response.status_code, 400, response.data[:300])
+				self.assertEqual(response.json.get("exc_type"), "InvalidInput")
+
+	def test_gate_1_card_holder_passes_the_gate_but_billing_is_not_connected(self):
+		# The card source does not exist yet. Here the test gives the server a card proof.
+		before = self.counts()
+		real = decision_api.collect_evidence
+
+		def with_card(user, now):
+			evidence = real(user, now)
+			evidence["payment-card"] = decision_api._proof(now)
+			return evidence
+
+		for plan in ("starter", "growth"):
+			with self.subTest(plan=plan), mock.patch.object(decision_api, "collect_evidence", with_card):
+				response = self.open_plan(MEMBER, {"plan": plan})
+				self.assertEqual(response.status_code, 409, response.data[:300])
+				self.assertEqual(response.json.get("exc_type"), "BillingNotConnected")
+		self.assertEqual(self.counts(), before)
+		self.assertEqual(owner_tasks(), [])
+
+	def test_gate_2_member_without_card_is_refused_and_nothing_is_written(self):
+		before = self.counts()
+		for plan in ("starter", "growth"):
+			with self.subTest(plan=plan):
+				self.assert_refused(self.open_plan(MEMBER, {"plan": plan}), "denied")
+		self.assertEqual(self.counts(), before)
+		self.assertEqual(owner_tasks(), [])
+
+	def test_gate_3_enterprise_is_refused_even_with_a_card(self):
+		before = self.counts()
+		real = decision_api.collect_evidence
+
+		def with_card(user, now):
+			evidence = real(user, now)
+			evidence["payment-card"] = decision_api._proof(now)
+			return evidence
+
+		with mock.patch.object(decision_api, "collect_evidence", with_card):
+			self.assert_refused(self.open_plan(MEMBER, {"plan": "enterprise"}), "not-self-service")
+			self.assert_refused(self.open_plan(MEMBER, {"plan": "trial"}), "unknown-plan")
+		self.assertEqual(self.counts(), before)
+
+	def test_gate_4_empty_pricing_rule_gives_configuration_required(self):
+		data = json.loads(decision.POLICY_FILE.read_text(encoding="utf-8"))
+		next(r for r in data["rules"] if r["id"] == "paid-plan-pricing")["value"] = None
+		with mock.patch.object(decision_api, "_load_policy", return_value=decision.Policy(data)):
+			self.assert_refused(self.open_plan(MEMBER, {"plan": "starter"}), "configuration_required")
+		tasks = owner_tasks()
+		self.assertEqual(len(tasks), 1, tasks)
+		self.assertIn("paid-plan-pricing", tasks[0].description)
 
 	def test_gate_6_refusal_writes_no_plan_or_billing_record(self):
 		before = self.counts()
 		for user in (MEMBER, MANAGER):
-			response = self.send(self.login(user), API + "open_paid_plan")
-			self.assertEqual(response.status_code, 403)
+			self.assert_refused(self.open_plan(user, {"plan": "growth"}), "denied")
 		self.assertEqual(self.counts(), before)
 
 	def test_gate_7_system_manager_cannot_pass_the_gate(self):
-		response = self.send(self.login(MANAGER), API + "open_paid_plan")
-		self.assertEqual(response.status_code, 403, response.data[:300])
-		self.assertEqual(response.json.get("exc_type"), "ActionRefused")
+		self.assert_refused(self.open_plan(MANAGER, {"plan": "starter"}), "denied")
 		# Administrator, in process: the gate does not look at roles.
 		frappe.set_user("Administrator")
 		with self.assertRaises(decision_api.ActionRefused):
-			decision_api.open_paid_plan()
+			decision_api.open_paid_plan("starter")
 
 
 class TestAtonotaVerificationNoticeAccess(IntegrationTestCase):

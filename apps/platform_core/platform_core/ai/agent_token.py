@@ -86,6 +86,10 @@ def authenticate_request() -> None:
 	record = frappe.cache.get_value(_key(token), use_local_cache=False)
 	if not record:
 		return
+	audience = frappe.conf.get("ai_agent_audience") or DEFAULT_AUDIENCE
+	if not isinstance(record.get("audience"), str) or record["audience"] != audience:
+		_log_denied(record, "wrong_audience")
+		return
 	# If there is a `cmd` field, Frappe ignores the path and runs that function (`frappe/app.py`).
 	# So the token is not turned into an identity on a request that carries `cmd`.
 	if frappe.request.path != MCP_PATH or "cmd" in frappe.form_dict or "cmd" in frappe.request.args:
@@ -96,11 +100,17 @@ def authenticate_request() -> None:
 		raise frappe.PermissionError(
 			_("Send either a session cookie or an agent token, not both.", context=CONTEXT)
 		)
+	if not frappe.db.get_value("User", record["user"], "enabled"):
+		_log_denied(record, "user_disabled")
+		frappe.cache.delete_value(_key(token))
+		return
 	if not _session_alive(record["sid"], record["user"]):
 		_log_denied(record, "session_ended")
 		frappe.cache.delete_value(_key(token))
 		return
+	form_dict = frappe.local.form_dict
 	frappe.set_user(record["user"])
+	frappe.local.form_dict = form_dict
 	frappe.local.yz_agent = {"token": token, **record}
 
 

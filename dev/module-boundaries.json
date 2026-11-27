@@ -27,7 +27,8 @@
     ],
     "oidc_verify": [],
     "atonota_login": [],
-    "platform_core.reseller": []
+    "platform_core.reseller": [],
+    "platform_core.idempotency": []
   },
   "public_paths": {
     "platform_core.identity": [
@@ -70,6 +71,9 @@
     ],
     "platform_core.reseller": [
       "platform_core.api.reseller"
+    ],
+    "platform_core.idempotency": [
+      "platform_core.idempotency.core"
     ]
   },
   "path_owners": {

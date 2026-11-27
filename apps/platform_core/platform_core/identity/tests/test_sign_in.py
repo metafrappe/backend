@@ -13,14 +13,15 @@ import hashlib
 import re
 import time
 from html import unescape
-from urllib.parse import parse_qs, urlsplit
 from unittest.mock import patch
+from urllib.parse import parse_qs, urlsplit
 
 import frappe
 from frappe.tests.test_api import FrappeAPITestCase
 
 from platform_core.identity import anonymization, provider_setup, session_policy
 from platform_core.identity.tests import helpers as h
+from platform_core.shell.api import BOOTSTRAP_KEY_PREFIX
 
 SID = "11111111-1111-4111-8111-111111111111"
 
@@ -431,6 +432,9 @@ class TestKeycloakSignIn(FrappeAPITestCase):
 				previous_activity = int(time.time()) - 60
 				frappe.cache.set_value(user_key, previous_activity, expires_in_sec=3600)
 				frappe.cache.hset("redirect_after_login", h.AYSE, "/account-start")
+				bootstrap_key = f"{BOOTSTRAP_KEY_PREFIX}generation:scope"
+				frappe.cache.set_value(bootstrap_key, {"stale": True}, user=h.AYSE, expires_in_sec=60)
+				self.addCleanup(frappe.cache.delete_value, bootstrap_key, user=h.AYSE)
 				self.addCleanup(frappe.cache.hdel, "redirect_after_login", h.AYSE)
 				with patch.object(anonymization, "lock_identity", side_effect=fail_second_lock):
 					response = h.login_with_keycloak(client, h.userinfo("sub-ayse", h.AYSE))
@@ -449,6 +453,9 @@ class TestKeycloakSignIn(FrappeAPITestCase):
 				)
 				self.assertEqual(
 					frappe.cache.get_value(user_key, expires=True, use_local_cache=False), previous_activity
+				)
+				self.assertIsNone(
+					frappe.cache.get_value(bootstrap_key, user=h.AYSE, expires=True, use_local_cache=False)
 				)
 				self.assertEqual(h.logged_user(client), "Guest")
 

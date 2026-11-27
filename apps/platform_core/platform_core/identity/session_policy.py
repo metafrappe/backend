@@ -20,6 +20,8 @@ import time
 import frappe
 from frappe.utils import now_datetime, time_diff_in_seconds
 
+from platform_core.shell.api import forget_user_bootstrap
+
 # System Settings validates hh:mm. Frappe's session parser expects hh:mm:ss.
 SYSTEM_SETTINGS_IDLE_TIMEOUT = "01:00"
 IDLE_TIMEOUT = f"{SYSTEM_SETTINGS_IDLE_TIMEOUT}:00"
@@ -58,6 +60,18 @@ def mark_activity(sid: str | None, user: str) -> None:
 	if sid and sid != "Guest":
 		frappe.cache.set_value(_session_key(sid), int(time.time()), expires_in_sec=IDLE_SECONDS)
 	frappe.cache.set_value(_user_key(user), int(time.time()), expires_in_sec=IDLE_SECONDS)
+
+
+def forget_session(sid: str | None, user: str | None) -> None:
+	"""Deletes the server-side data a closed session leaves behind (O-64).
+
+	Removes the activity key of the session and the shell bootstrap cache of the user. The user activity
+	key stays: other sessions of the same user read it. Every sign-out path calls this function.
+	"""
+	if sid and sid != "Guest":
+		frappe.cache.delete_value(_session_key(sid))
+	if user and user != "Guest":
+		forget_user_bootstrap(user)
 
 
 def recently_active(user: str) -> bool:

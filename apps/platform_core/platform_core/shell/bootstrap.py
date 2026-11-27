@@ -10,7 +10,7 @@ from frappe.locale import get_date_format, get_first_day_of_the_week, get_time_f
 from frappe.translate import get_all_languages
 from frappe.utils import cint, get_system_timezone
 
-from platform_core.shell.cache import permission_version
+from platform_core.shell.cache import BOOTSTRAP_KEY_PREFIX, permission_version
 from platform_core.shell.serialization import digest
 from platform_core.shell.session_locale import get_locale
 
@@ -122,7 +122,7 @@ def _bootstrap_cache_key(version: str, language: str, roles: list[str], locale: 
 			frappe.conf.get("shell_navigation_hosts"),
 		]
 	)
-	return f"platform_core:shell:bootstrap:v2:{version}:{scope}"
+	return f"{BOOTSTRAP_KEY_PREFIX}{version}:{scope}"
 
 
 def _build_bootstrap(user: str, version: str, language: str, roles: list[str], locale: dict) -> dict:

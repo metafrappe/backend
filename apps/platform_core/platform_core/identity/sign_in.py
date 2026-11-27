@@ -286,7 +286,7 @@ def _close_new_session() -> None:
 	clear_cookies()
 	frappe.local.cookie_manager.delete_cookie(_cookie_name())
 	if sid and sid != "Guest":
-		frappe.cache.delete_value(session_policy._session_key(sid))
+		session_policy.forget_session(sid, frappe.session.user)
 		delete_session(sid, reason="Sign-in identity recheck failed")
 	frappe.set_user("Guest")
 

@@ -8,7 +8,7 @@ from frappe import _
 from frappe.sessions import delete_session
 from frappe.utils import get_datetime, now_datetime
 
-from platform_core.identity import helpers, jwks, sign_in, site_settings
+from platform_core.identity import helpers, jwks, session_policy, sign_in, site_settings
 from platform_core.identity.api import mobile_azp
 from platform_core.identity.exceptions import InvalidLogoutToken, KeycloakKeysUnavailable
 
@@ -26,9 +26,11 @@ def logout_current_session() -> dict:
 	"""
 	settings = site_settings.get()
 	keycloak_sid = frappe.session.data.get("keycloak_sid")
+	sid, user = frappe.session.sid, frappe.session.user
 	if helpers.is_session_id(keycloak_sid):
-		sign_in.forget_keycloak_session(keycloak_sid, frappe.session.sid)
+		sign_in.forget_keycloak_session(keycloak_sid, sid)
 	frappe.local.login_manager.logout()
+	session_policy.forget_session(sid, user)
 	return {
 		"logout_url": helpers.end_session_url(
 			settings.public_url, settings.realm, settings.client_id, settings.panel_url
@@ -100,8 +102,10 @@ def handle_logout_token(logout_token: object, close_mobile_session=None) -> dict
 	sid = claims.get("sid")
 	if helpers.is_session_id(sid):
 		for frappe_sid in sign_in.frappe_sids_for(sid):
-			if _session_exists(frappe_sid):
-				delete_session(frappe_sid, reason=LOGOUT_REASON)
+			owner = _session_owner(frappe_sid)
+			if owner:
+				delete_session(frappe_sid, user=owner, reason=LOGOUT_REASON)
+				session_policy.forget_session(frappe_sid, owner)
 				closed += 1
 		sign_in.forget_keycloak_session(sid)
 
@@ -144,13 +148,16 @@ def _close(finder, *args) -> int:
 	closed = 0
 	for sid, user in finder(*args):
 		delete_session(sid, user=user, reason=LOGOUT_REASON)
+		session_policy.forget_session(sid, user)
 		closed += 1
 	return closed
 
 
-def _session_exists(frappe_sid: str) -> bool:
+def _session_owner(frappe_sid: str) -> str | None:
+	"""User of an open Frappe session, or None when the session is already closed."""
 	sessions = frappe.qb.DocType("Sessions")
-	return bool(frappe.qb.from_(sessions).select(sessions.sid).where(sessions.sid == frappe_sid).run())
+	rows = frappe.qb.from_(sessions).select(sessions.user).where(sessions.sid == frappe_sid).run()
+	return rows[0][0] if rows else None
 
 
 def sessions_for_user_before(user: str, iat: int) -> list[tuple[str, str]]:

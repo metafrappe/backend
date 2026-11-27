@@ -1,9 +1,8 @@
 # G-83 ve G-88 devir notu
 
 Bu not Hüseyin Cengiz'e yöneliktir.
-Çalışma dalı `pc/ai-service-setup` olur.
+İlk çalışma eski `pc/ai-service-setup` dalında yapıldı.
 Yerel kurulum canlı kurulum kanıtı değildir.
-Bu dal henüz birleştirmeye hazır değildir.
 Test kapısı ortak kilidi bekliyor.
 G-88 sözleşmesi ve testleri hazırdır. G-88 uygulama kodu henüz yazılmadı.
 Önce düşen test koşmadan uygulama koduna geçilmedi.

@@ -1,8 +1,7 @@
 # AJA-85 ara teslim kaydı
 
-Dal `pc/ai-service-setup` adındadır.
-Taban commit `d54673d058a86b8af97f7589d3263060892461d1` olur.
-Bu dal henüz birleştirmeye hazır değildir.
+İlk çalışma eski `pc/ai-service-setup` dalında yapıldı.
+Bu kayıt o dalın ara teslim durumunu anlatır.
 G-83 ve G-88 kapanmadı.
 
 Bu kayıt 28 Kasım 2026 Cumartesi günü bu depoya taşındı. Taşıma işi AJA-2436 oldu.

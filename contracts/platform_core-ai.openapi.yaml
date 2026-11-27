@@ -67,6 +67,7 @@ paths:
         A write tool opens a proposal and returns the `approval_required` status.
         A tool error is not an HTTP error. A tool error is a result that carries `isError: true`.
         Every call and every denial is written to an "AI Action Log" record.
+        Planned (G-88), not implemented yet: the server does not read _meta today.
         tools/call accepts optional params._meta.page_context. The context is an untrusted
         page hint, never an authorization grant or an implicit tool argument. The server
         validates every referenced record before running the tool or opening a proposal.
@@ -569,6 +570,7 @@ components:
       additionalProperties: false
       required: [doctype]
       description: >
+        Planned (G-88), not implemented yet.
         A list page names its DocType. A record page also names its saved document.
         selected_names contains at most 200 unique document names in the same DocType.
         Every record needs read permission. Unknown or forbidden references reject the call.
@@ -607,7 +609,7 @@ components:
       properties:
         _meta:
           type: object
-          description: Present only when a successful call supplied page_context.
+          description: Planned (G-88). Present only when a successful call supplied page_context.
           properties:
             page_context:
               $ref: "#/components/schemas/PageContext"

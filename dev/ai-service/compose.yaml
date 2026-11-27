@@ -41,11 +41,15 @@ services:
       FS_TENANT_WEB_PORT: "8000"
       FS_TENANT_SOCKET_PORT: "9000"
     command: ["bench", "worker", "--queue", "short,default,long"]
+    # Only tenant-web answers to the tenant1.localhost alias.
+    networks: !override
+      default: {}
     depends_on:
       tenant-db:
         condition: service_healthy
       tenant-redis:
         condition: service_healthy
+  # tenant-socket is left out: realtime is outside this local gateway check.
   ai-tls:
     image: fs-ai-service-tls:local
     build:

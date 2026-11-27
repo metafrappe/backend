@@ -141,3 +141,36 @@ Email address of the account to recover.,Kurtarılacak hesabın e-posta adresi.,
 The request was received. The answer does not show whether an account exists.,İstek alındı. Yanıt hesabın var olup olmadığını göstermez.,press_tr.openapi
 The request had extra fields.,İstekte fazladan alan vardı.,press_tr.openapi
 Recovery request limit reached.,Kurtarma isteği sınırına ulaşıldı.,press_tr.openapi
+Enter a price with at most two decimal places.,En çok iki ondalık basamağı olan bir fiyat yazın.,press_tr
+Create a new plan to change its price.,Fiyatı değiştirmek için yeni bir plan açın.,press_tr
+You cannot change the price start date.,Fiyatın başlangıç tarihini değiştiremezsiniz.,press_tr
+You can enable the plan when its price starts.,Fiyat başladığında planı açabilirsiniz.,press_tr
+Set a Turkish lira price for this paid plan.,Bu ücretli planın Türk lirası fiyatını belirleyin.,press_tr
+Enter valid plan names.,Geçerli plan adları yazın.,press_tr
+Enter a valid price start date.,Geçerli bir fiyat başlangıç tarihi yazın.,press_tr
+Choose a start date at least 30 days from today.,Bugünden en az 30 gün sonrasını seçin.,press_tr
+Enter a USD equivalent for a paid plan. Use zero for both prices on a free plan.,Ücretli planın dolar karşılığını yazın. Ücretsiz planın iki fiyatını da sıfır yazın.,press_tr
+Enter a price that differs from the current price.,Şu anki fiyattan farklı bir fiyat yazın.,press_tr
+Site plan price change,Site planı fiyat değişikliği,press_tr
+Site Plan Price Change,Site Planı Fiyat Değişikliği,Press Notification
+The new plan price is {0} TRY from {1}.,Yeni planın fiyatı {1} günü {0} Türk lirası olur.,press_tr
+Price (TRY),Fiyat (Türk lirası),Site Plan
+Price Start Date,Fiyat Başlangıç Tarihi,Site Plan
+Plan price in Turkish lira.,Planın Türk lirası fiyatı.,Site Plan
+First date when the revised price can be enabled.,Yeni fiyatın başlayabileceği ilk tarih.,Site Plan
+You can assign the plan when its price starts.,Fiyat başladığında aboneyi bu plana geçirebilirsiniz.,press_tr
+Add an email address for each subscriber team before changing the price.,Fiyatı değiştirmeden önce her abone ekibine e-posta adresi ekleyin.,press_tr
+Previous Plan,Önceki Plan,Site Plan
+You cannot change the previous plan.,Önceki planı değiştiremezsiniz.,press_tr
+Site plans only support Turkish lira.,Site planlarında yalnız Türk lirası kullanabilirsiniz.,press_tr
+Copy a Site Plan with a new Turkish lira price.,Site planını yeni Türk lirası fiyatıyla kopyalar.,press_tr.openapi
+Requires System Manager and Site Plan create permission. Creates a disabled successor and records a notice for each active subscriber team in the same transaction. Each team must have an email address. Email is queued in the transaction and sent after commit. The effective date must be at least 30 calendar days from the site date.,System Manager rolü ve Site Plan oluşturma izni gerekir. İşlem kapalı bir yeni plan açar. Aynı işlemde her etkin abone ekibi için bir bildirim kaydeder. Her ekibin bir e-posta adresi olmalıdır. E-posta işlem içinde sıraya girer ve kayıttan sonra gider. Başlangıç tarihi site tarihinden en az 30 takvim günü sonra olmalıdır.,press_tr.openapi
+The new Site Plan name.,Yeni site planının adı.,press_tr.openapi
+The caller cannot create a price revision.,İstek sahibi yeni fiyatlı plan açamaz.,press_tr.openapi
+"Invalid plan name, price, or effective date, or a subscriber team has no email address.","Plan adı, fiyat ya da başlangıç tarihi geçersiz. Ya da bir abone ekibinin e-posta adresi yok.",press_tr.openapi
+List the panel site plans with Turkish lira prices.,Paneldeki site planlarını Türk lirası fiyatlarıyla listeler.,press_tr.openapi
+Wraps the Press function press.api.site.get_site_plans. The override_whitelisted_methods hook routes the Press address in x-frappe-original to this function. Every plan gets currency TRY and the price_try value of its Site Plan. Press decides who may call the original function. This endpoint adds no access rule and changes no record.,"Bu uç nokta Press'in press.api.site.get_site_plans işlevini sarar. override_whitelisted_methods kancası, x-frappe-original içindeki Press adresini bu işleve yönlendirir. Her plana TRY para birimi eklenir. Her plana Site Plan kaydındaki price_try değeri de eklenir. Asıl işlevi kimin çağırabileceğine Press karar verir. Bu uç nokta yeni erişim kuralı eklemez. Bu uç nokta hiçbir kaydı değiştirmez.",press_tr.openapi
+The Press plan list with Turkish lira prices.,Türk lirası fiyatlı Press plan listesi.,press_tr.openapi
+List the panel site plans with Turkish lira prices by POST.,Paneldeki site planlarını POST isteğiyle ve Türk lirası fiyatlarıyla listeler.,press_tr.openapi
+Same response as the GET operation. Press clients may call the original address by POST.,Yanıt GET isteğiyle aynıdır. Press istemcileri asıl adresi POST isteğiyle çağırabilir.,press_tr.openapi
+The Press plan list with Turkish lira prices. The shape is the same as the GET response.,Türk lirası fiyatlı Press plan listesi. Yapısı GET yanıtıyla aynıdır.,press_tr.openapi

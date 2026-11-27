@@ -1,6 +1,6 @@
 # Canlı deneme listeleri
 
-Bu belge DevOps sorumlusu içindir. DevOps sorumlusu kıdemli DevOps mühendisidir. Belgeyi A Takımı DevOps 25 Kasım 2026 Çarşamba günü yazdı.
+Bu belge DevOps sorumlusu içindir. DevOps sorumlusu kıdemli DevOps mühendisidir. Belgeyi Team A DevOps 25 Kasım 2026 Çarşamba günü yazdı.
 
 Belgede üç liste var:
 

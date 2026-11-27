@@ -147,7 +147,7 @@ Bu karar verilene kadar olay eklentisi kurulmadı. Durum raporu `blocked` olarak
 
 Google ve Apple sağlayıcıları `postBrokerLoginFlowAlias` olarak `atonota-post-broker` akışını kullanır. Akış, kullanıcının kurulu TOTP ya da güvenlik anahtarını ister. Gerçek sosyal giriş denenmedi, çünkü sağlayıcı anahtarı yok. Akışın bağlı olduğu canlı testle gösterildi.
 
-## G-162 düzeltmesi: tasarım kararı (24 Kasım 2026 Salı günü, B Takımı mimarı)
+## G-162 düzeltmesi: tasarım kararı (24 Kasım 2026 Salı günü, Team B mimarı)
 
 Testçi iki eksik buldu. Testler `backend/identity/keycloak/tests/test_magic_link.py` dosyasındadır. İki test bilerek düşer.
 
@@ -312,7 +312,7 @@ Testte bilinen bir sınır var. `fresh_totp_code` kullanılan kodları yalnız b
 
 İki eklenti de Apache-2.0'dır. Keycloak imajına eklenir. `platform_core` koduna karışmaz. MIT lisanslı kodumuzu etkilemez.
 
-## G-162 ek iş: tek kaynak başkasının girişini engelleyemez (24 Kasım 2026 Salı günü, B Takımı mimarı, AJA-413)
+## G-162 ek iş: tek kaynak başkasının girişini engelleyemez (24 Kasım 2026 Salı günü, Team B mimarı, AJA-413)
 
 Bu bölüm `pc/g162-rate-limit` dalındaki G-162 düzeltmesinin üstüne kurulur. Düzeltmenin tasarımı yukarıdaki "G-162 düzeltmesi" bölümündedir. O bölüm dal `backend` dalına girince bu dosyada görünür.
 

@@ -37,9 +37,7 @@ class NewTenantSiteLocaleTests(unittest.TestCase):
         self.frappe.connect = Mock()
         self.frappe.destroy = Mock()
         self.frappe.db = SimpleNamespace(
-            set_single_value=Mock(
-                side_effect=lambda doctype, values: self.system_settings.update(values)
-            ),
+            set_single_value=Mock(side_effect=lambda doctype, values: self.system_settings.update(values)),
             set_default=Mock(side_effect=lambda key, value: self.defaults.update({key: value})),
             commit=Mock(),
         )
@@ -69,9 +67,12 @@ class NewTenantSiteLocaleTests(unittest.TestCase):
         arguments = [] if time_zone is None else [time_zone]
         previous = os.getcwd()
         self.addCleanup(os.chdir, previous)
-        with patch.object(self.bootstrap, "BENCH", self.bench), patch.dict(
-            sys.modules, self.modules
-        ), patch.dict("os.environ", environment), patch.object(self.bootstrap.subprocess, "run"):
+        with (
+            patch.object(self.bootstrap, "BENCH", self.bench),
+            patch.dict(sys.modules, self.modules),
+            patch.dict("os.environ", environment),
+            patch.object(self.bootstrap.subprocess, "run"),
+        ):
             self.bootstrap.prepare(site, [], *arguments)
 
     def test_new_site_language_is_en_gb(self):

@@ -255,6 +255,59 @@ Ayrı arayüz üretimde aynı kökende düz dosya olarak sunulur. Dosyalar kirac
 
 Yedek dil, kullanıcının dili bilinmeyince seçilen dildir. Yedek dil MVP'de iki tarafta farklıdır. Arayüzün yedek dili `tr` değeridir. Backend'in son yedeği `en` değeridir. Bu fark bilinçli bir MVP kararıdır. Açılış verisinde `user.language` her zaman doludur. Arayüz bu değeri kullanırsa iki taraf aynı dili gösterir. Varsayılan dil işi iki yedeği birlikte değiştirir.
 
+### Yerel ayar ve pazar
+
+Açılış verisi `locale` alanını taşır. Alanın şeması `Locale` bileşenidir. Sözleşmenin kaynağı `contracts/platform_core-shell.openapi.yaml` dosyasıdır.
+
+Bu alan yalnız okunur. Açılış verisi bir şey yazmaz.
+
+Her değer ayrı bir alandadır. İstemci bir alanı başka bir alandan çıkarmaz. Örneğin dil seçmek pazar açmaz. Dil seçmek parayı ve fatura ülkesini de değiştirmez.
+
+Örnek bir oturum şöyle olabilir. Arayüz Almancadır. Fatura adresi Türkiye'dedir. Fiyatlar avrodur. Bu oturum geçerlidir.
+
+| Alan | Tür | Örnek | Ayar boşsa değer |
+| --- | --- | --- | --- |
+| `language_tag` | Metin. BCP 47 dil etiketi. | `en-GB` | `en-GB` |
+| `language` | Metin. ISO 639 dil kodu. | `en` | `en` |
+| `region` | Metin ya da `null`. ISO 3166-1 iki harfli kod. | `GB` | `GB` |
+| `time_zone` | Metin. IANA saat dilimi adı. | `Europe/Istanbul` | Sitenin `formatting.time_zone` değeri |
+| `transaction_currency` | Metin ya da `null`. ISO 4217 para kodu. | `EUR` | `null` |
+| `billing_country` | Metin ya da `null`. ISO 3166-1 iki harfli kod. | `TR` | `null` |
+| `measurement_system` | Metin. Değer `metric` ya da `imperial` olur. | `metric` | `metric` |
+| `selected_market` | Metin ya da `null`. İki büyük harfli pazar kodu. | `TR` | `open_markets` listesinin ilk öğesi |
+| `open_markets` | Metin listesi. Öğeler tekrar etmez. | `["TR"]` | `["TR"]` |
+
+Alanların kuralları şunlardır:
+
+- `language_tag` alanı `language` ve `region` alanlarından kurulur. İstemci etiketi bölüp dili bulmaz. İstemci `language` alanını okur.
+- `region` alanı sayı ve tarih biçimini seçer. Bu alan pazarı ve fatura ülkesini seçmez.
+- `region` alanı yalnız dil etiketinde bölge yoksa `null` olur. Örneğin etiket `tr` ise bölge `null` olur.
+- `time_zone` alanı kullanıcının saat dilimidir. Kullanıcı saat dilimi seçmediyse sunucu sitenin saat dilimini yazar.
+- `transaction_currency` alanı fiyat ve ödeme parasıdır. Sunucu önce kiracının ayarına bakar. Sonra seçili pazarın parasına bakar. İkisi de yoksa değer `null` olur.
+- Para `null` ise istemci fiyat göstermez. İstemci fiyatlı bir eylem de sunmaz.
+- `billing_country` alanı kiracının fatura adresindeki ülkedir. Fatura adresi yoksa değer `null` olur.
+- `selected_market` her zaman `open_markets` listesindedir. Kayıtlı pazar listede yoksa sunucu `null` yazar. Bu durumda istemci kullanıcıdan pazar seçmesini ister.
+- Ürün sahibi pazar listesini henüz ilan etmedi. Liste gelene kadar yalnız `TR` pazarı açıktır.
+
+Kullanıcı ayarı ve kiracı ayarı boş olabilir. Bu durumda tam dil etiketi `en-GB` olur (Karar 44). Şemada bu değer `default` anahtarıyla yazılıdır.
+
+Bu üç durum ayrı ayrı denenir:
+
+1. Kullanıcı ayarı boştur. Sunucu kiracı ayarını kullanır.
+2. Kiracı ayarı da boştur. Sunucu tablodaki boş değerleri yazar.
+3. Seçili pazar açık değildir. Sunucu `selected_market` alanına `null` yazar.
+
+Eski alanlar kalır. `user.language` alanı yanıtın dilini taşımaya devam eder. `formatting.time_zone` alanı sitenin saat dilimini taşımaya devam eder. Eski istemci `locale` alanını okumaz ve bozulmaz.
+
+`locale` alanı şimdilik isteğe bağlıdır. Sunucu henüz bu alanı üretmez. B Takımının sunucu işi bitince alan zorunlu olur. Bu iş [AJA-1734](/AJA/issues/AJA-1734) ile başlar. Kısa açılış yanıtında da `locale` alanı kalır.
+
+Takvim günü ile an iki ayrı türdür:
+
+- Takvim günü `CalendarDate` türüdür. Biçimi `YYYY-MM-DD` olur. Örnek: `2026-11-27`. Takvim günü saat ve saat dilimi taşımaz. İstemci takvim gününü saat dilimine göre kaydırmaz. Örneğin doğum günü ve fatura tarihi takvim günüdür.
+- An `Instant` türüdür. An, saat dilimi farkı olan ISO 8601 zamanıdır. Örnek: `2026-11-27T09:30:00+03:00` ya da `2026-11-27T06:30:00Z`. Farkı olmayan zaman geçersizdir. İstemci anı `time_zone` alanına göre gösterir.
+
+Sözleşme testi `apps/platform_core/platform_core/tests/test_shell_contract.py` dosyasındaki `TestLocaleContract` sınıfıdır. Test şema kopyasını denetler. Kopya `apps/platform_core/platform_core/tests/shell_contract_components.json` dosyasıdır. Kopya `generate_snapshot.py` ile üretilir.
+
 ### Website User için yöntem izin listesi
 
 - Website User yalnız izin listesindeki yöntemleri çağırabilir. Öteki her yöntem 403 döner. Kural `/api/method`, `/api/v1/method`, `/api/v2/method` ve `cmd` biçimlerinin hepsine uygulanır.

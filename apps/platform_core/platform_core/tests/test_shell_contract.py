@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import unittest
 from pathlib import Path
 
@@ -27,6 +28,8 @@ SCHEMA_KEYWORDS = {
 	"enum",
 	"const",
 	"description",
+	"default",
+	"pattern",
 	"minimum",
 	"not",
 	"required",
@@ -55,6 +58,8 @@ def matches(value, schema, components):
 	if "enum" in schema and value not in schema["enum"]:
 		return False
 	if "const" in schema and value != schema["const"]:
+		return False
+	if "pattern" in schema and isinstance(value, str) and not re.search(schema["pattern"], value):
 		return False
 	if "minimum" in schema and value < schema["minimum"]:
 		return False
@@ -143,3 +148,114 @@ class TestShellProjectionContract(unittest.TestCase):
 			],
 		}
 		self.check("SidebarData", project_sidebar(source))
+
+
+# GILT opening data (AJA-1766). Each locale and market value is a separate field.
+LOCALE_FIELDS = {
+	"language_tag",
+	"language",
+	"region",
+	"time_zone",
+	"transaction_currency",
+	"billing_country",
+	"measurement_system",
+	"selected_market",
+	"open_markets",
+}
+# German interface, Turkish billing address and euro prices in the same session.
+LOCALE_MIXED = {
+	"language_tag": "de-DE",
+	"language": "de",
+	"region": "DE",
+	"time_zone": "Europe/Istanbul",
+	"transaction_currency": "EUR",
+	"billing_country": "TR",
+	"measurement_system": "metric",
+	"selected_market": "TR",
+	"open_markets": ["TR"],
+}
+# The user and the tenant have no settings.
+LOCALE_EMPTY = {
+	"language_tag": "en-GB",
+	"language": "en",
+	"region": "GB",
+	"time_zone": "Europe/Istanbul",
+	"transaction_currency": None,
+	"billing_country": None,
+	"measurement_system": "metric",
+	"selected_market": "TR",
+	"open_markets": ["TR"],
+}
+
+
+class TestLocaleContract(unittest.TestCase):
+	def setUp(self):
+		self.components = parse_json(SCHEMA_FILE.read_bytes())
+
+	def valid(self, component, payload):
+		return matches(payload, self.components[component], self.components)
+
+	def test_every_locale_value_is_a_required_field_of_its_own(self):
+		locale = self.components["Locale"]
+		self.assertEqual(set(locale["required"]), LOCALE_FIELDS)
+		self.assertEqual(set(locale["properties"]), LOCALE_FIELDS)
+		self.assertIs(locale["additionalProperties"], False)
+		for name in LOCALE_FIELDS:
+			missing = {key: value for key, value in LOCALE_MIXED.items() if key != name}
+			self.assertFalse(self.valid("Locale", missing), name)
+
+	def test_mixed_language_billing_and_currency_session_is_valid(self):
+		self.assertTrue(self.valid("Locale", LOCALE_MIXED))
+
+	def test_empty_settings_fall_back_to_en_gb(self):
+		properties = self.components["Locale"]["properties"]
+		self.assertEqual(properties["language_tag"]["default"], "en-GB")
+		self.assertEqual(properties["language"]["default"], "en")
+		self.assertEqual(properties["region"]["default"], "GB")
+		self.assertEqual(properties["measurement_system"]["default"], "metric")
+		self.assertIsNone(properties["transaction_currency"]["default"])
+		self.assertIsNone(properties["billing_country"]["default"])
+		self.assertTrue(self.valid("Locale", LOCALE_EMPTY))
+
+	def test_selected_market_that_is_not_open_is_null(self):
+		self.assertTrue(self.valid("Locale", {**LOCALE_EMPTY, "selected_market": None}))
+
+	def test_malformed_codes_are_rejected(self):
+		for name, value in (
+			("language_tag", "en_GB"),
+			("language_tag", "english"),
+			("language", "EN"),
+			("region", "gb"),
+			("time_zone", "+03:00"),
+			("transaction_currency", "eur"),
+			("transaction_currency", "EURO"),
+			("billing_country", "TUR"),
+			("measurement_system", "us"),
+			("selected_market", "tr"),
+			("open_markets", ["TR", "TR"]),
+			("open_markets", "TR"),
+		):
+			self.assertFalse(self.valid("Locale", {**LOCALE_MIXED, name: value}), (name, value))
+
+	def test_calendar_date_has_no_time_zone(self):
+		self.assertTrue(self.valid("CalendarDate", "2026-11-27"))
+		for value in ("2026-11-27T00:00:00Z", "27.11.2026", "2026-11-27+03:00"):
+			self.assertFalse(self.valid("CalendarDate", value), value)
+
+	def test_instant_carries_a_time_zone_offset(self):
+		for value in ("2026-11-27T09:30:00+03:00", "2026-11-27T06:30:00Z", "2026-11-27T06:30:00.125Z"):
+			self.assertTrue(self.valid("Instant", value), value)
+		for value in ("2026-11-27T09:30:00", "2026-11-27", "09:30:00+03:00"):
+			self.assertFalse(self.valid("Instant", value), value)
+
+	def test_bootstrap_adds_locale_and_keeps_the_old_fields(self):
+		contract_path = os.environ.get("SHELL_TEST_OPENAPI")
+		if not contract_path:
+			self.skipTest("Canonical contract is mounted by the repository test runner.")
+		schemas = parse_json(Path(contract_path).read_bytes())["components"]["schemas"]
+		bootstrap = schemas["Bootstrap"]
+		self.assertEqual(bootstrap["properties"]["locale"], {"$ref": "#/components/schemas/Locale"})
+		self.assertNotIn("locale", bootstrap["required"])
+		self.assertIn("formatting", bootstrap["required"])
+		self.assertIn("language", schemas["User"]["required"])
+		self.assertIn("time_zone", schemas["Formatting"]["required"])

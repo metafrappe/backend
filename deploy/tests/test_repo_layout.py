@@ -187,3 +187,16 @@ class StandardsPr78Tests(unittest.TestCase):
     def test_decision_record_has_decision_47(self):
         text = standards_text("KARARLAR.md")
         self.assertIn("### Karar 47. Backend dalı GitHub'da olacak, PR'ları ProPR birleştirecek", text)
+
+
+class StandardsPr69Tests(unittest.TestCase):
+    """frappesetup PR #69: GILT scope research document (AJA-1672)."""
+
+    def test_gilt_scope_is_in_docs_standards(self):
+        self.assertTrue((ROOT / "docs" / "standards" / "gilt-kapsami.md").is_file())
+        self.assertIn("(gilt-kapsami.md)", standards_text("README.md"))
+
+    def test_gilt_scope_names_the_new_folder(self):
+        text = standards_text("gilt-kapsami.md")
+        self.assertIn("`docs/standards/`", text)
+        self.assertNotIn("docs/" + "standartlar", text)

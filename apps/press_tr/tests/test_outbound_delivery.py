@@ -29,22 +29,36 @@ class DeliveryTest(unittest.TestCase):
 		}
 		self.policy = {
 			"enabled": True,
-			"verified_senders": [{
-				"email": self.account["email_id"],
-				"smtp_server": self.account["smtp_server"],
-				"spf": True, "dkim": True, "dmarc": True, "ptr": True,
-			}],
+			"verified_senders": [
+				{
+					"email": self.account["email_id"],
+					"smtp_server": self.account["smtp_server"],
+					"spf": True,
+					"dkim": True,
+					"dmarc": True,
+					"ptr": True,
+				}
+			],
 			"quota": {"feature": "outbound_email_daily", "plan": "example-plan", "limit": 2},
 		}
-		self.message = b"From: notice@tenant.example.test\r\nTo: reader@example.test\r\nSubject: Example\r\n\r\nHello"
+		self.message = (
+			b"From: notice@tenant.example.test\r\nTo: reader@example.test\r\nSubject: Example\r\n\r\nHello"
+		)
 		self.reserve = Mock(return_value=True)
 		self.smtp = self.enterContext(patch("press_tr.outbound_email.delivery.smtplib.SMTP"))
 		self.connection = self.smtp.return_value.__enter__.return_value
 		self.connection.sendmail.return_value = {}
 
 	def send(self, **overrides):
-		kwargs = dict(site="tenant-a", sender=self.account["email_id"], recipient="reader@example.test",
-			message=self.message, account=self.account, policy=self.policy, reserve=self.reserve)
+		kwargs = dict(
+			site="tenant-a",
+			sender=self.account["email_id"],
+			recipient="reader@example.test",
+			message=self.message,
+			account=self.account,
+			policy=self.policy,
+			reserve=self.reserve,
+		)
 		kwargs.update(overrides)
 		return deliver(**kwargs)
 
@@ -67,10 +81,14 @@ class DeliveryTest(unittest.TestCase):
 	def test_tenant_can_use_its_own_verified_sender(self):
 		self.send()
 		self.connection.sendmail.assert_called_once_with(
-			self.account["email_id"], ["reader@example.test"], self.message)
+			self.account["email_id"], ["reader@example.test"], self.message
+		)
 
 	def test_approval_cannot_be_reused_after_sender_or_relay_change(self):
-		for field, value in (("email_id", "notice@other.example.test"), ("smtp_server", "other.example.test")):
+		for field, value in (
+			("email_id", "notice@other.example.test"),
+			("smtp_server", "other.example.test"),
+		):
 			with self.subTest(field=field):
 				account = {**self.account, field: value}
 				with self.assertRaises(DeliveryDenied):
@@ -87,8 +105,12 @@ class DeliveryTest(unittest.TestCase):
 		self.assertTrue(all(call.kwargs["site"] == "tenant-a" for call in self.reserve.call_args_list))
 
 	def test_missing_or_untrusted_plan_quota_blocks_delivery(self):
-		for quota in ({}, {"limit": -1}, {"feature": "unknown", "plan": "plan", "limit": 2},
-			{"feature": "outbound_email_daily", "plan": "plan", "limit": True}):
+		for quota in (
+			{},
+			{"limit": -1},
+			{"feature": "unknown", "plan": "plan", "limit": 2},
+			{"feature": "outbound_email_daily", "plan": "plan", "limit": True},
+		):
 			with self.subTest(quota=quota), self.assertRaises(DeliveryDenied):
 				self.send(policy={**self.policy, "quota": quota})
 		self.smtp.assert_not_called()

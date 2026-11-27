@@ -3,6 +3,7 @@
 A small stand-in replaces `frappe`, so the test runs without a site. Values are synthetic.
 """
 
+import importlib
 import sys
 import types
 import unittest
@@ -56,8 +57,8 @@ class HooksTest(unittest.TestCase):
 	def load(self, frappe):
 		self.enterContext(patch.dict(sys.modules, {"frappe": frappe}))
 		sys.modules.pop("press_tr.outbound_email.hooks", None)
-		from press_tr.outbound_email import hooks
-
+		# import_module reads sys.modules, so each test gets a fresh module bound to its own stand-in.
+		hooks = importlib.import_module("press_tr.outbound_email.hooks")
 		self.addCleanup(sys.modules.pop, "press_tr.outbound_email.hooks", None)
 		return hooks
 
@@ -68,7 +69,9 @@ class HooksTest(unittest.TestCase):
 		policy = {"enabled": True, "quota": {"feature": "outbound_email_daily", "plan": "p", "limit": 5}}
 		hooks = self.load(fake_frappe({"outbound_email_policy": policy}))
 		with patch.object(hooks.delivery, "deliver") as deliver:
-			hooks.send_queued(self.queue(), "Atonota <notice@tenant.example.test>", "reader@example.test", b"m")
+			hooks.send_queued(
+				self.queue(), "Atonota <notice@tenant.example.test>", "reader@example.test", b"m"
+			)
 		kwargs = deliver.call_args.kwargs
 		self.assertEqual(kwargs["site"], "tenant-a.example.test")
 		self.assertEqual(kwargs["sender"], "notice@tenant.example.test")
@@ -79,7 +82,10 @@ class HooksTest(unittest.TestCase):
 
 	def test_missing_policy_denies_delivery(self):
 		hooks = self.load(fake_frappe())
-		with patch.object(hooks.delivery.smtplib, "SMTP") as smtp, self.assertRaises(hooks.delivery.DeliveryDenied):
+		with (
+			patch.object(hooks.delivery.smtplib, "SMTP") as smtp,
+			self.assertRaises(hooks.delivery.DeliveryDenied),
+		):
 			hooks.send_queued(self.queue(), "notice@tenant.example.test", "reader@example.test", b"m")
 		smtp.assert_not_called()
 

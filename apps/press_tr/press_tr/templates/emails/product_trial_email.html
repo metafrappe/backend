@@ -1,0 +1,6 @@
+{% extends "templates/emails/ptr_base.html" %}
+{% block title %}{{ _("Your trial has ended", context="press_tr.email") }}{% endblock %}
+{% block content %}
+{#- The operator writes this text in the Product Trial record. It is trusted HTML, as in Press. -#}
+<div style="margin:0;">{{ message }}</div>
+{% endblock %}

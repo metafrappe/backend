@@ -141,3 +141,26 @@ Email address of the account to recover.,Kurtarılacak hesabın e-posta adresi.,
 The request was received. The answer does not show whether an account exists.,İstek alındı. Yanıt hesabın var olup olmadığını göstermez.,press_tr.openapi
 The request had extra fields.,İstekte fazladan alan vardı.,press_tr.openapi
 Recovery request limit reached.,Kurtarma isteği sınırına ulaşıldı.,press_tr.openapi
+Your invoice is ready,Faturanız hazır,press_tr.email
+We could not take your payment,Ödemeniz alınamadı,press_tr.email
+Your sites have been stopped,Siteleriniz durduruldu,press_tr.email
+Your site will be archived,Siteniz arşivlenecek,press_tr.email
+Your trial has ended,Deneme süreniz bitti,press_tr.email
+Update your card details,Kart bilginizi güncelleyin,press_tr.email
+You have been invited to a team,Takıma davet edildiniz,press_tr.email
+You get this e-mail because you have an Atonota account.,Bu e-postayı Atonota hesabınız olduğu için alıyorsunuz.,press_tr.email
+Invoice number,Fatura numarası,press_tr.email
+Amount,Tutar,press_tr.email
+Open billing,Faturalara git,press_tr.email
+Card ending in,Kartın son dört hanesi,press_tr.email
+These sites may be stopped if the payment is not made:,Ödeme yapılmazsa şu siteler durdurulabilir:,press_tr.email
+Pay now,Şimdi öde,press_tr.email
+Update payment details,Ödeme bilgilerini güncelle,press_tr.email
+We stopped these sites because a payment is overdue:,Ödemenin süresi geçtiği için şu siteleri durdurduk:,press_tr.email
+Pay the open invoice to start the sites again.,Siteleri yeniden açmak için açık faturayı ödeyin.,press_tr.email
+Site,Site,press_tr.email
+Days left before archiving,Arşivlemeye kalan gün,press_tr.email
+Start the site again before this date to keep it.,Siteyi korumak için siteyi bu süre bitmeden yeniden açın.,press_tr.email
+We could not charge your card.,Kartınızdan ödeme alamadık.,press_tr.email
+Invited by,Davet eden,press_tr.email
+Accept the invitation,Daveti kabul et,press_tr.email

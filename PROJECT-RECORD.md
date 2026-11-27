@@ -435,6 +435,15 @@ Proje sahibi 22 Kasım 2026 Pazar günü şöyle yazdı: “Herşeyi onaylıyoru
   - Eklerin listesi ve test adımları [devir notundadır](docs/handoff/press-tr-extension-test.md).
   - Bu karar önce O-54 numarasını taşıyordu. O-54 ile O-61 arasındaki numaralar başka kararlara verildi. Karar 25 Kasım 2026 Çarşamba günü O-62 oldu.
 
+- **O-69. Press e-postaları Türkçe şablonla ve denetimli gönderimle çıkar (G-17, G-47).** Karar 27 Kasım 2026 Cuma günü alındı.
+  - Altı Türkçe şablon Press şablonuyla aynı adı taşır. Frappe'nin Jinja yükleyicisi uygulamaları ters sırayla arar. Bu yüzden önce `press_tr` dosyası okunur. Press kodu değişmez (M-4).
+  - Press konu satırlarını `_()` olmadan yazar. `make_email_body_message` kancası Press v0.154.1 konularını tam eşleşmeyle Türkçe konuya çevirir. Bilinmeyen konu değişmez. Press sürümü değişince liste yeniden denetlenir.
+  - Gönderim `override_email_send` kancasından geçer. Frappe 16 bu kancayı alıcı döngüsünün içinde çağırır. Alıcı durumu, yeniden deneme ve hata kaydı Frappe'de kalır.
+  - Frappe'nin kendi STARTTLS çağrısı sertifikayı doğrulamaz (`frappe/email/smtp.py`). Bu yüzden kanca bağlantıyı sertifika doğrulamasıyla kendisi açar.
+  - Gönderim kuralı Frappe kullanmayan bir modüldedir: `press_tr/outbound_email/delivery.py`. Mimar ortak kitaplık önerdi. Kitaplığı Press imajına koymak, dev-ortam işinin kurulum zincirini değiştirmeyi gerektirir. Bu yüzden ilk adımda modül `press_tr` içinde kalır.
+  - Frappe 16'da hazır e-posta kotası yoktur. Kota Redis sayacıyla günlük tutulur. Sayaç site önekli anahtarda atomik artar. Kota sınırı şimdilik site ayarından okunur.
+  - Gönderim ayarı yoksa hiçbir e-posta çıkmaz. Ayrıntı ve sunucu adımları [devir notundadır](docs/handoff/outbound-email.md).
+
 ## Karar sitesine işlenecek farklar
 
 Backend kararları karar sitesinin bazı maddelerini değiştirdi. Site ayrı bir işte, kendi denetimleriyle güncellenir. Farklar şunlardır:

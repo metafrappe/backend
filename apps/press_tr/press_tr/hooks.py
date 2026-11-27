@@ -292,3 +292,7 @@ doc_events = {
 extend_doctype_class = {"Account Request": ["press_tr.press_identity.accounts.AccountRequestPolicy"]}
 
 ai_write_closed_doctypes = ["PTR Identity Link", "PTR Keycloak Session"]
+
+# G-17 and G-47 (AJA-103, O-69): checked delivery and Turkish subjects for outgoing e-mail.
+override_email_send = "press_tr.outbound_email.hooks.send_queued"
+make_email_body_message = "press_tr.outbound_email.hooks.localize_subject"

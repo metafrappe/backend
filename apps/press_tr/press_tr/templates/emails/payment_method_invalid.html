@@ -1,0 +1,7 @@
+{% extends "templates/emails/ptr_base.html" %}
+{% block title %}{{ _("Update your card details", context="press_tr.email") }}{% endblock %}
+{% block content %}
+<p style="margin:0 0 12px;">{{ _("We could not charge your card.", context="press_tr.email") }}</p>
+<p style="margin:0 0 12px;">{{ _("Amount", context="press_tr.email") }}: <strong>{{ amount|e }}</strong></p>
+<p style="margin:24px 0 0;"><a href="{{ billing_link|e }}" style="display:inline-block;padding:12px 20px;background:#1d5f4f;color:#ffffff;text-decoration:none;font-weight:600;">{{ _("Update payment details", context="press_tr.email") }}</a></p>
+{% endblock %}

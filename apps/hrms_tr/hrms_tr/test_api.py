@@ -1,5 +1,6 @@
 """Check the leave endpoints' transport and record permission boundaries."""
 
+import json
 from inspect import signature
 from unittest import TestCase
 from unittest.mock import Mock, patch
@@ -380,6 +381,30 @@ class EmployeeAnonymizationTest(IntegrationTestCase):
 			to_date=today(),
 		)
 		application.db_insert()
+		with patch.object(frappe, "sendmail") as sendmail:
+			request = frappe.get_doc(
+				doctype="Personal Data Download Request", user=user, user_name="Synthetic Employee"
+			).insert()
+		sendmail.assert_called_once()
+		self.assertEqual(sendmail.call_args.kwargs["recipients"], user)
+		files = frappe.get_all(
+			"File",
+			filters={"attached_to_doctype": request.doctype, "attached_to_name": request.name},
+			pluck="name",
+		)
+		self.assertEqual(len(files), 1)
+		export = frappe.get_doc("File", files[0])
+		self.assertEqual((export.owner, export.is_private), (user, 1))
+		employees = {record["name"]: record for record in json.loads(export.get_content())["Employee"]}
+		self.assertEqual(set(employees), {employee.name, historical.name})
+		self.assertEqual(employees[employee.name]["personal_email"], email_fields["personal_email"])
+
+		changes = {
+			"changed": [["first_name", "Previous name", "Synthetic"], ["status", "Inactive", "Active"]]
+		}
+		version = frappe.get_doc(
+			doctype="Version", ref_doctype="Employee", docname=employee.name, data=json.dumps(changes)
+		).insert()
 		delete_account = frappe.get_attr("platform_core.api.identity.anonymize_user")
 		with (
 			patch.dict(
@@ -417,6 +442,9 @@ class EmployeeAnonymizationTest(IntegrationTestCase):
 		self.assertEqual(application.employee, employee.name)
 		self.assertEqual(application.employee_name, personal_fields["employee_name"])
 		self.assertEqual(employee.status, "Active")
+		version.reload()
+		self.assertEqual((version.ref_doctype, version.docname), ("Employee", employee.name))
+		self.assertEqual(json.loads(version.data)["changed"], [["status", "Inactive", "Active"]])
 
 
 class LeaveRequestContextCleanupTest(TestCase):

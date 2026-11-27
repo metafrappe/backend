@@ -1,5 +1,6 @@
 """Preview and human approval (G-86)."""
 
+import json
 from unittest.mock import patch
 
 import frappe
@@ -112,8 +113,13 @@ class TestApproval(AiTestCase):
 			outcome = self.approve(client, proposal_id, digest).json["message"]
 
 		self.assertTrue(outcome["executed"], outcome)
-		version = self.last_log(proposal=proposal_id, stage="execute").version
-		self.assertEqual(frappe.db.get_value("Version", version, ["ref_doctype", "docname"]), (DOCTYPE, name))
+		executed = self.last_log(proposal=proposal_id, stage="execute")
+		self.assertEqual((executed.user, executed.tool), (USER_A, "plt_update_document"))
+		self.assertEqual((executed.approval_state, executed.result), ("consumed", "succeeded"))
+		self.assertEqual((executed.target_doctype, executed.target_name), (DOCTYPE, name))
+		version = frappe.get_doc("Version", executed.version)
+		self.assertEqual((version.ref_doctype, version.docname), (DOCTYPE, name))
+		self.assertIn(["title", "Eski", "Yeni"], json.loads(version.data)["changed"])
 
 	def test_expired_proposal_is_rejected(self):
 		name = self.make_record(USER_A, title="Eski")

@@ -138,3 +138,20 @@ class StandardsFolderTests(unittest.TestCase):
             cwd=ROOT, capture_output=True, text=True, check=False,
         )
         self.assertEqual(result.stdout, "")
+
+
+def standards_text(name):
+    return (ROOT / "docs" / "standards" / name).read_text(encoding="utf-8")
+
+
+class StandardsSyncTests(unittest.TestCase):
+    """docs/standards/ matches the frappesetup backend branch before PR #64 (AJA-1672)."""
+
+    def test_decision_record_has_decisions_43_and_44(self):
+        text = standards_text("KARARLAR.md")
+        self.assertIn("### Karar 43. GILT kuralları onaylandı", text)
+        self.assertIn("### Karar 44. Varsayılan dil İngiliz İngilizcesi olacak", text)
+
+    def test_naming_report_is_in_docs_standards(self):
+        self.assertTrue((ROOT / "docs" / "standards" / "naming_rules_report.md").is_file())
+        self.assertIn("(naming_rules_report.md)", standards_text("README.md"))

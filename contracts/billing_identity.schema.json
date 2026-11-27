@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "billing_identity.schema.json",
+  "title": "Billing party, address and tax number check",
+  "description": "Billing data of a person or a company (AJA-1776). The billing country chooses the address format. The screen language never chooses it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["party", "billing_address"],
+  "properties": {
+    "party": {"$ref": "#/$defs/party"},
+    "billing_address": {"$ref": "#/$defs/address"},
+    "tax_id_check": {"$ref": "#/$defs/tax_id_check"}
+  },
+  "x-address-formats": {
+    "TR": {
+      "fields": ["line1", "line2", "district", "province", "postal_code"],
+      "required": ["line1", "district", "province"]
+    },
+    "default": {
+      "fields": ["line1", "line2", "city", "region", "postal_code"],
+      "required": ["line1", "city"]
+    }
+  },
+  "$defs": {
+    "party": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "name"],
+      "properties": {
+        "kind": {"enum": ["person", "company"]},
+        "name": {"type": "string", "minLength": 1, "description": "Full name or full company title in one field. A one-part name is valid. A long title is not cut."},
+        "tax_id": {"type": ["string", "null"], "description": "Tax number as typed. The billing country decides the rule."}
+      }
+    },
+    "address": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["billing_country", "line1"],
+      "properties": {
+        "billing_country": {"type": "string", "pattern": "^[A-Z]{2}$", "description": "Two letter country code. It selects the format in x-address-formats. Unknown countries use default."},
+        "line1": {"type": "string", "minLength": 1},
+        "line2": {"type": ["string", "null"]},
+        "district": {"type": ["string", "null"]},
+        "province": {"type": ["string", "null"]},
+        "city": {"type": ["string", "null"]},
+        "region": {"type": ["string", "null"]},
+        "postal_code": {"type": ["string", "null"]}
+      }
+    },
+    "tax_id_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result", "checked_at"],
+      "properties": {
+        "result": {
+          "enum": ["valid", "invalid", "unavailable"],
+          "description": "valid: the service confirmed the number. invalid: the service rejected the number. unavailable: the service did not answer, so nothing is known."
+        },
+        "checked_at": {"type": "string", "format": "date-time"},
+        "billing_country": {"type": "string", "pattern": "^[A-Z]{2}$"}
+      }
+    }
+  }
+}

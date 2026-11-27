@@ -1,0 +1,90 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-11-27 16:00:00.000000",
+ "description": "Append-only record of one acceptance of a binding text (AJA-1781). The shape is contracts/terms_acceptance.schema.json. A new acceptance writes a new record. An old record is never changed or deleted. The record name is the acceptance_id.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "terms_id",
+  "terms_version",
+  "shown_locale",
+  "user",
+  "accepted_at"
+ ],
+ "fields": [
+  {
+   "description": "Id of the binding text. Example: terms-of-use.",
+   "fieldname": "terms_id",
+   "fieldtype": "Data",
+   "label": "Terms ID",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "search_index": 1,
+   "length": 140
+  },
+  {
+   "description": "Version of the text that was shown. It must be a published PLT Terms Version.",
+   "fieldname": "terms_version",
+   "fieldtype": "Data",
+   "label": "Terms Version",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1,
+   "length": 140
+  },
+  {
+   "description": "Language of the text on the screen at the moment of acceptance. It is not the account language of the user.",
+   "fieldname": "shown_locale",
+   "fieldtype": "Data",
+   "label": "Shown Locale",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1,
+   "length": 16
+  },
+  {
+   "description": "Keycloak subject (sub) of the user who accepted.",
+   "fieldname": "user",
+   "fieldtype": "Data",
+   "label": "User",
+   "read_only": 1,
+   "reqd": 1,
+   "in_standard_filter": 1,
+   "search_index": 1,
+   "length": 140
+  },
+  {
+   "description": "Moment of acceptance in UTC, ISO 8601 with a Z suffix.",
+   "fieldname": "accepted_at",
+   "fieldtype": "Data",
+   "label": "Accepted At (UTC)",
+   "read_only": 1,
+   "reqd": 1,
+   "length": 32
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-27 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Identity",
+ "name": "PLT Terms Acceptance",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

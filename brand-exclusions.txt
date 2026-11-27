@@ -5,7 +5,6 @@
 # Test: backend/deploy/tests/test_brand_hardcode.py
 backend/brand.env  # Tek kaynak. Değerler burada yazılıdır.
 backend/PROJECT-RECORD.md  # Proje kaydı. Eski kararlar o günkü adla kalır.
-docs/standartlar/KARARLAR.md  # Karar kaydı. Eski kararlar o günkü adla kalır.
 backend/docs/decisions/  # Mimari karar kayıtları.
 backend/docs/handoff/  # Devir belgeleri.
 src/content/docs/acik-kararlar.md  # Açık kararlar kaydı.

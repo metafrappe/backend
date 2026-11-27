@@ -385,6 +385,10 @@ def replay(row: frappe._dict, render: Callable[[Document], object]):
 	return render(result)
 
 
+# BORC(mvp): nothing calls `purge_expired()` yet. Effect: expired key rows stay in the table, and
+# each row keeps the user id in its `account` field until it is deleted (G-15). Owner: Team A PO
+# decides the schedule; V-9 requires an explicit `cron` decision. Closes when a follow-up task adds
+# a `scheduler_events` entry in `platform_core/hooks.py` that runs this function at least daily.
 def purge_expired() -> None:
 	"""Delete rows older than the 24-hour retention. Nothing schedules this function yet."""
 	cutoff = retention_start()

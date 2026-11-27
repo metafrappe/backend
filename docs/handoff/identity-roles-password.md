@@ -23,7 +23,8 @@ Bu testler gerçek Keycloak sunucusuyla giriş yapıldığını kanıtlamaz.
    Kök yol genel bir HTML hata sayfası döner. Bu sayfada hata türü yazmaz.
    Kullanıcı misafir kalmalıdır. Sunucu yeni oturum kaydı oluşturmamalıdır.
 2. Yetkisiz uygulama kullanıcısı `/desk` ve `/app` sayfalarını açamamalıdır.
-   Yanıt 403 olmalıdır. Kullanıcının mevcut oturumu açık kalmalıdır.
+   Sunucu kullanıcıyı 302 yanıtıyla `/panel` sayfasına yönlendirmelidir.
+   Bu kural G-53 içindir. Kullanıcının mevcut oturumu açık kalmalıdır.
    Kullanıcı türü ve roller değişmemelidir.
 
 Oturum sınırı testleri mevcut `test_session_boundary_contract.py` dosyasında korunmuştur.
@@ -80,14 +81,14 @@ Bu rol kaynakta yoktur.
 
 Mevcut ret testleri `Website User` türündeki uygulama kullanıcısını sınar.
 Bu testler kiracı yöneticisinin bütün sınırlarını kanıtlamaz.
-Mevcut 403 yanıtı, planlanan uygulama sayfasına yönlendirme davranışını da kanıtlamaz.
+Test, `/panel` yönlendirmesini sınar. Panelin içeriğini sınamaz.
 
 G-53 için şu parçalar eksiktir:
 
 - Kiracı yöneticisinin izin verilen işleri tanımlanmalıdır.
 - `System Manager` rolünün yalnız platform işletmecisinde kaldığı doğrulanmalıdır.
 - `System Settings`, `Social Login Key` ve `Email Account` kayıtları korunmalıdır.
-- Yönetim ekranına erişim ve uygulamaya yönlendirme kuralları uygulanmalıdır.
+- Yönetim ekranına erişim kuralları kiracı yöneticisi için uygulanmalıdır.
 - Başlangıç ekranı ve yönetim bildirimleri gereksinime göre ayarlanmalıdır.
 
 Sonraki işte A Takımı PO, bu parçaları ayrı kabul ölçütleriyle vermelidir.

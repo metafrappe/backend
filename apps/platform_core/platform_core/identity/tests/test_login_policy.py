@@ -77,8 +77,10 @@ class TestKeycloakOnly(FrappeAPITestCase):
 		self.assertEqual(h.session_count(h.AYSE), 1)
 		for path in ("/desk", "/app"):
 			with self.subTest(path=path):
-				denied = h.request(client.get, path, follow_redirects=True)
-				self.assertEqual(denied.status_code, 403, denied.data[:200])
+				# G-53: a user without the Platform Operator role is sent from the Desk to the panel.
+				denied = h.request(client.get, path)
+				self.assertEqual(denied.status_code, 302, denied.data[:200])
+				self.assertTrue(denied.headers["Location"].endswith("/panel"), denied.headers["Location"])
 				self.assertEqual(client.get_cookie("sid").value, sid)
 				self.assertEqual(h.logged_user(client), h.AYSE)
 				self.assertEqual(h.session_count(h.AYSE), 1)

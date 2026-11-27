@@ -101,26 +101,26 @@ class WorkflowTests(unittest.TestCase):
         step = next(s for s in aggregate["steps"] if "RESULTS" in s.get("env", {}))
         self.assertEqual(step["env"]["RESULTS"], "${{ join(needs.*.result, ' ') }}")
         others = ["success"] * (len(GATES) - 1)
-        for result in ("success", "failure", "cancelled", "skipped"):
+        for gate_result in ("success", "failure", "cancelled", "skipped"):
             for position in (0, len(others)):
-                with self.subTest(result=result, position=position):
+                with self.subTest(result=gate_result, position=position):
                     results = list(others)
-                    results.insert(position, result)
-                    process = subprocess.run(
+                    results.insert(position, gate_result)
+                    run = subprocess.run(
                         ["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", step["run"]],
                         env={**os.environ, "RESULTS": " ".join(results)},
                         capture_output=True,
                         check=False,
                     )
-                    self.assertEqual(process.returncode, 0 if result == "success" else 1)
+                    self.assertEqual(run.returncode, 0 if gate_result == "success" else 1)
         with self.subTest(result="empty"):
-            process = subprocess.run(
+            run = subprocess.run(
                 ["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", step["run"]],
                 env={**os.environ, "RESULTS": ""},
                 capture_output=True,
                 check=False,
             )
-            self.assertNotEqual(process.returncode, 0)
+            self.assertNotEqual(run.returncode, 0)
 
     def test_actions_use_full_commit_hashes_with_a_version_comment(self):
         uses = re.findall(r"^\s*(?:-\s+)?uses:\s*(\S+)(.*)$", self.text, flags=re.MULTILINE)

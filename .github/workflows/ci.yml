@@ -1,13 +1,20 @@
-# Backend CI: runs the light Jenkins gates on every pull request and on every push to main.
-# The gate commands equal the table "Jenkins kapıları" in docs/handoff/ci-security.md.
-# Two Jenkins gates are not here: "security audit" needs Docker images and the OSV database,
-# "platform_core tests" and "hrms_tr tests" build a Frappe bench. Jenkins keeps running them.
+# Backend CI: runs the eight backend gates on every pull request and on every push to main.
+# Each gate is its own job. The gate list is checked by dev/tests/test_ci_workflow.py.
 #
-# The code root is found at run time: "backend" if that folder exists, else the repository root.
-# So the workflow runs before and after the path change of PR 9.
+#   1. module-boundaries  dev/bin/module-boundaries
+#   2. security           dev/bin/security-audit and the security tool tests
+#   3. ai-readiness       dev/bin/ai-readiness
+#   4. dev-tests          dev/tests
+#   5. naming             dev/naming/tests and check_names.py against the reviewed baseline
+#   6. deploy-tests       deploy/tests
+#   7. press-ai           tools/press-ai/tests
+#   8. contract           press-ai check-contract and the OpenAPI tests that need no Frappe bench
+#
+# "platform_core tests" and "hrms_tr tests" build a Frappe bench. Jenkins keeps running them.
+# dev/hrms/test_contract.py imports frappe, so it also stays in Jenkins.
 #
 # ProPR waits for the check named "build-and-test". The name must not change. The job runs with
-# "if: always()", so a skipped gate cannot count as green.
+# "if: always()", so a failed, cancelled or skipped gate cannot count as green.
 name: CI
 
 on:
@@ -23,26 +30,27 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  gate:
-    name: gate (${{ matrix.gate }})
+  # check_boundaries.py reads Python 3.14 syntax. An older python3 reports wrong violations.
+  module-boundaries:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.14'
+      - name: Module boundaries
+        run: dev/bin/module-boundaries
+
+  # security-audit needs bandit, semgrep, the gitleaks image and the OSV database.
+  # The runner downloads them first. The audit itself then runs offline.
+  security:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - gate: deploy tests
-            python: '3.14'
-            command: python -I -m unittest discover -s "$ROOT/deploy/tests"
-          - gate: dev tests
-            python: '3.14'
-            command: python -I -m unittest discover -s "$ROOT/dev/tests"
-          - gate: security tool tests
-            python: '3.12'
-            command: python -B -m unittest discover -s "$ROOT/dev/security"
-          - gate: module boundaries
-            python: '3.14'
-            command: '"$ROOT/dev/bin/module-boundaries"'
+    env:
+      FS_COLIMA_PROFILE: ci
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
@@ -50,23 +58,163 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          python-version: ${{ matrix.python }}
-      - name: Find the code root
+          python-version: |
+            3.12
+            3.14
+      - name: Prepare offline security tools
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
-          if [ -d backend/dev ]; then echo "ROOT=backend" >> "$GITHUB_ENV"; else echo "ROOT=." >> "$GITHUB_ENV"; fi
-      - name: Run gate
-        run: ${{ matrix.command }}
+          # security-audit compares commit messages after the merge base with this ref.
+          git update-ref refs/heads/backend "$BASE_SHA"
+          # The ai-readiness self tests create Git repositories. They expect the branch "main".
+          git config --global init.defaultBranch main
+          python3.14 -m pip install uv==0.13.9
+          source dev/security/tool-versions.env
+          uv python install 3.12
+          uvx --python 3.12 --exclude-newer "$TOOL_CUTOFF" "bandit@$BANDIT_VERSION" --version
+          SEMGREP_ENABLE_VERSION_CHECK=0 uvx --python 3.12 --exclude-newer "$TOOL_CUTOFF" "semgrep@$SEMGREP_VERSION" --version
+          docker pull "ghcr.io/gitleaks/gitleaks:v${GITLEAKS_VERSION}@${GITLEAKS_DIGEST}"
+          dev/security/osv-setup --if-stale
+      - name: Security audit
+        env:
+          UV_OFFLINE: '1'
+        run: dev/bin/security-audit
+      - name: Security tool tests
+        run: python3.12 -B -m unittest discover -s dev/security
+
+  ai-readiness:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      FS_COLIMA_PROFILE: ci
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.14'
+      # The ShellCheck step runs its image with "--pull never", so the runner pulls it first.
+      # The self tests create Git repositories. They expect the branch "main".
+      - name: Prepare ShellCheck image
+        run: |
+          git config --global init.defaultBranch main
+          docker pull "$(python3.14 -B -c 'import sys; sys.path.insert(0, "dev/ai_readiness"); from shellcheck_step import SHELLCHECK_IMAGE; print(SHELLCHECK_IMAGE)')"
+      - name: AI readiness self tests
+        run: dev/bin/ai-readiness --self-test
+      - name: AI readiness
+        run: dev/bin/ai-readiness
+
+  dev-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.14'
+      # Without these packages the contract and workflow tests skip and look green.
+      - name: Install test dependencies
+        run: python3.14 -m pip install -r dev/requirements-contract-tests.txt
+      - name: Prepare Docker context for Compose tests
+        # test_e2e_stack.py uses this context name on Linux too.
+        run: docker context create colima-factory --docker host=unix:///var/run/docker.sock
+      - name: Development tests
+        run: python3.14 -B -m unittest discover -s dev/tests
+
+  # check_names.py still reports 1585 old findings (AJA-1588). dev/naming/baseline.json lists the
+  # reviewed old findings. The gate fails only for a finding that is not in that list.
+  naming:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.14'
+      - name: Naming tests
+        run: python3.14 -B -m unittest discover -s dev/naming/tests
+      - name: New naming findings
+        run: python3.14 -B dev/naming/check_new_names.py
+
+  # Release manifest and remote script tests of the Jenkins deploy line. Stdlib and GNU tools only.
+  deploy-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.14'
+      - name: Deploy tests
+        run: python3.14 -I -m unittest discover -s deploy/tests
+
+  # tools/press-ai uses the standard library only.
+  press-ai:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.14'
+      - name: press-ai tests
+        run: python3.14 -I -m unittest discover -s tools/press-ai/tests
+
+  # The pressguide data is not in this repository, so check-contract skips the guide order check.
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.14'
+      # Without these packages the OpenAPI tests skip and look green.
+      - name: Install contract test dependencies
+        run: |
+          python3.14 -m pip install -r dev/requirements-contract-tests.txt openapi-spec-validator==0.7.2
+          python3.14 -B -c 'import jsonschema, referencing, yaml, openapi_spec_validator'
+      - name: press-ai contract check
+        run: python3.14 -I tools/press-ai/server.py check-contract
+      - name: OpenAPI tests
+        run: |
+          python3.14 -B -m unittest discover -s dev/tests -p test_gateway_openapi.py
+          python3.14 -B -m unittest discover -s dev/press -p test_openapi_contract.py
+          python3.14 -B -m unittest discover -s dev/mobile_test_app/tests -p test_contract_examples.py
 
   build-and-test:
     name: build-and-test
     if: always()
-    needs: [gate]
+    needs:
+      - module-boundaries
+      - security
+      - ai-readiness
+      - dev-tests
+      - naming
+      - deploy-tests
+      - press-ai
+      - contract
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Every gate passed
         env:
-          RESULT: ${{ needs.gate.result }}
+          RESULTS: ${{ join(needs.*.result, ' ') }}
         run: |
-          echo "gate result: $RESULT"
-          test "$RESULT" = success
+          echo "gate results: $RESULTS"
+          test -n "$RESULTS"
+          for gate in $RESULTS; do
+            if [ "$gate" != success ]; then echo "::error::A gate ended with: $gate"; exit 1; fi
+          done

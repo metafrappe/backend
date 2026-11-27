@@ -48,6 +48,51 @@ def run_lines(step):
     return [line.strip() for line in step.get("run", "").splitlines() if line.strip()]
 
 
+PIP_INSTALL = re.compile(r"\bpip3?(?:\.\d+)? install\b|\b-m pip install\b")
+HASH = re.compile(r"--hash=sha256:[0-9a-f]{64}\b")
+
+
+def pip_install_problems(lines):
+    """Return the pip install lines that do not install only from hashed lock files.
+
+    A good line uses --require-hashes and names only lock files with -r. It names no package.
+    """
+    problems = []
+    for line in lines:
+        if not PIP_INSTALL.search(line):
+            continue
+        words = line.split()
+        tail = words[words.index("install") + 1:]
+        files, extra, i = [], [], 0
+        while i < len(tail):
+            word = tail[i]
+            if word in ("-r", "--requirement") and i + 1 < len(tail):
+                files.append(tail[i + 1])
+                i += 2
+                continue
+            if word != "--require-hashes":
+                extra.append(word)
+            i += 1
+        if "--require-hashes" not in tail or not files or extra:
+            problems.append(line)
+    return problems
+
+
+def lock_problems(text):
+    """Return the requirements in a lock file that have no exact version or no sha256 hash."""
+    problems = []
+    entries = re.split(r"\n(?=\S)", "\n".join(
+        line for line in text.splitlines() if line.strip() and not line.lstrip().startswith("#")
+    ))
+    for entry in entries:
+        name = entry.split("\n", 1)[0].strip()
+        if not entry.strip():
+            continue
+        if not re.match(r"^[A-Za-z0-9._-]+(\[[^]]+\])?==[^\s;\\]+", name) or not HASH.search(entry):
+            problems.append(name)
+    return problems
+
+
 class WorkflowTests(unittest.TestCase):
     def setUp(self):
         self.text = WORKFLOW.read_text(encoding="utf-8")
@@ -84,10 +129,43 @@ class WorkflowTests(unittest.TestCase):
         # Without these packages the OpenAPI tests skip and look green.
         lines = [line for step in self.jobs["contract"]["steps"] for line in run_lines(step)]
         install = next(i for i, line in enumerate(lines) if "pip install" in line)
-        self.assertIn("-r dev/requirements-contract-tests.txt", lines[install])
-        self.assertIn("openapi-spec-validator==", lines[install])
+        self.assertIn("-r dev/requirements-openapi-tests.txt", lines[install])
+        lock = (ROOT / "dev/requirements-openapi-tests.txt").read_text(encoding="utf-8")
+        for package in ("jsonschema==", "pyyaml==", "openapi-spec-validator==", "referencing==", "rpds-py=="):
+            self.assertRegex(lock, rf"(?m)^{re.escape(package)}")
         first_test = next(i for i, line in enumerate(lines) if "unittest" in line)
         self.assertLess(install, first_test)
+
+    def test_every_pip_install_uses_a_hashed_lock_file(self):
+        # SecOps finding B3: each package and each dependency is pinned with a sha256 hash.
+        lines = [line for job in self.jobs.values() for step in job["steps"] for line in run_lines(step)]
+        installs = [line for line in lines if PIP_INSTALL.search(line)]
+        self.assertTrue(installs)
+        self.assertEqual(pip_install_problems(lines), [])
+        for line in installs:
+            words = line.split()
+            for lock in (words[i + 1] for i, word in enumerate(words) if word in ("-r", "--requirement")):
+                with self.subTest(lock=lock):
+                    text = (ROOT / lock).read_text(encoding="utf-8")
+                    self.assertIn("Regenerate", text.split("\n", 3)[0] + text.split("\n", 3)[1])
+                    self.assertEqual(lock_problems(text), [])
+
+    def test_the_pip_install_check_rejects_hashless_lines(self):
+        bad = (
+            "python3.14 -m pip install -r dev/requirements-contract-tests.txt",
+            "python3.14 -m pip install uv==0.13.9",
+            "pip install --require-hashes -r dev/a.txt openapi-spec-validator==0.7.2",
+            "python3 -m pip install --require-hashes requests==2.0",
+        )
+        for line in bad:
+            with self.subTest(line=line):
+                self.assertEqual(pip_install_problems([line]), [line])
+        good = "python3.14 -m pip install --require-hashes -r dev/a.txt -r dev/b.txt"
+        self.assertEqual(pip_install_problems([good, "echo pip"]), [])
+        hashed = "a==1.0 \\\n    --hash=sha256:" + "0" * 64 + "\n"
+        self.assertEqual(lock_problems(hashed), [])
+        self.assertEqual(lock_problems("a==1.0\n"), ["a==1.0"])
+        self.assertEqual(lock_problems("a>=1.0 --hash=sha256:" + "0" * 64 + "\n"), ["a>=1.0 --hash=sha256:" + "0" * 64])
 
     def test_aggregate_keeps_its_name_and_always_runs(self):
         aggregate = self.jobs[AGGREGATE]

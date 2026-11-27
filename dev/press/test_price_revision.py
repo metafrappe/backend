@@ -93,7 +93,7 @@ class PriceRevisionTest(unittest.TestCase):
         notices = [call.args[0] for call in self.frappe.get_doc.call_args_list[1:]]
         self.assertEqual([notice["team"] for notice in notices], ["subscriber-a", "subscriber-b"])
         self.assertEqual(self.frappe.sendmail.call_count, 2)
-        self.assertTrue(all(call.kwargs["now"] for call in self.frappe.sendmail.call_args_list))
+        self.assertFalse(any(call.kwargs.get("now") for call in self.frappe.sendmail.call_args_list))
         for notice in notices:
             self.assertEqual(notice["doctype"], "Press Notification")
             self.assertIn("23 Aralık 2026 Çarşamba", notice["message"])
@@ -107,6 +107,15 @@ class PriceRevisionTest(unittest.TestCase):
         self.successor.insert.assert_not_called()
         self.notice.insert.assert_not_called()
         self.frappe.sendmail.assert_not_called()
+
+    def test_failed_request_sends_no_email(self):
+        self.notice.insert.side_effect = [self.notice, ValidationError("second notice failed")]
+        with self.assertRaises(ValidationError):
+            self.change()
+        # Without now=True, Frappe writes the email to Email Queue in the request transaction.
+        # The failed request rolls back that queue row, so no team receives an email.
+        self.assertEqual(self.frappe.sendmail.call_count, 1)
+        self.assertFalse(self.frappe.sendmail.call_args.kwargs.get("now"))
 
     def test_rejects_early_assignment_even_when_plan_name_is_known(self):
         subscription = SimpleNamespace(enabled=1, plan_type="Site Plan", plan="new")

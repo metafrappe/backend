@@ -42,7 +42,8 @@ test "$(git -C apps/frappe rev-parse HEAD)" = 49789a1711d4dde2be9c6888efe3565146
 test "$(git -C apps/press rev-parse HEAD)" = 7a4384d5eec9f0f0dce4124e9dd48b106e51222f
 
 bash /opt/press-local/scripts/patch-py314.sh
-bench build --app frappe
+# Frappe 16.56 imports every app's hooks after writing assets. Site-less Press hooks fail there.
+bench build --app frappe || test -f sites/assets/assets.json
 # The site-less Press after_build hook can fail after emitting the dashboard.
 bench build --app press || test -f apps/press/press/public/dashboard/index.html
 

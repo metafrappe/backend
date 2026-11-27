@@ -28,6 +28,12 @@ class FrappeVersionTest(unittest.TestCase):
             install.splitlines(),
         )
 
+    def test_frappe_build_survives_site_less_press_hooks(self):
+        # Frappe 16.56 imports every app's hooks after it writes the assets.
+        # Press hooks need a site, so the installer must check the asset manifest instead.
+        install = (PRESS_DEV / "install.sh").read_text(encoding="utf-8").splitlines()
+        self.assertIn("bench build --app frappe || test -f sites/assets/assets.json", install)
+
     def test_documents_name_only_the_pinned_release(self):
         old = re.compile(r"(?<![\d.])16\.(?!56(?:\.0)?(?![\d.]))\d+(?:\.\d+)?")
         for name in VERSIONED_FILES:

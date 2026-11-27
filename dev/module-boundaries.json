@@ -11,9 +11,12 @@
       "platform_core.shell",
       "platform_core.model_gateway",
       "platform_core.access",
-      "platform_core.mobile"
+      "platform_core.mobile",
+      "platform_core.conversation"
     ],
-    "platform_core.model_gateway": [],
+    "platform_core.model_gateway": [
+      "platform_core.conversation"
+    ],
     "platform_core.access": [],
     "platform_core.mobile": [
       "platform_core.identity"
@@ -27,7 +30,8 @@
     ],
     "oidc_verify": [],
     "atonota_login": [],
-    "platform_core.reseller": []
+    "platform_core.reseller": [],
+    "platform_core.conversation": []
   },
   "public_paths": {
     "platform_core.identity": [
@@ -70,6 +74,9 @@
     ],
     "platform_core.reseller": [
       "platform_core.api.reseller"
+    ],
+    "platform_core.conversation": [
+      "platform_core.conversation"
     ]
   },
   "path_owners": {

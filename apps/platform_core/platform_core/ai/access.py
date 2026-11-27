@@ -9,6 +9,7 @@ from typing import Any
 import frappe
 from frappe import _
 
+from platform_core import conversation
 from platform_core.ai import store
 from platform_core.ai.errors import CONTEXT
 
@@ -17,7 +18,6 @@ AGENT = "agent_token"
 OAUTH = "oauth"
 OTHER = "other"
 GUEST = "guest"
-CONVERSATION_HEADER = "Mcp-Conversation-Id"
 
 
 def principal() -> str:
@@ -149,8 +149,7 @@ def session_id() -> str | None:
 	A client may put a credential into this header by mistake. Rows of one conversation still
 	share the same value, so they can be matched.
 	"""
-	value = frappe.get_request_header(CONVERSATION_HEADER) if frappe.request else None
-	return hashlib.sha256(value.encode()).hexdigest() if value else None
+	return conversation.session_id()
 
 
 def record(

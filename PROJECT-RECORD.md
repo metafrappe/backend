@@ -435,6 +435,21 @@ Proje sahibi 22 Kasım 2026 Pazar günü şöyle yazdı: “Herşeyi onaylıyoru
   - Eklerin listesi ve test adımları [devir notundadır](docs/handoff/press-tr-extension-test.md).
   - Bu karar önce O-54 numarasını taşıyordu. O-54 ile O-61 arasındaki numaralar başka kararlara verildi. Karar 25 Kasım 2026 Çarşamba günü O-62 oldu.
 
+- **O-63. AJA-84 kullanım ve kredi kapsamı.** Karar 23 Kasım 2026 Pazartesi günü yazıldı.
+  - AJA-133 mimari incelemesi mevcut süre aşımı sözleşmesini korur.
+  - Gönderilmediği kanıtlı çağrı ayrılan krediyi serbest bırakır.
+  - Gönderilmiş olabilecek çağrının tutarı korunur. Yönetici gerçek ücreti doğrular.
+  - Kullanım ve araç günlükleri aynı konuşma izini kullanır. Ham başlık saklanmaz.
+  - Ortak iz üreticisi iki modül arasında döngü kurmaz.
+  - Yönetici özeti aynı sitenin tüketimini gösterir. Kullanıcı ve hesap toplamları ayrı döner.
+  - Para birimleri toplanmaz. Bilinmeyen ücret doğrulanmış ücret sayılmaz.
+  - Konuşma içeriği için kayıt deposu yoktur. 90 günlük saklama kanıtı açık kalır.
+  - Çoklu site takım toplamı Press gerektirir. G-87 bütünüyle kapanmaz.
+  - G-90 hukuki aktarım onayı kod işi değildir. Hukuk sorumlusu bu parçayı tamamlar.
+  - SA-15 ödeme bağı P2'ye bağlıdır. P2, MVP kapsamının dışındadır.
+  - Ayrıntılı devir `docs/handoff/ai-usage-credit.md` dosyasındadır.
+  - Bu karar önce O-57 numarasını taşıyordu. O-57 ile O-62 arasındaki numaralar başka kararlara verildi. Karar 28 Kasım 2026 Cumartesi günü O-63 oldu.
+
 ## Karar sitesine işlenecek farklar
 
 Backend kararları karar sitesinin bazı maddelerini değiştirdi. Site ayrı bir işte, kendi denetimleriyle güncellenir. Farklar şunlardır:

@@ -53,6 +53,7 @@ Orkestratör, D-10, 22 Kasım 2026 Pazar
 | --- | --- | --- |
 | Python | `platform_core.model_gateway.api.complete` | Yetkili yol üzerinden model çağrısı yapar. |
 | Python ve Bench | `platform_core.model_gateway.api.purge_usage_logs(*, dry_run=False, names=None)` | Yalnız “System Manager” çağırabilir. İşlev `eligible`, `deleted` ve `names` alanlarını döndürür. |
+| HTTP | `platform_core.api.model.usage_summary` | Yöneticinin okuyabildiği kayıtların aylık tüketimini gösterir. |
 | HTTP | `platform_core.api.model.complete` | Oturum veya kullanıcı anahtarıyla model çağrısı yapar. |
 | HTTP | `platform_core.api.model.test_api` | Yöneticiye bağlantı denemesi sunar. |
 | HTTP | `platform_core.api.model.resolve_usage` | Yöneticinin doğruladığı tutarı kullanım kaydına işler. |

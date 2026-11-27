@@ -773,3 +773,37 @@ Parça metni yalnız iş sürerken tutulur. Bekleyen metin için iki süre sın�
 | `platform_core.api.model.file_job_status` | POST | İşin sahibi ya da yönetici | Parça planını, tahmini maliyeti ve parça durumlarını gösterir. Parça metnini dönmez. |
 | `platform_core.api.model.start_file_job` | POST | İşin sahibi ya da yönetici | Planlanmış işin parçalarını kuyruğa koyar. Her parça ücretli olabilir. |
 | `platform_core.api.model.retry_file_chunk` | POST | İşin sahibi ya da yönetici | Başarısız tek parçayı yeniden kuyruğa koyar. |
+
+
+### AJA-84 kullanım özeti ve konuşma bağı
+
+Yönetici `platform_core.api.model.usage_summary` ucuna POST isteği gönderir.
+Uç insan oturumu ister. "PLT AI Manager" ve "System Manager" rolleri kullanabilir.
+Özet, mevcut ayın başından isteğin başladığı ana kadar olan kayıtları kapsar.
+Kaynak aynı sitenin "PLT AI Usage Log" kayıtlarıdır.
+Sistem yöneticinin kayıt izinlerini uygular. Özet yalnız okunabilen kayıtları toplar.
+
+- `team`, yöneticinin okuyabildiği kayıtların toplamıdır. Bu alan çoklu site toplamı değildir.
+- `users`, tüketimi kullanıcıya göre ayırır.
+- `accounts`, tüketimi sağlayıcı hesabına göre ayırır.
+- Her grup para birimini ayrı tutar. Tutarlar ondalık metin olarak döner.
+- `cost`, doğrulanmış ücrettir. `reserved_cost`, henüz kapanmayan ayrılmış tutardır.
+- `cost_unknown`, ücreti bilinmeyen çağrı sayısıdır. Ayrılan tutar doğrulanmış ücrete eklenmez.
+- `usage_unknown`, kullanım miktarı bilinmeyen çağrı sayısıdır.
+- Özet mesaj içeriğini ve gizli bağlantı değerlerini döndürmez.
+
+Kullanım kaydı, `Mcp-Conversation-Id` başlığının SHA-256 özetini `session_id` alanında tutar.
+SHA-256, metinden sabit uzunlukta bir iz üretir. Ham başlık saklanmaz.
+Başlık yoksa alan boş kalır. Alan Keycloak oturum kimliği değildir.
+Araç ve onay günlüğü aynı izi kullanır. İz, kimlik veya yetki kanıtı değildir.
+Birleştiren tüketici site ve kullanıcı sınırını da korumalıdır.
+Eski kullanım kayıtlarının boş alanları geriye dönük doldurulmaz.
+
+Konuşma içeriği için kayıt deposu yoktur. Bu yüzden 90 günlük saklama kanıtı açık kalır.
+Araç günlüğünün varsayılan saklaması 365 gündür. Kullanım günlüğünün süresi sabit 365 gündür.
+Onay önerisinin mevcut 30 günlük süresi değişmez.
+
+Gönderilmediği kanıtlı süre aşımı ayrılan krediyi serbest bırakır.
+Gönderilmiş olabilecek çağrı `unknown` kalır. Yönetici gerçek ücreti doğrulayana kadar tutar korunur.
+Aynı kullanım kaydının tekrar kapanması ikinci ücret oluşturmaz.
+Yeni bir HTTP isteği ayrı çağrıdır. Bu uç istek tekrarını tek çağrıya indirmez.

@@ -1,0 +1,762 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metafrappe.example/contracts/tax_result.schema.json",
+  "title": "Price and tax result",
+  "description": "Shared price and tax result for screen, invoice document and ledger (AJA-1756). Rules: contracts/tax-result.md. All rates in examples are fictional.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "operation",
+    "idempotency_key",
+    "billing_country",
+    "currency",
+    "lines",
+    "totals",
+    "invoice"
+  ],
+  "properties": {
+    "operation": {
+      "enum": [
+        "quote",
+        "purchase",
+        "refund"
+      ],
+      "description": "quote is a read and needs no key. purchase and refund need an idempotency key (contracts/idempotency.md)."
+    },
+    "idempotency_key": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "billing_country": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$",
+      "description": "ISO 3166-1 alpha-2 country of the billing address. This decides the tax. The UI language never does."
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "lines": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/line"
+      }
+    },
+    "totals": {
+      "$ref": "#/$defs/totals"
+    },
+    "invoice": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/invoiceSnapshot"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "operation": {
+            "const": "quote"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "idempotency_key": {
+            "type": "null"
+          },
+          "invoice": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "idempotency_key": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "money": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "currency"
+      ],
+      "properties": {
+        "value": {
+          "type": "string",
+          "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]{1,4})?$",
+          "description": "Decimal text with a dot. Never a float. Display formatting is the client's job."
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        }
+      }
+    },
+    "taxStatus": {
+      "enum": [
+        "calculated",
+        "zero_rated",
+        "exempt",
+        "reverse_charge",
+        "not_calculated",
+        "service_unavailable"
+      ]
+    },
+    "reasonCode": {
+      "enum": [
+        "TAX_STANDARD_RATE",
+        "TAX_REDUCED_RATE",
+        "TAX_ZERO_RATE_EXPORT",
+        "TAX_ZERO_RATE_GOODS",
+        "TAX_EXEMPT_BY_LAW",
+        "TAX_EXEMPT_CUSTOMER",
+        "TAX_REVERSE_CHARGE_B2B",
+        "TAX_MISSING_BILLING_COUNTRY",
+        "TAX_UNSUPPORTED_COUNTRY",
+        "TAX_MISSING_TAX_ID",
+        "TAX_SERVICE_UNAVAILABLE",
+        "TAX_SERVICE_TIMEOUT"
+      ]
+    },
+    "line": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "line_id",
+        "description",
+        "net",
+        "tax_rate",
+        "tax",
+        "gross",
+        "tax_status",
+        "reason_code",
+        "label_key_short",
+        "label_key_long"
+      ],
+      "properties": {
+        "line_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "net": {
+          "$ref": "#/$defs/money"
+        },
+        "tax_rate": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]{1,4})?$",
+              "description": "Percent as decimal text."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tax": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/money"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "gross": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/money"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tax_status": {
+          "$ref": "#/$defs/taxStatus"
+        },
+        "reason_code": {
+          "$ref": "#/$defs/reasonCode"
+        },
+        "label_key_short": {
+          "type": "string",
+          "pattern": "^tax\\.status\\.[a-z_]+\\.short$",
+          "description": "Short status text key for a 320 px screen."
+        },
+        "label_key_long": {
+          "type": "string",
+          "pattern": "^tax\\.status\\.[a-z_]+\\.long$"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "tax_status": {
+                "enum": [
+                  "not_calculated",
+                  "service_unavailable"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "tax": {
+                "type": "null"
+              },
+              "gross": {
+                "type": "null"
+              },
+              "tax_rate": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "tax": {
+                "$ref": "#/$defs/money"
+              },
+              "gross": {
+                "$ref": "#/$defs/money"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "net",
+        "tax",
+        "gross"
+      ],
+      "properties": {
+        "net": {
+          "$ref": "#/$defs/money"
+        },
+        "tax": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/money"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "gross": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/money"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "invoiceSnapshot": {
+      "type": "object",
+      "readOnly": true,
+      "additionalProperties": false,
+      "description": "Frozen copy made when the invoice is issued. A later rate change never edits it.",
+      "required": [
+        "invoice_number",
+        "issued_on",
+        "currency",
+        "lines",
+        "totals"
+      ],
+      "properties": {
+        "invoice_number": {
+          "type": "string",
+          "minLength": 1
+        },
+        "issued_on": {
+          "type": "string",
+          "format": "date"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "lines": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/line"
+          }
+        },
+        "totals": {
+          "$ref": "#/$defs/totals"
+        }
+      }
+    }
+  },
+  "x-reason-codes": {
+    "calculated": [
+      "TAX_STANDARD_RATE",
+      "TAX_REDUCED_RATE"
+    ],
+    "zero_rated": [
+      "TAX_ZERO_RATE_EXPORT",
+      "TAX_ZERO_RATE_GOODS"
+    ],
+    "exempt": [
+      "TAX_EXEMPT_BY_LAW",
+      "TAX_EXEMPT_CUSTOMER"
+    ],
+    "reverse_charge": [
+      "TAX_REVERSE_CHARGE_B2B"
+    ],
+    "not_calculated": [
+      "TAX_MISSING_BILLING_COUNTRY",
+      "TAX_UNSUPPORTED_COUNTRY",
+      "TAX_MISSING_TAX_ID"
+    ],
+    "service_unavailable": [
+      "TAX_SERVICE_UNAVAILABLE",
+      "TAX_SERVICE_TIMEOUT"
+    ]
+  },
+  "x-label-keys": {
+    "calculated": {
+      "short": "tax.status.calculated.short",
+      "long": "tax.status.calculated.long"
+    },
+    "zero_rated": {
+      "short": "tax.status.zero_rated.short",
+      "long": "tax.status.zero_rated.long"
+    },
+    "exempt": {
+      "short": "tax.status.exempt.short",
+      "long": "tax.status.exempt.long"
+    },
+    "reverse_charge": {
+      "short": "tax.status.reverse_charge.short",
+      "long": "tax.status.reverse_charge.long"
+    },
+    "not_calculated": {
+      "short": "tax.status.not_calculated.short",
+      "long": "tax.status.not_calculated.long"
+    },
+    "service_unavailable": {
+      "short": "tax.status.service_unavailable.short",
+      "long": "tax.status.service_unavailable.long"
+    }
+  },
+  "examples": [
+    {
+      "operation": "quote",
+      "idempotency_key": null,
+      "billing_country": "ZZ",
+      "currency": "EUR",
+      "lines": [
+        {
+          "line_id": "L1",
+          "description": "Plan A",
+          "net": {
+            "value": "100.00",
+            "currency": "EUR"
+          },
+          "tax_rate": "12.34",
+          "tax": {
+            "value": "12.34",
+            "currency": "EUR"
+          },
+          "gross": {
+            "value": "112.34",
+            "currency": "EUR"
+          },
+          "tax_status": "calculated",
+          "reason_code": "TAX_STANDARD_RATE",
+          "label_key_short": "tax.status.calculated.short",
+          "label_key_long": "tax.status.calculated.long"
+        },
+        {
+          "line_id": "L2",
+          "description": "Ek kredi",
+          "net": {
+            "value": "50.00",
+            "currency": "EUR"
+          },
+          "tax_rate": "0",
+          "tax": {
+            "value": "0.00",
+            "currency": "EUR"
+          },
+          "gross": {
+            "value": "50.00",
+            "currency": "EUR"
+          },
+          "tax_status": "zero_rated",
+          "reason_code": "TAX_ZERO_RATE_EXPORT",
+          "label_key_short": "tax.status.zero_rated.short",
+          "label_key_long": "tax.status.zero_rated.long"
+        },
+        {
+          "line_id": "L3",
+          "description": "Eğitim",
+          "net": {
+            "value": "20.00",
+            "currency": "EUR"
+          },
+          "tax_rate": null,
+          "tax": {
+            "value": "0.00",
+            "currency": "EUR"
+          },
+          "gross": {
+            "value": "20.00",
+            "currency": "EUR"
+          },
+          "tax_status": "exempt",
+          "reason_code": "TAX_EXEMPT_BY_LAW",
+          "label_key_short": "tax.status.exempt.short",
+          "label_key_long": "tax.status.exempt.long"
+        }
+      ],
+      "totals": {
+        "net": {
+          "value": "170.00",
+          "currency": "EUR"
+        },
+        "tax": {
+          "value": "12.34",
+          "currency": "EUR"
+        },
+        "gross": {
+          "value": "182.34",
+          "currency": "EUR"
+        }
+      },
+      "invoice": null
+    },
+    {
+      "operation": "purchase",
+      "idempotency_key": "3f2b8c1e-6d4a-4f0b-9a7e-2c5d8e1f0a3b",
+      "billing_country": "ZZ",
+      "currency": "EUR",
+      "lines": [
+        {
+          "line_id": "L1",
+          "description": "Plan B",
+          "net": {
+            "value": "200.00",
+            "currency": "EUR"
+          },
+          "tax_rate": null,
+          "tax": {
+            "value": "0.00",
+            "currency": "EUR"
+          },
+          "gross": {
+            "value": "200.00",
+            "currency": "EUR"
+          },
+          "tax_status": "reverse_charge",
+          "reason_code": "TAX_REVERSE_CHARGE_B2B",
+          "label_key_short": "tax.status.reverse_charge.short",
+          "label_key_long": "tax.status.reverse_charge.long"
+        },
+        {
+          "line_id": "L2",
+          "description": "Ek kredi",
+          "net": {
+            "value": "10.00",
+            "currency": "EUR"
+          },
+          "tax_rate": "7.77",
+          "tax": {
+            "value": "0.78",
+            "currency": "EUR"
+          },
+          "gross": {
+            "value": "10.78",
+            "currency": "EUR"
+          },
+          "tax_status": "calculated",
+          "reason_code": "TAX_REDUCED_RATE",
+          "label_key_short": "tax.status.calculated.short",
+          "label_key_long": "tax.status.calculated.long"
+        }
+      ],
+      "totals": {
+        "net": {
+          "value": "210.00",
+          "currency": "EUR"
+        },
+        "tax": {
+          "value": "0.78",
+          "currency": "EUR"
+        },
+        "gross": {
+          "value": "210.78",
+          "currency": "EUR"
+        }
+      },
+      "invoice": {
+        "invoice_number": "INV-TEST-0001",
+        "issued_on": "2026-11-27",
+        "currency": "EUR",
+        "lines": [
+          {
+            "line_id": "L1",
+            "description": "Plan B",
+            "net": {
+              "value": "200.00",
+              "currency": "EUR"
+            },
+            "tax_rate": null,
+            "tax": {
+              "value": "0.00",
+              "currency": "EUR"
+            },
+            "gross": {
+              "value": "200.00",
+              "currency": "EUR"
+            },
+            "tax_status": "reverse_charge",
+            "reason_code": "TAX_REVERSE_CHARGE_B2B",
+            "label_key_short": "tax.status.reverse_charge.short",
+            "label_key_long": "tax.status.reverse_charge.long"
+          },
+          {
+            "line_id": "L2",
+            "description": "Ek kredi",
+            "net": {
+              "value": "10.00",
+              "currency": "EUR"
+            },
+            "tax_rate": "7.77",
+            "tax": {
+              "value": "0.78",
+              "currency": "EUR"
+            },
+            "gross": {
+              "value": "10.78",
+              "currency": "EUR"
+            },
+            "tax_status": "calculated",
+            "reason_code": "TAX_REDUCED_RATE",
+            "label_key_short": "tax.status.calculated.short",
+            "label_key_long": "tax.status.calculated.long"
+          }
+        ],
+        "totals": {
+          "net": {
+            "value": "210.00",
+            "currency": "EUR"
+          },
+          "tax": {
+            "value": "0.78",
+            "currency": "EUR"
+          },
+          "gross": {
+            "value": "210.78",
+            "currency": "EUR"
+          }
+        }
+      }
+    },
+    {
+      "operation": "quote",
+      "idempotency_key": null,
+      "billing_country": "ZZ",
+      "currency": "EUR",
+      "lines": [
+        {
+          "line_id": "L1",
+          "description": "Plan A",
+          "net": {
+            "value": "100.00",
+            "currency": "EUR"
+          },
+          "tax_rate": "12.34",
+          "tax": {
+            "value": "12.34",
+            "currency": "EUR"
+          },
+          "gross": {
+            "value": "112.34",
+            "currency": "EUR"
+          },
+          "tax_status": "calculated",
+          "reason_code": "TAX_STANDARD_RATE",
+          "label_key_short": "tax.status.calculated.short",
+          "label_key_long": "tax.status.calculated.long"
+        },
+        {
+          "line_id": "L2",
+          "description": "Ek kredi",
+          "net": {
+            "value": "50.00",
+            "currency": "EUR"
+          },
+          "tax_rate": null,
+          "tax": null,
+          "gross": null,
+          "tax_status": "not_calculated",
+          "reason_code": "TAX_MISSING_TAX_ID",
+          "label_key_short": "tax.status.not_calculated.short",
+          "label_key_long": "tax.status.not_calculated.long"
+        }
+      ],
+      "totals": {
+        "net": {
+          "value": "150.00",
+          "currency": "EUR"
+        },
+        "tax": null,
+        "gross": null
+      },
+      "invoice": null
+    },
+    {
+      "operation": "quote",
+      "idempotency_key": null,
+      "billing_country": "ZZ",
+      "currency": "EUR",
+      "lines": [
+        {
+          "line_id": "L1",
+          "description": "Plan A",
+          "net": {
+            "value": "100.00",
+            "currency": "EUR"
+          },
+          "tax_rate": null,
+          "tax": null,
+          "gross": null,
+          "tax_status": "service_unavailable",
+          "reason_code": "TAX_SERVICE_UNAVAILABLE",
+          "label_key_short": "tax.status.service_unavailable.short",
+          "label_key_long": "tax.status.service_unavailable.long"
+        }
+      ],
+      "totals": {
+        "net": {
+          "value": "100.00",
+          "currency": "EUR"
+        },
+        "tax": null,
+        "gross": null
+      },
+      "invoice": null
+    },
+    {
+      "operation": "refund",
+      "idempotency_key": "9c1d2e3f-4a5b-4c6d-8e7f-0a1b2c3d4e5f",
+      "billing_country": "ZZ",
+      "currency": "EUR",
+      "lines": [
+        {
+          "line_id": "L1",
+          "description": "Plan A",
+          "net": {
+            "value": "100.00",
+            "currency": "EUR"
+          },
+          "tax_rate": "12.34",
+          "tax": {
+            "value": "12.34",
+            "currency": "EUR"
+          },
+          "gross": {
+            "value": "112.34",
+            "currency": "EUR"
+          },
+          "tax_status": "calculated",
+          "reason_code": "TAX_STANDARD_RATE",
+          "label_key_short": "tax.status.calculated.short",
+          "label_key_long": "tax.status.calculated.long"
+        }
+      ],
+      "totals": {
+        "net": {
+          "value": "100.00",
+          "currency": "EUR"
+        },
+        "tax": {
+          "value": "12.34",
+          "currency": "EUR"
+        },
+        "gross": {
+          "value": "112.34",
+          "currency": "EUR"
+        }
+      },
+      "invoice": {
+        "invoice_number": "INV-TEST-0002",
+        "issued_on": "2026-11-27",
+        "currency": "EUR",
+        "lines": [
+          {
+            "line_id": "L1",
+            "description": "Plan A",
+            "net": {
+              "value": "100.00",
+              "currency": "EUR"
+            },
+            "tax_rate": "12.34",
+            "tax": {
+              "value": "12.34",
+              "currency": "EUR"
+            },
+            "gross": {
+              "value": "112.34",
+              "currency": "EUR"
+            },
+            "tax_status": "calculated",
+            "reason_code": "TAX_STANDARD_RATE",
+            "label_key_short": "tax.status.calculated.short",
+            "label_key_long": "tax.status.calculated.long"
+          }
+        ],
+        "totals": {
+          "net": {
+            "value": "100.00",
+            "currency": "EUR"
+          },
+          "tax": {
+            "value": "12.34",
+            "currency": "EUR"
+          },
+          "gross": {
+            "value": "112.34",
+            "currency": "EUR"
+          }
+        }
+      }
+    }
+  ]
+}

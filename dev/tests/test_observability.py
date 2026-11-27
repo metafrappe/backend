@@ -7,6 +7,7 @@ first-party RUM with web-vitals, route templates and sampling, no third party, a
 
 import ast
 import importlib
+import json
 import re
 import subprocess
 import sys
@@ -183,6 +184,29 @@ class TestRealUserMonitoring(ObservabilityTestCase):
                     rum.clean_beacon(self.valid(**changes))
         record = rum.clean_beacon({"route": "/panel", "metrics": {"TTFB": 12}})
         self.assertEqual(record, {"route": "/panel", "metrics": {"TTFB": 12}, "sample_rate": 1.0})
+
+    def test_store_writes_even_when_frappe_logs_only_errors(self):
+        # Frappe sets its loggers to ERROR outside the dev server. The beacon line must still be written.
+        import logging
+
+        logger = logging.getLogger("test_observability.rum")
+        logger.setLevel(logging.ERROR)
+        logger.propagate = False
+        self.frappe.logger = lambda *args, **kwargs: logger
+        rum = self.load()
+        record = rum.clean_beacon(self.valid())
+        # assertLogs would lower the logger level itself, so a plain handler collects the lines.
+        captured = []
+        handler = logging.Handler(level=logging.DEBUG)
+        handler.emit = captured.append
+        logger.addHandler(handler)
+        self.addCleanup(logger.removeHandler, handler)
+        rum.store(record)
+        self.assertEqual(len(captured), 1)
+        line = captured[0].getMessage()
+        self.assertEqual(json.loads(line), record)
+        for field in PERSONAL_FIELDS:
+            self.assertNotIn(f'"{field}"', line)
 
     def test_endpoint_reads_no_person(self):
         # The collection point stores the cleaned beacon only. It never reads who sent it.

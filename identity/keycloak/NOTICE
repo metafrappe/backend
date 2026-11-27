@@ -1,0 +1,64 @@
+Atonota Keycloak folder: license notice
+
+This folder mixes code written by this project with code from other projects.
+Each part keeps its own license. This file lists them.
+
+Code written by this project
+- License: MIT. The text is in the LICENSE file next to this one.
+- Documents (Markdown files): CC BY 4.0. The text is in LICENSE-CONTENT.
+- Covers: Dockerfile, bin/, conf/, event-sink/, realm/ (except the password list below),
+  tests/, themes/atonota/ (except the templates and fonts below).
+
+event-listener/
+- A modified copy of sashyo/keycloak-webhook-listener.
+- License: Apache License, Version 2.0. See event-listener/LICENSE and event-listener/NOTICE.
+
+magic-link-fork/
+- Files changed from cloudflightio/keycloak-magic-link, commit
+  7b4ee949a39a7ee953987162479ae1da2c57c3cb.
+- License: Apache License, Version 2.0. Copyright 2025 Cloudflight GmbH.
+  See magic-link-fork/LICENSE and magic-link-fork/NOTICE.
+
+themes/atonota/login/ templates
+- Eight templates are modified copies of the Keycloak 26.8.2 keycloak.v2 login theme:
+  template.ftl, login-config-totp.ftl, select-authenticator.ftl, login-verify-email.ftl,
+  webauthn-register.ftl, login-page-expired.ftl, login-recovery-authn-code-config.ftl and
+  logout-confirm.ftl.
+- Source: https://github.com/keycloak/keycloak (tag 26.8.2).
+- License: Apache License, Version 2.0. The text is the same as event-listener/LICENSE.
+- template.ftl names its source at its top. The changes in all eight templates are listed in
+  themes/atonota/README.md, section "Temel temadan kopyalanan şablonlar".
+
+themes/atonota/*/resources/fonts/
+- Outfit font. Copyright 2021 The Outfit Project Authors.
+- License: SIL Open Font License, Version 1.1. See OFL.txt next to the font files.
+
+realm/password-blacklists/common-passwords.txt
+- Filtered from SecLists, Passwords/Common-Credentials/100k-most-used-passwords-NCSC.txt,
+  commit 1a7bb9127eca9e6ff2fc0301c597fe6e16a0cb56.
+- Source: https://github.com/danielmiessler/SecLists
+- License: MIT. Copyright (c) 2018 Daniel Miessler.
+- The filtering is described in realm/password-blacklists/SOURCE.md.
+- The SecLists license text follows.
+
+MIT License
+
+Copyright (c) 2018 Daniel Miessler
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

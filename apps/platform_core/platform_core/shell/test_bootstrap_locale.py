@@ -41,7 +41,9 @@ class TestBootstrapLocale(IntegrationTestCase):
 
 	def test_site_formatting_is_used_without_a_language_date_override(self):
 		settings = "System Settings"
-		previous = {field: frappe.db.get_single_value(settings, field) for field in ("date_format", "number_format")}
+		previous = {
+			field: frappe.db.get_single_value(settings, field) for field in ("date_format", "number_format")
+		}
 		self.addCleanup(frappe.clear_cache)
 		self.addCleanup(frappe.db.set_single_value, settings, previous)
 		previous_date = frappe.db.get_value("Language", "tr", "date_format")
@@ -51,7 +53,9 @@ class TestBootstrapLocale(IntegrationTestCase):
 		with patch.object(frappe.local, "lang", "tr"):
 			for date_format, number_format in (("yyyy-mm-dd", "#,###.##"), ("dd.mm.yyyy", "#.###,##")):
 				with self.subTest(date_format=date_format, number_format=number_format):
-					frappe.db.set_single_value(settings, {"date_format": date_format, "number_format": number_format})
+					frappe.db.set_single_value(
+						settings, {"date_format": date_format, "number_format": number_format}
+					)
 					frappe.clear_cache()
 					bump_permission_version()
 					formatting = get_bootstrap(frappe.session.user)["formatting"]

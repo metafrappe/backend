@@ -69,19 +69,23 @@ class TestServerPagination(ShellHTTPFixture):
 					"message",
 					doctype=CHILD_DOCTYPE,
 					parent=DOCTYPE,
-					filters=json.dumps({"parent": record.name, "parenttype": DOCTYPE, "parentfield": "test_entries"}),
+					filters=json.dumps(
+						{"parent": record.name, "parenttype": DOCTYPE, "parentfield": "test_entries"}
+					),
 					fields=json.dumps(["entry"]),
 					order_by="idx asc",
 				)
 				self.assertEqual(page, entries[start : start + PAGE_SIZE])
 
 	def request_collection(self, doctype, filters, fields, **parameters):
-		query = urlencode({
-			"doctype": doctype,
-			"filters": json.dumps(filters),
-			"fields": json.dumps(fields),
-			**parameters,
-		})
+		query = urlencode(
+			{
+				"doctype": doctype,
+				"filters": json.dumps(filters),
+				"fields": json.dumps(fields),
+				**parameters,
+			}
+		)
 		status, _headers, body = self.request(f"{COLLECTION_LIST}?{query}", self.reader_sid)
 		return status, json.loads(body)
 
@@ -93,8 +97,12 @@ class TestServerPagination(ShellHTTPFixture):
 		frappe.db.commit()
 
 		status, body = self.request_collection(
-			DOCTYPE, {"title": ["like", f"{prefix}-%"]}, ["title"],
-			limit_start=PAGE_SIZE, limit_page_length=ROW_COUNT, order_by="title asc",
+			DOCTYPE,
+			{"title": ["like", f"{prefix}-%"]},
+			["title"],
+			limit_start=PAGE_SIZE,
+			limit_page_length=ROW_COUNT,
+			order_by="title asc",
 		)
 
 		self.assertEqual(status, 200)
@@ -108,7 +116,8 @@ class TestServerPagination(ShellHTTPFixture):
 		status, _body = self.request_collection(
 			CHILD_DOCTYPE,
 			{"parent": record.name, "parenttype": PROTECTED_DOCTYPE, "parentfield": "entries"},
-			["entry"], parent=PROTECTED_DOCTYPE,
+			["entry"],
+			parent=PROTECTED_DOCTYPE,
 		)
 		self.assertEqual(status, 403)
 
@@ -124,7 +133,8 @@ class TestServerPagination(ShellHTTPFixture):
 		status, _body = self.request_collection(
 			CHILD_DOCTYPE,
 			{"parent": record.name, "parenttype": DOCTYPE, "parentfield": "test_entries"},
-			["private_entry"], parent=DOCTYPE,
+			["private_entry"],
+			parent=DOCTYPE,
 		)
 		self.assertEqual(status, 403)
 
@@ -138,6 +148,7 @@ class TestServerPagination(ShellHTTPFixture):
 				status, _body = self.request_collection(
 					CHILD_DOCTYPE,
 					{key: value for key, value in filters.items() if key != missing},
-					["entry"], parent=DOCTYPE,
+					["entry"],
+					parent=DOCTYPE,
 				)
 				self.assertEqual(status, 417)

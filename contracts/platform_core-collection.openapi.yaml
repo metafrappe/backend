@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Platform Core collection API
   version: 0.1.0
-  description: Read-only collection summaries for the signed-in tenant user.
+  description: Read-only collection summaries and list pages for the signed-in tenant user.
 servers:
   - url: /api/method
     description: Frappe endpoint root of the tenant site
@@ -123,6 +123,131 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 exc_type: DoesNotExistError
+        '429':
+          description: The account exceeded 120 requests per 60 seconds.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                exc_type: RateLimitExceededError
+  /platform_core.api.collection.list_records:
+    get:
+      operationId: listCollectionRecords
+      summary: Read one page of readable records or child table rows
+      description: |
+        Returns one page of rows through the permission-aware Frappe list query.
+        A page holds at most 20 rows. A larger limit_page_length is cut to 20 (O-73).
+        A child table is read only inside one parent record. The filters must then
+        name parent, parenttype and parentfield with the = operator, and the parent
+        parameter must equal parenttype. The parent DocType, the parent record and the
+        table field must be readable. Every requested, filter and order field must be readable.
+        The request accepts the current browser session cookie.
+      parameters:
+        - name: doctype
+          in: query
+          required: true
+          description: Exact DocType name. Single and virtual DocTypes are refused.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 140
+          example: Kabuk Test Record
+        - name: parent
+          in: query
+          description: Parent DocType. Required for a child table and refused otherwise.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 140
+        - name: fields
+          in: query
+          description: URL-encoded JSON array of up to 100 readable field names. Defaults to name.
+          schema:
+            type: string
+            maxLength: 8192
+          example: '["title"]'
+        - name: filters
+          in: query
+          description: URL-encoded JSON in the same filter format as group_summary.
+          schema:
+            type: string
+            maxLength: 8192
+          example: '{"title":["like","A%"]}'
+        - name: order_by
+          in: query
+          description: |
+            Up to five comma-separated readable fields, each with an optional asc or desc.
+            Defaults to idx asc for a child table and creation desc otherwise.
+          schema:
+            type: string
+            maxLength: 1000
+          example: title asc, name asc
+        - name: limit_start
+          in: query
+          description: Number of rows to skip.
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: limit_page_length
+          in: query
+          description: Requested page size. The server returns at most 20 rows.
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+      responses:
+        '200':
+          description: One page of readable rows with the requested fields.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                additionalProperties: false
+                properties:
+                  message:
+                    type: array
+                    maxItems: 20
+                    items:
+                      type: object
+              example:
+                message:
+                  - title: A
+        '401':
+          description: The supplied session has expired or is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                exc_type: SessionExpired
+                session_expired: 1
+        '403':
+          description: Permission denied for the DocType, the parent record or a field.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                exc_type: PermissionError
+        '404':
+          description: The requested DocType or parent record does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                exc_type: DoesNotExistError
+        '417':
+          description: Invalid parameters, fields, filters, order or child table scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                exc_type: InvalidListQuery
         '429':
           description: The account exceeded 120 requests per 60 seconds.
           content:

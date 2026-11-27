@@ -19,7 +19,7 @@
   "accountTheme": "atonota",
   "adminTheme": "keycloak.v2",
   "emailTheme": "atonota",
-  "registrationAllowed": true,
+  "registrationAllowed": false,
   "registrationEmailAsUsername": true,
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
@@ -1913,5 +1913,18 @@
     "name": "default-roles-platform",
     "composite": true,
     "clientRole": false
+  },
+  "components": {
+    "org.keycloak.userprofile.UserProfileProvider": [
+      {
+        "providerId": "declarative-user-profile",
+        "subComponents": {},
+        "config": {
+          "kc.user.profile.config": [
+            "{\"attributes\":[{\"name\":\"username\",\"displayName\":\"${username}\",\"validations\":{\"length\":{\"min\":3,\"max\":255},\"username-prohibited-characters\":{},\"up-username-not-idn-homograph\":{}},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"email\",\"displayName\":\"${email}\",\"validations\":{\"email\":{},\"length\":{\"max\":255},\"pattern\":{\"pattern\":\"(?i)^(?!.*@(?:[^@]+\\\\.)?(?:10minutemail\\\\.com|10minutemail\\\\.net|1secmail\\\\.com|1secmail\\\\.net|1secmail\\\\.org|burnermail\\\\.io|byom\\\\.de|discard\\\\.email|dispostable\\\\.com|emailondeck\\\\.com|fakeinbox\\\\.com|getnada\\\\.com|grr\\\\.la|guerrillamail\\\\.biz|guerrillamail\\\\.com|guerrillamail\\\\.de|guerrillamail\\\\.info|guerrillamail\\\\.net|guerrillamail\\\\.org|guerrillamailblock\\\\.com|jetable\\\\.org|mailcatch\\\\.com|maildrop\\\\.cc|mailinator\\\\.com|mailnesia\\\\.com|mintemail\\\\.com|minuteinbox\\\\.com|moakt\\\\.com|mohmal\\\\.com|mytemp\\\\.email|sharklasers\\\\.com|spamgourmet\\\\.com|temp-mail\\\\.io|temp-mail\\\\.org|tempinbox\\\\.com|tempmail\\\\.com|tempmailo\\\\.com|tempr\\\\.email|throwawaymail\\\\.com|trash-mail\\\\.com|trashmail\\\\.com|trashmail\\\\.de|wegwerfmail\\\\.de|yopmail\\\\.com|yopmail\\\\.fr|yopmail\\\\.net)$).*$\",\"error-message\":\"atDisposableEmail\"}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"firstName\",\"displayName\":\"${firstName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"lastName\",\"displayName\":\"${lastName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false}],\"groups\":[{\"name\":\"user-metadata\",\"displayHeader\":\"User metadata\",\"displayDescription\":\"Attributes, which refer to user metadata\"}]}"
+          ]
+        }
+      }
+    ]
   }
 }

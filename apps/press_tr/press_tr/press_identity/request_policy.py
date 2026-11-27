@@ -59,6 +59,8 @@ LOCAL_IDENTITY_METHODS = (
 API_PREFIXES = ("/api/method/", "/api/v1/method/", "/api/v2/method/")
 ADMIN_METHOD = "press_tr.api.maintenance.cleanup_expired_sessions"
 ACCOUNT_METHOD = "press_tr.api.account.request_deletion"
+# Methods for a signed-in customer. Each one checks its own caller.
+CUSTOMER_METHODS = (ACCOUNT_METHOD, "press_tr.api.trial.start", "press_tr.api.team.invite")
 
 
 def deny_request():
@@ -193,7 +195,7 @@ def before_request():
 	routes = {prefix + name for prefix in API_PREFIXES for name in GUEST_METHODS}
 	routes.update(
 		f"/api/method/{name}"
-		for name in (*SERVICE_PARAMETERS, *MACHINE_METHODS, ADMIN_METHOD, ACCOUNT_METHOD)
+		for name in (*SERVICE_PARAMETERS, *MACHINE_METHODS, ADMIN_METHOD, *CUSTOMER_METHODS)
 	)
 	if path in routes and path not in ALLOWED_PATHS:
 		ALLOWED_PATHS.append(path)

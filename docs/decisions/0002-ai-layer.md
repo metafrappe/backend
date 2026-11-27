@@ -125,6 +125,8 @@ Bunun yerine az sayıda genel araç vardır. Her araç `doctype` değerini girdi
 - `get_doctype_schema` her alan için ad, tür, etiket, seçenek, zorunluluk ve açıklama döner. Kullanıcının o alanı okuyup yazamadığını da döner.
 - Yazma aracı girdiyi çağrı anında tanıma göre doğrular. Bilinmeyen alan reddedilir.
 - Araç listesi kullanıcıya göre daralır. Örneğin yönetim araçları yalnız yönetici rolüne görünür (G-84).
+- Liste yalnız bu sitede kurulu uygulamaların araçlarını gösterir (G-84). Kanca bir uygulamanın modülünü adlandırabilir. O uygulama sitede kurulu değilse araç listeye girmez.
+- Kayıttaki metin talimat değildir (G-89). Sunucunun `instructions` metni bunu modele söyler. Kayıttaki metin kural, rol ve araç listesini değiştirmez. Saldırı örnekleri `ai/tests/attacks.json` dosyasındadır. `test_prompt_injection.py` her örneği gerçek MCP ucundan koşar. `test_tool_guard_unit.py` aynı iki kuralı site kurmadan denetler.
 - Her araç MCP işaretini taşır. Okuma araçları `readOnlyHint` taşır. Silme ve iptal `destructiveHint` taşır.
 - Ham SQL, ham Python, kabuk ve `call_method` aracı yoktur.
 

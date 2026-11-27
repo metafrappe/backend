@@ -283,11 +283,21 @@ def _builtin_tools() -> tuple[AiTool, ...]:
 	)
 
 
+def installed_apps() -> list[str]:
+	"""Apps installed on this site."""
+	return frappe.get_installed_apps()
+
+
 def app_tools(taken: set[str]) -> list[AiTool]:
 	"""Load the tools apps declare. An invalid declaration is not loaded and lands in the error log."""
 	tools = []
+	installed = set(installed_apps())
 	for path in frappe.get_hooks("ai_tools") or []:
 		app = path.split(".")[0]
+		if app not in installed:
+			# A hook may name the module of an app that is only in the bench. The user sees
+			# only the tools of the apps installed on this site (G-84).
+			continue
 		try:
 			declarations = list(frappe.get_attr(path)() or [])
 		except Exception as error:

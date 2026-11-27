@@ -9,44 +9,44 @@ APP = Path(__file__).resolve().parents[1] / "press_tr"
 
 
 class TestSiteSetup(unittest.TestCase):
-    def setUp(self):
-        self.frappe = ModuleType("frappe")
-        self.frappe.db = Mock()
-        self.agent = ModuleType("press.agent")
-        self.agent.Agent = Mock()
-        upstream = ModuleType("press.press.doctype.site.site")
-        upstream.Site = type("Site", (), {})
-        spec = importlib.util.spec_from_file_location("site_setup", APP / "site_setup.py")
-        module = importlib.util.module_from_spec(spec)
-        with patch.dict(
-            sys.modules,
-            {"frappe": self.frappe, self.agent.__name__: self.agent, upstream.__name__: upstream},
-        ):
-            spec.loader.exec_module(module)
-        self.site = module.SetupSite()
-        self.site.name = "tenant.example.test"
+	def setUp(self):
+		self.frappe = ModuleType("frappe")
+		self.frappe.db = Mock()
+		self.agent = ModuleType("press.agent")
+		self.agent.Agent = Mock()
+		upstream = ModuleType("press.press.doctype.site.site")
+		upstream.Site = type("Site", (), {})
+		spec = importlib.util.spec_from_file_location("site_setup", APP / "site_setup.py")
+		module = importlib.util.module_from_spec(spec)
+		with patch.dict(
+			sys.modules,
+			{"frappe": self.frappe, self.agent.__name__: self.agent, upstream.__name__: upstream},
+		):
+			spec.loader.exec_module(module)
+		self.site = module.SetupSite()
+		self.site.name = "tenant.example.test"
 
-    def test_dispatches_after_site_is_active(self):
-        self.frappe.db.get_value.side_effect = [("Active", 0, "test-server"), None]
-        args = {"language": "tr", "country": "Türkiye", "currency": "TRY"}
-        self.assertIs(
-            self.site.complete_setup_wizard(args),
-            self.agent.Agent.return_value.complete_setup_wizard.return_value,
-        )
-        self.agent.Agent.assert_called_once_with("test-server")
-        self.agent.Agent.return_value.complete_setup_wizard.assert_called_once_with(self.site, args)
+	def test_dispatches_after_site_is_active(self):
+		self.frappe.db.get_value.side_effect = [("Active", 0, "test-server"), None]
+		args = {"language": "tr", "country": "Türkiye", "currency": "TRY"}
+		self.assertIs(
+			self.site.complete_setup_wizard(args),
+			self.agent.Agent.return_value.complete_setup_wizard.return_value,
+		)
+		self.agent.Agent.assert_called_once_with("test-server")
+		self.agent.Agent.return_value.complete_setup_wizard.assert_called_once_with(self.site, args)
 
-    def test_pending_and_completed_sites_do_not_dispatch(self):
-        for status, completed in (("Pending", 0), ("Active", 1)):
-            with self.subTest(status=status, completed=completed):
-                self.frappe.db.get_value.return_value = (status, completed, "test-server")
-                self.assertIsNone(self.site.complete_setup_wizard({}))
-        self.agent.Agent.assert_not_called()
+	def test_pending_and_completed_sites_do_not_dispatch(self):
+		for status, completed in (("Pending", 0), ("Active", 1)):
+			with self.subTest(status=status, completed=completed):
+				self.frappe.db.get_value.return_value = (status, completed, "test-server")
+				self.assertIsNone(self.site.complete_setup_wizard({}))
+		self.agent.Agent.assert_not_called()
 
-    def test_existing_job_prevents_duplicate_dispatch(self):
-        self.frappe.db.get_value.side_effect = [("Active", 0, "test-server"), "existing-job"]
-        self.assertIsNone(self.site.complete_setup_wizard({}))
-        self.agent.Agent.assert_not_called()
+	def test_existing_job_prevents_duplicate_dispatch(self):
+		self.frappe.db.get_value.side_effect = [("Active", 0, "test-server"), "existing-job"]
+		self.assertIsNone(self.site.complete_setup_wizard({}))
+		self.agent.Agent.assert_not_called()
 
 
 BACKEND = Path(__file__).resolve().parents[3]
@@ -75,8 +75,8 @@ class FakePress:
 		self.site_class = site_class
 		self.site = {"status": status, "setup_wizard_complete": completed, "server": "f1.example.test"}
 		self.site.update(name="tenant.example.test", bench="bench-1", team="team-1")
-		self.team = {"user": "owner@example.test", "billing_name": "Deneme Yazılım"}
-		self.user = {"full_name": "Ayşe Yılmaz", "email": "owner@example.test"}
+		self.team = {"user": "owner@example.test", "billing_name": "Deneme Yazılım"}  # noqa: RUF001 (Turkish test data)
+		self.user = {"full_name": "Ayşe Yılmaz", "email": "owner@example.test"}  # noqa: RUF001 (Turkish test data)
 		self.jobs = []
 		self.queue = []
 		self.agent_calls = []
@@ -193,8 +193,8 @@ class TestSiteActivationPatch(unittest.TestCase):
 		self.assertEqual(args["enable_telemetry"], 0)
 		self.assertRegex(args["fy_start_date"], r"^\d{4}-01-01$")
 		self.assertEqual(args["fy_end_date"], args["fy_start_date"][:4] + "-12-31")
-		self.assertEqual((args["company_name"], args["company_abbr"]), ("Deneme Yazılım", "DY"))
-		self.assertEqual((args["full_name"], args["email"]), ("Ayşe Yılmaz", "owner@example.test"))
+		self.assertEqual((args["company_name"], args["company_abbr"]), ("Deneme Yazılım", "DY"))  # noqa: RUF001 (Turkish test data)
+		self.assertEqual((args["full_name"], args["email"]), ("Ayşe Yılmaz", "owner@example.test"))  # noqa: RUF001 (Turkish test data)
 
 	def test_patch_runs_right_after_press_writes_the_new_status(self):
 		lines = self.patch_text.splitlines()

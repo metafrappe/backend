@@ -13,6 +13,10 @@ The allow lists are these:
 - Press signed-in customer: `ACCOUNT_METHOD` in `request_policy.py` and the same Caddy paths.
 - Press service (identity-sync): `SERVICE_PARAMETERS` in `press_tr/press_identity/service.py`.
 - Press administrator: `ADMIN_METHOD` in `request_policy.py`. It answers only on Tailscale.
+- Press support consent (G-18): `API_METHODS` in `press_tr/support/service.py`. A signed-in Press
+  account calls it. It stays off the customer edge (O-55).
+- Tenant server to Press (G-18, O-65): `GUEST_METHODS` in `request_policy.py`, but not the Caddy
+  paths. The tenant calls it over the private network with a site-bound secret.
 - Tenant to identity-sync: the token routes in `identity_sync/server.py` and the preview relay
   targets in `e2e/preview/session_tls.py`.
 
@@ -39,7 +43,10 @@ PRESS = APPS / "press_tr/press_tr"
 # "closed" is a Frappe local sign-in wrapper: guest by Frappe, refused by the Keycloak-only gate.
 # "public" is called by the sign-in screen before sign-in and also by a signed-in panel account,
 # so it is a guest method and it is on the Website User list too (AJA-516).
+# "support" is a signed-in Press support consent route (G-18). "tenant" is a tenant server that
+# calls Press over the private network with a site-bound secret, so Frappe sees a guest (O-65).
 GUEST, CLOSED, PANEL, ADMIN, SERVICE, PUBLIC = "guest", "closed", "panel", "admin", "service", "public"
+SUPPORT, TENANT = "support", "tenant"
 
 LOCAL_SIGN_IN_WRAPPERS = (
     "reset_password",
@@ -71,6 +78,8 @@ EXPECTED = {
     # The sign-in screen reads the platform list before sign-in (AJA-516, panel contract G-159).
     "platform_core.api.auth.list_login_providers": PUBLIC,
     "platform_core.api.auth.list_linked_accounts": PANEL,
+    # A support agent's browser opens the consented tenant session with a Press ticket (G-18, O-65).
+    "platform_core.api.auth.start_support_session": GUEST,
     # Keycloak's logout notice. The signed logout token authorizes it.
     "platform_core.api.keycloak_backchannel_logout": GUEST,
     # atonota_login decisions and the verification inbox.
@@ -107,6 +116,15 @@ EXPECTED = {
     "press_tr.api.identity.anonymize_user": SERVICE,
     "press_tr.api.identity.list_identities": SERVICE,
     "press_tr.api.maintenance.cleanup_expired_sessions": ADMIN,
+    # Support consent on Press (G-18, O-63). The support module checks the role and the owner.
+    "press_tr.api.support.request_access": SUPPORT,
+    "press_tr.api.support.approve_access": SUPPORT,
+    "press_tr.api.support.revoke_access": SUPPORT,
+    "press_tr.api.support.site_status": SUPPORT,
+    "press_tr.api.support.open_tenant_session": SUPPORT,
+    # The tenant server redeems the ticket and rechecks each support request (O-65).
+    "press_tr.api.support.redeem_tenant_session": TENANT,
+    "press_tr.api.support.check_tenant_session": TENANT,
     # AI access layer (platform_core.api.ai, AJA-1002). The MCP endpoint and its metadata take
     # a bearer credential, so Frappe sees a guest. The panel user decides on their own proposals.
     "platform_core.api.ai.mcp": PUBLIC,
@@ -292,6 +310,7 @@ def caddy_customer_paths() -> set[str]:
 
 REQUEST_POLICY = PRESS / "press_identity/request_policy.py"
 SERVICE_FILE = PRESS / "press_identity/service.py"
+SUPPORT_FILE = PRESS / "support/service.py"
 
 
 class LoginMethodAllowListTests(unittest.TestCase):
@@ -314,7 +333,7 @@ class LoginMethodAllowListTests(unittest.TestCase):
             if caller is None:
                 continue
             with self.subTest(method=method):
-                self.assertEqual(guest, caller in (GUEST, CLOSED, PUBLIC), f"{method} is {caller}")
+                self.assertEqual(guest, caller in (GUEST, CLOSED, PUBLIC, TENANT), f"{method} is {caller}")
 
     def test_tenant_panel_methods_are_on_the_website_user_list(self):
         allowed = website_user_methods()
@@ -337,6 +356,9 @@ class LoginMethodAllowListTests(unittest.TestCase):
                 if EXPECTED.get(method) == GUEST:
                     self.assertIn(method, guests)
                     self.assertIn(f"/api/method/{method}", edge)
+                elif EXPECTED.get(method) == TENANT:
+                    self.assertIn(method, guests)
+                    self.assertNotIn(f"/api/method/{method}", edge)
                 else:
                     self.assertNotIn(method, guests)
 
@@ -352,6 +374,7 @@ class LoginMethodAllowListTests(unittest.TestCase):
     def test_press_service_and_admin_methods_stay_behind_their_lists(self):
         service = set(assigned(SERVICE_FILE, "SERVICE_PARAMETERS"))
         admin = as_set(assigned(REQUEST_POLICY, "ADMIN_METHOD"))
+        support = set(assigned(SUPPORT_FILE, "API_METHODS"))
         edge = caddy_customer_paths()
         for method in self.methods:
             if not method.startswith("press_tr."):
@@ -362,7 +385,11 @@ class LoginMethodAllowListTests(unittest.TestCase):
                     self.assertIn(method, service)
                 if caller == ADMIN:
                     self.assertIn(method, admin)
-                if caller in (SERVICE, ADMIN):
+                if caller == SUPPORT:
+                    self.assertIn(method, support)
+                else:
+                    self.assertNotIn(method, support)
+                if caller in (SERVICE, ADMIN, SUPPORT):
                     self.assertNotIn(f"/api/method/{method}", edge)
 
     def test_tenant_identity_sync_calls_have_a_route_and_a_relay_target(self):

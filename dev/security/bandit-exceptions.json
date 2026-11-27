@@ -2942,7 +2942,7 @@
     "rule": "B105",
     "file": "backend/apps/press_tr/tests/deletion_fixture.py",
     "code": "\"press_service_client_secret\": \"press-test-fixture\",",
-    "statementSha256": "6ed5d4d20fd86dfff717da06c0895dee6a29d5849b679e1c947740d0dff11af9",
+    "statementSha256": "87d9a75fe40efa9370a454c01105b367831f94d81711e56d0a876d5b47890ae4",
     "reason": "The deletion fixture contains only a synthetic service credential.",
     "owner": "press-tr",
     "ignoreUntil": "2027-02-22"

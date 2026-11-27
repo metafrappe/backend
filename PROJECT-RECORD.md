@@ -435,6 +435,94 @@ Proje sahibi 22 Kasım 2026 Pazar günü şöyle yazdı: “Herşeyi onaylıyoru
   - Eklerin listesi ve test adımları [devir notundadır](docs/handoff/press-tr-extension-test.md).
   - Bu karar önce O-54 numarasını taşıyordu. O-54 ile O-61 arasındaki numaralar başka kararlara verildi. Karar 25 Kasım 2026 Çarşamba günü O-62 oldu.
 
+- **O-63. Destek erişimi müşteri onayına bağlı dar bir yoldan açılır.**
+  Karar 23 Kasım 2026 Pazartesi günü AJA-101 kapsamında alındı.
+  Sistem mimarı mevcut Press yollarını AJA-162 görevinde inceledi.
+  Mimar, destek onayının açık kiracı oturumunu bitirmediğini bildirdi.
+  Bu nedenle yeni yol kiracı oturumu üretmez.
+  - Sahip modül `press_tr.support` olur. Ana kayıt mevcut `Support Access` türüdür.
+  - `press_tr.api.support`, destek modülünü çağırır. Kimlik kancası da aynı modülü çağırır.
+  - Müşteri takımının sahibi onay verir. Sistem sahibi `Team.user` alanından okur.
+  - Sistem destek çalışanını, takımı, siteyi ve gerekçeyi talebe bağlar.
+  - Talep yalnız `Pending` durumunda açılır. Müşteri talebi ayrıca onaylar.
+  - Sistem onaylayan kullanıcıyı, onay saatini ve kural sürümünü kaydeder.
+  - Eski onaylarda bu kanıt yoktur. Müşteri yeni talebi onaylamalıdır.
+  - Gerekçe ve kapsam değişmez. Yeni kapsam için yeni talep gerekir.
+  - Normal destek süresi 3, 6, 12 veya 24 saattir.
+  - Yönetici onayı ayrı talep ister. Talep yalnız bir siteyi kapsar.
+  - Yönetici onayı 3 saat sürer. Talep başka izin içermez.
+  - SSH ve ortak çalışma ortamına erişim kapalıdır. SSH, sunucuya komutla bağlanma yoludur.
+  - İlk destek işlemi yalnız sitenin adını ve durumunu okur.
+  - Her okumada sistem onayı, süreyi ve mevcut site sahibini yeniden denetler.
+  - Onay geri alma ve okuma aynı kayıt kilidini kullanır.
+  - Kayıt kilidi, bu işlemleri sıraya koyar. Bitmiş yanıt geri alınamaz.
+  - Süre bitince sonraki okuma reddedilir. Zamanlanmış iş kurulmaz.
+  - Sistem gerekçeyi ve erişim kapsamını aynı işlemde yorum kaydına yazar.
+  - Yorum kaydı yazılamazsa sistem veriyi döndürmez.
+  - Destek rolü taşıyan hesaplar eski Press erişim yollarını kullanamaz.
+  - `System User` türü bu kısıtı kaldırmaz.
+  - Normal platform yönetimi bu dar destek hizmetinden ayrı kalır.
+  - Destek çalışanının yönetici oturumu ve takım kimliğine geçiş yolları kapalı kalır.
+  - Müşteri sahibinin kendi sitesine giriş yolu korunur.
+  - Kiracı oturumunun süre ve iptal bağı henüz yazılmadı. Bu bağ O-65 ile yazıldı.
+  - Yönetici onayı kaydedilir. Bu onay henüz yönetici oturumu açmaz.
+  - Gerçek ağ isteğiyle doğrulama tamamlanmadan G-18 bütünü kapanmaz.
+  - [Devir notu](docs/handoff/support-access-consent.md) eksik işleri ve yerel kanıtı açıklar.
+  - Bu karar önce O-57 numarasını taşıyordu. Bu depoda O-57 ile O-62 arasındaki numaralar doluydu. Karar 27 Kasım 2026 Cuma günü AJA-1620 kapsamında O-63 oldu.
+
+- **O-64. Destek kısıtı müşterinin kendi takım girişini kapatmaz.**
+  Karar 24 Kasım 2026 Salı günü AJA-176 kapsamında kaydedildi.
+  Ürün sorumlusu bu kararı görevde açıkça verdi.
+  - Müşteri takımının sahibi ve üyeleri kendi sitelerine girebilir.
+  - Sistem üyeliği sitenin takımındaki `Team Member` kayıtlarından doğrular.
+  - Dört Press giriş yolu korunur. Bunlar yönetici, takım, site kullanıcısı ve deneme girişidir.
+  - Destek rolü bu üyeliği kullanarak eski giriş yolunu açamaz.
+  - Destek hesabı mevcut hesap silme sayfasından CSRF değeri alabilir.
+  - CSRF, tarayıcıdan gelen sahte isteklere karşı koruma değeridir.
+  - Sistem yalnız `GET` ve `HEAD` sayfa isteklerine izin verir.
+  - Destek hesabı `/app` gibi diğer sayfalarda 403 alır.
+  - `Administrator` için sistem işi ve insan isteği ayrı denetlenir.
+  - Sistem işi, Frappe'nin bellekte oluşturduğu `frappe.local.job` kaydını gerektirir.
+  - HTTP isteği varsa bu kayıt yönetici girişini açmaz.
+  - İş kaydı yoksa yönetici girişi yine reddedilir.
+  - Bu değişiklik yeni zamanlanmış iş kurmaz.
+  - O-63 kapsamındaki kiracı destek oturumu eksikliği devam eder.
+  - Bu karar önce O-58 numarasını taşıyordu. Bu depoda O-57 ile O-62 arasındaki numaralar doluydu. Karar 27 Kasım 2026 Cuma günü AJA-1620 kapsamında O-64 oldu.
+
+- **O-65. Kiracı destek oturumu her istekte Press'teki onaya bağlıdır.**
+  Karar 24 Kasım 2026 Salı günü AJA-177 kapsamında alındı.
+  Karar O-63'deki kiracı oturumu eksikliğini kapatır.
+  - Destek çalışanı Press'ten tek kullanımlık bir bilet alır. Bilet 60 saniye geçerlidir.
+  - Press bileti vermeden önce onayı denetler. Açılışı gerekçesiyle yorum kaydına yazar.
+  - Kiracı bileti bir kez Press'e sorar. Press bileti siler ve siteye bağlı bir anahtar verir.
+  - Press bilette ve anahtarda yalnız SHA-256 özetini saklar.
+  - Kiracı, destek kullanıcısının her isteğini Press'e sorar.
+  - Press her soruda onayı, süreyi, site sahibini ve çalışanın rolünü denetler.
+  - Bir koşul tutmazsa kiracı oturumu siler ve 403 döner.
+  - Press'e ulaşılamazsa da oturum kapanır.
+  - Kiracı bu denetimi diğer kimlik kancalarından sonra yapar.
+  - Destek kullanıcısı yalnız tarayıcı çereziyle çalışır. Başlıkla gelen istek 403 alır.
+  - Destek kullanıcısı anlık bildirim bağlantısı açamaz.
+  - Press her istekteki denetimde satır kilidi almaz. Bilet işlemleri kilitle yapılır.
+  - Destek kullanıcısı `support_session_user` ayarındaki sınırlı kullanıcıdır.
+  - Bu kullanıcı `Administrator` olamaz. `System Manager` rolünü de taşıyamaz.
+  - Yönetici onayı bu yoldan oturum açmaz. Yönetici oturumu ayrı bir iştir.
+  - Press'in iki yeni misafir ucunu yalnız kiracı sunucusu çağırır. Uçlar O-55 gereği özel ağda kalır.
+  - Gerçek ağ denemesi yapılmadı. [Devir notu](docs/handoff/support-tenant-session.md) kalan işi anlatır.
+  - Bu karar önce O-59 numarasını taşıyordu. Bu depoda O-57 ile O-62 arasındaki numaralar doluydu. Karar 27 Kasım 2026 Cuma günü AJA-1620 kapsamında O-65 oldu.
+
+- **O-66. Destek kullanıcısının kiracıdaki rollerini müşteri seçer. Her istekteki Press sorusu G-18 için engel değildir.**
+  Karar 24 Kasım 2026 Salı günü AJA-245 kapsamında yazıldı. Kararı A Takımı PO verdi.
+  Karar O-65'daki iki açık ürün sorusunu kapatır.
+  - Destek kullanıcısına kiracıda varsayılan rol verilmez.
+  - Destek kullanıcısının rollerini müşteri seçer.
+  - `System Manager` ve `Administrator` rolleri her zaman yasaktır.
+  - Bu kural dalın bugünkü davranışıdır. Kod değişmedi.
+  - Kiracı, destek kullanıcısının her isteğini Press'e sorar. Bunun hız etkisi G-18 için engel değildir.
+  - Hız etkisinin ölçümü MVP sonrasına kalır.
+  - Bozuk gövdeli isteğe misafir uçların 500 dönmesi Frappe'nin varsayılanıdır. Bu davranış bu işte değişmedi.
+  - Bu karar önce O-60 numarasını taşıyordu. Bu depoda O-57 ile O-62 arasındaki numaralar doluydu. Karar 27 Kasım 2026 Cuma günü AJA-1620 kapsamında O-66 oldu.
+
 ## Karar sitesine işlenecek farklar
 
 Backend kararları karar sitesinin bazı maddelerini değiştirdi. Site ayrı bir işte, kendi denetimleriyle güncellenir. Farklar şunlardır:

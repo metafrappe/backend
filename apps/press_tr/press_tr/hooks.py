@@ -286,9 +286,16 @@ doc_events = {
 		# AJA-421: only Administrator gives or takes the Recovery Reviewer role.
 		"validate": "press_tr.press_identity.accounts.guard_reviewer_role",
 	},
+	"Support Access": {
+		"validate": "press_tr.support.service.validate_support_access",
+		"on_update": "press_tr.support.service.audit_support_access",
+	},
 	# G-49: Press's own key format check never runs, so press_tr checks it on every Site save.
 	"Site": {"validate": "press_tr.backup_keys.validate_site_keys"},
 }
-extend_doctype_class = {"Account Request": ["press_tr.press_identity.accounts.AccountRequestPolicy"]}
+extend_doctype_class = {
+	"Account Request": ["press_tr.press_identity.accounts.AccountRequestPolicy"],
+	"Site": ["press_tr.support.service.SiteSupportPolicy"],
+}
 
 ai_write_closed_doctypes = ["PTR Identity Link", "PTR Keycloak Session"]

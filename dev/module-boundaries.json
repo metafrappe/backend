@@ -19,8 +19,10 @@
       "platform_core.identity"
     ],
     "press_tr.press_identity": [
-      "oidc_verify"
+      "oidc_verify",
+      "press_tr.support"
     ],
+    "press_tr.support": [],
     "press_tr.ansible_bridge": [],
     "identity_sync": [
       "oidc_verify"
@@ -30,6 +32,7 @@
     "platform_core.reseller": []
   },
   "public_paths": {
+    "press_tr.support": ["press_tr.support.service"],
     "platform_core.identity": [
       "platform_core.identity.api",
       "platform_core.identity.service_client",
@@ -73,6 +76,7 @@
     ]
   },
   "path_owners": {
+    "press_tr.api.support": "press_tr.support",
     "platform_core.api.auth": "platform_core.identity",
     "platform_core.api.identity": "platform_core.identity",
     "platform_core.api.shell": "platform_core.shell",

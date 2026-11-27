@@ -7,7 +7,14 @@ import frappe
 from frappe import _
 from frappe.rate_limiter import rate_limit
 
-from platform_core.identity import csrf_token, login_accounts, provider_setup, sign_in, sign_out
+from platform_core.identity import (
+	csrf_token,
+	login_accounts,
+	provider_setup,
+	sign_in,
+	sign_out,
+	support_session,
+)
 from platform_core.identity.exceptions import InvalidRedirect, KeycloakLoginNotConfigured
 from platform_core.identity.safe_errors import safe_errors
 from platform_core.shell.http import no_store, require_session
@@ -165,3 +172,11 @@ def list_linked_accounts() -> dict:
 	require_session()
 	login_accounts.reject_parameters()
 	return login_accounts.list_linked_accounts()
+
+
+# The ticket is single-use, bound to this site and checked by Press (O-65). Press stays authoritative.
+@frappe.whitelist(allow_guest=True, methods=["POST"])  # nosemgrep: frappe-missing-permission
+@rate_limit(limit=20, seconds=60)
+def start_support_session(ticket: str) -> dict:
+	"""Opens a customer-approved support session. Every later request is rechecked with Press."""
+	return support_session.start(ticket)

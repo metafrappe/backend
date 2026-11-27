@@ -11,6 +11,8 @@ from werkzeug.utils import redirect
 from press_tr.press_identity.deletion import ACCOUNT_DELETION_PAGE
 from press_tr.press_identity.machine_routes import MACHINE_METHODS, MONITORING_ALERT, machine_targets
 from press_tr.press_identity.service import SERVICE_PARAMETERS
+from press_tr.support.service import API_METHODS as SUPPORT_METHODS
+from press_tr.support.service import enforce_support_routes
 
 LEGACY_PAGES = frozenset({"/login", "/signup", "/dashboard/login"})
 GUEST_METHODS = (
@@ -21,6 +23,9 @@ GUEST_METHODS = (
 	# G-163: a person who lost their key cannot sign in. The method is rate limited and gives the
 	# same answer for every address.
 	"press_tr.api.account.request_recovery",
+	# Tenant sites call these over the private network (O-55, O-65). A site-bound secret authorizes them.
+	"press_tr.api.support.redeem_tenant_session",
+	"press_tr.api.support.check_tenant_session",
 )
 LOCAL_IDENTITY_METHODS = (
 	"frappe.core.doctype.user.user.sign_up",
@@ -193,7 +198,7 @@ def before_request():
 	routes = {prefix + name for prefix in API_PREFIXES for name in GUEST_METHODS}
 	routes.update(
 		f"/api/method/{name}"
-		for name in (*SERVICE_PARAMETERS, *MACHINE_METHODS, ADMIN_METHOD, ACCOUNT_METHOD)
+		for name in (*SERVICE_PARAMETERS, *MACHINE_METHODS, *SUPPORT_METHODS, ADMIN_METHOD, ACCOUNT_METHOD)
 	)
 	if path in routes and path not in ALLOWED_PATHS:
 		ALLOWED_PATHS.append(path)
@@ -204,7 +209,10 @@ def before_request():
 
 def enforce_guest_allowlist():
 	target = getattr(frappe.local, "press_request_target", None)
-	if target is None or frappe.session.user != "Guest":
+	if frappe.session.user != "Guest":
+		enforce_support_routes(target[0] if target is not None else None)
+		return
+	if target is None:
 		return
 	if target[0] not in allowed_guest_targets() and target[0] not in machine_targets():
 		frappe.throw(_("Guest access is denied.", context="press_tr"), frappe.PermissionError)

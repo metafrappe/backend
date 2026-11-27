@@ -208,6 +208,8 @@ def fake_exchange(token: str | None = None, **token_response):
 		return {
 			"id_token": token,
 			"access_token": "fake-access-token",
+			# Keycloak returns a refresh token to the confidential tenant client (G-163 item 3 keeps it encrypted).
+			"refresh_token": "fake-refresh-token",
 			"token_type": "Bearer",
 			**token_response,
 		}

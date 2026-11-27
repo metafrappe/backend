@@ -8,7 +8,7 @@ from frappe import _
 from frappe.sessions import delete_session
 from frappe.utils import get_datetime, now_datetime
 
-from platform_core.identity import helpers, jwks, sign_in, site_settings
+from platform_core.identity import helpers, jwks, keycloak_session, sign_in, site_settings
 from platform_core.identity.api import mobile_azp
 from platform_core.identity.exceptions import InvalidLogoutToken, KeycloakKeysUnavailable
 
@@ -28,6 +28,8 @@ def logout_current_session() -> dict:
 	keycloak_sid = frappe.session.data.get("keycloak_sid")
 	if helpers.is_session_id(keycloak_sid):
 		sign_in.forget_keycloak_session(keycloak_sid, frappe.session.sid)
+	# The renewed refresh token and the check state must not outlive the session (G-163).
+	keycloak_session.forget(frappe.session.sid)
 	frappe.local.login_manager.logout()
 	return {
 		"logout_url": helpers.end_session_url(
@@ -102,6 +104,7 @@ def handle_logout_token(logout_token: object, close_mobile_session=None) -> dict
 		for frappe_sid in sign_in.frappe_sids_for(sid):
 			if _session_exists(frappe_sid):
 				delete_session(frappe_sid, reason=LOGOUT_REASON)
+				keycloak_session.forget(frappe_sid)
 				closed += 1
 		sign_in.forget_keycloak_session(sid)
 
@@ -144,6 +147,7 @@ def _close(finder, *args) -> int:
 	closed = 0
 	for sid, user in finder(*args):
 		delete_session(sid, user=user, reason=LOGOUT_REASON)
+		keycloak_session.forget(sid)
 		closed += 1
 	return closed
 

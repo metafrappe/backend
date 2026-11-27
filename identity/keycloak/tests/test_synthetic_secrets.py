@@ -17,6 +17,7 @@ SECRET_LINE = re.compile(r"^\s*(?:private static final String\s+)?[A-Z_]*(?:SECR
 TEST_FILES = [
     DIRECTORY / "tests" / "test_second_factor.py",
     DIRECTORY / "tests" / "test_dev_script_secrets.py",
+    DIRECTORY / "tests" / "test_admin_strong_key.py",
     *sorted((DIRECTORY / "event-listener" / "src" / "test").rglob("*.java")),
 ]
 

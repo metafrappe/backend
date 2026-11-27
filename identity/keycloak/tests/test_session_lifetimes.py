@@ -56,15 +56,19 @@ class SessionLifetimeFileTest(unittest.TestCase):
         for client_id in EMPLOYEE_CLIENTS:
             client = self.clients[client_id]
             attributes = client["attributes"]
-            self.assertEqual(json.loads(attributes["acr.loa.map"]), {"employee": 1}, client_id)
+            # G-163 item 1: the tenant site also knows ACR "admin" (level 2) for its administrators.
+            expected = {"employee": 1, "admin": 2} if client_id == "site-tenant1" else {"employee": 1}
+            self.assertEqual(json.loads(attributes["acr.loa.map"]), expected, client_id)
             self.assertEqual(attributes["default.acr.values"], "employee", client_id)
             self.assertEqual(attributes["minimum.acr.value"], "employee", client_id)
             self.assertIn("acr", client["defaultClientScopes"], client_id)
 
     def test_browser_flow_has_the_level_condition_around_every_login_method(self):
         flows = _flows(self.realm)
-        login = flows["atonota-browser-giris"]["authenticationExecutions"]
-        self.assertEqual(len(login), 1)
+        login = sorted(flows["atonota-browser-giris"]["authenticationExecutions"], key=lambda e: e["priority"])
+        # The level 1 subflow comes first. The level 2 and administrator subflows follow it
+        # (G-163 item 1, tests/test_admin_strong_key.py).
+        self.assertEqual(login[0]["flowAlias"], "atonota-browser-level")
         self.assertEqual(login[0]["requirement"], "CONDITIONAL")
         level_flow = flows[login[0]["flowAlias"]]["authenticationExecutions"]
         condition = level_flow[0]

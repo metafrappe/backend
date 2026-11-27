@@ -17,6 +17,8 @@ Bu modül kiracı sitesinde Keycloak ile girişi ve çıkışı kurar. Servis be
 | `login_policy.py` | Yerel girişi kapatan kapı ve portal sayfalarının kapatılması. |
 | `jwks.py` | Anahtar listesi önbelleği. |
 | `session_policy.py` | Oturum 1 saat işlem olmazsa kapanır. Eski girişli çalışan yeniden kimlik doğrular (O-25). |
+| `step_up.py` | Hassas işlem taze ve güçlü giriş ister (G-163). |
+| `keycloak_session.py` | Keycloak oturumu kapanınca Frappe çerez oturumunu kapatır. Bildirim gelmese de kapatır (G-163). |
 | `anonymization.py` | Hesap silme: kullanıcıyı kapatır ve kişi alanlarını anonim yapar (O-27, karar notu 0013). |
 | `anonymization_scope.py` | Silmenin kapsamı: kişinin kendi kayıtları ile ortak kayıtları ayırır. |
 | `safe_errors.py` | Kimlik, giriş ve çıkış uçlarında hata kaydına yalnız güvenli alanları yazar. |
@@ -39,6 +41,42 @@ Bu modül kiracı sitesinde Keycloak ile girişi ve çıkışı kurar. Servis be
 4. Dönüş ucu kodu PKCE doğrulayıcısıyla değiştirir. Kimlik belirtecini `oidc_verify.verify_id_token` ile doğrular. `nonce` değerini denetler.
 5. Kullanıcı `(iss, sub)` çiftiyle bulunur. İlk bağ yalnız doğrulanmış e-postayla kurulur. Bilinmeyen e-posta ile kayıt açılmaz.
 6. Frappe oturumu açılır. Keycloak oturum kimliği ve CSRF belirteci oturuma yazılır. Tarayıcı `redirect_to` yoluna döner.
+
+## Yönetici girişi ve hassas işlemler
+
+Sistem yöneticisi rolü olan kişi yalnız `admin` düzeyiyle oturum açar. Bu düzey geçiş anahtarı ya da donanım anahtarı ister. TOTP bu düzeye yetmez.
+
+1. Dönüş ucu kimlik belirtecindeki `acr` değerini okur.
+2. Değer `admin` değilse oturum açılmaz. Giriş `acr_values=admin` ile yeniden başlar.
+3. İkinci denemede de değer `admin` değilse giriş reddedilir.
+
+Dönüş ucu `acr` ve `auth_time` değerini oturum kaydına yazar. `step_up.py` bu değerleri okur. Hassas işlem 300 saniyeden eski girişle çalışmaz. Liste ve ret yanıtı `backend/docs/contracts.md` dosyasının "Hassas işlemler" bölümündedir.
+
+## Keycloak oturumunu sorma
+
+Keycloak oturumu kapanınca Frappe'ye bildirim gönderir. Bildirim ulaşmazsa Frappe oturumu açık kalırdı. Bu yüzden Frappe, Keycloak oturumunu kendisi sorar.
+
+1. Dönüş ucu yenileme belirtecini saklar. Belirteç Frappe'nin şifreleme yardımcısıyla şifrelenir. Düz metin saklanmaz.
+2. Her oturum isteğinde `session_policy.before_request` denetimi çalışır. Oturum kimliği çerezle ya da `sid` form alanıyla gelebilir. İkisi de denetlenir. Arka plan istekleri de denetlenir.
+3. Denetim Keycloak'ın `introspect` ucunu yenileme belirteciyle çağırır. İstemci `site-tenant1` gizli istemcisidir.
+4. Cevap 60 saniye önbellekte kalır. Bu sürede Keycloak yeniden çağrılmaz.
+5. Keycloak `active: false` derse oturum hemen kapanır. Kapanış, boşta kalma kapanışıyla aynıdır. Yanıt 401 ve `SessionExpired` olur.
+6. Keycloak'a ulaşılamazsa son olumlu cevap 300 saniye geçerli kalır. Bu süre geçince oturum kapanır.
+
+İki süre `keycloak_session.py` dosyasında sabittir:
+
+| Sabit | Değer | İşi |
+| --- | --- | --- |
+| `CACHE_SECONDS` | 60 saniye | Keycloak cevabının önbellekte kaldığı süre |
+| `UNREACHABLE_GRACE_SECONDS` | 300 saniye | Keycloak'a ulaşılamazken son olumlu cevabın geçerli kaldığı süre |
+
+Denetim `introspect` için `refresh_token` isteği kullanmaz. Realm'de `revokeRefreshToken` açıktır. Bu istek her seferinde belirteci değiştirirdi.
+
+Bir istisna vardır. Kiracı istemcisinin oturumu Keycloak'ta 3600 saniye işlemsiz kalınca biter. Yenileme belirtecinin süresi de bu sürede dolar. Yalnız `introspect` kullanılsaydı her Frappe oturumu girişten 1 saat sonra kapanırdı. Çalışmayı sürdüren kullanıcı da çıkarılırdı. Bu yüzden belirtecin bitmesine 900 saniyeden az kalınca bir istek belirteci bir kez yeniler. Kısa bir Redis kilidi aynı anda tek isteğin yenilemesine izin verir. Arka plan isteği belirteci yenilemez. Yeni belirteç de şifreli saklanır. Yeni belirteç Redis'e ve oturum kaydına yazılır. Böylece önbellek temizlense de belirteç kaybolmaz.
+
+Başka bir istek belirteci az önce yenilemiş olabilir. Keycloak eski belirteç için `active: false` der. Bu durumda denetim yeni belirteci bir kez daha sorar. Yeni belirteç de geçerli değilse oturum kapanır.
+
+Bu denetim her oturum için en çok 60 saniyede bir Keycloak çağrısı ekler. Yük testi henüz yapılmadı.
 
 Frappe'nin hazır `login_via_keycloak` ucu kullanılmaz. “Social Login Key” kaydı kapalı durur. Kayıt yalnız istemci bilgisini Frappe'nin olağan yerinde tutar.
 

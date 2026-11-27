@@ -8,6 +8,7 @@ from frappe import _
 from frappe.permissions import is_system_user
 
 from platform_core.access import explain, field_level, permission_log, tenant_admin
+from platform_core.identity import step_up
 
 
 @frappe.whitelist(methods=["GET"])
@@ -34,6 +35,7 @@ def get_access_summary(doctype: str) -> dict:
 @frappe.whitelist(methods=["POST"])
 def set_field_level(doctype: str, fieldname: str, permlevel: int) -> dict:
 	"""Changes the permission level of a field. “System Manager” only."""
+	step_up.require("platform_core.api.access.set_field_level")
 	if not frappe.has_permission("Property Setter", "create"):
 		frappe.throw(_("No permission to change field levels."), frappe.PermissionError)
 	return field_level.set_field_level(doctype, fieldname, permlevel)
@@ -42,6 +44,7 @@ def set_field_level(doctype: str, fieldname: str, permlevel: int) -> dict:
 @frappe.whitelist(methods=["POST"])
 def set_level_access(doctype: str, role: str, permlevel: int, read: bool, write: bool) -> dict:
 	"""Gives a role read and write permission at a permission level. “System Manager” only."""
+	step_up.require("platform_core.api.access.set_level_access")
 	if not frappe.has_permission("Custom DocPerm", "write"):
 		frappe.throw(_("No permission to change role permissions."), frappe.PermissionError)
 	return field_level.set_level_access(doctype, role, permlevel, read, write)

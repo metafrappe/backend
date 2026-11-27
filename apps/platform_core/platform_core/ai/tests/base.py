@@ -6,6 +6,7 @@ come from the `contracts/platform_core-yapay-zeka.openapi.yaml` contract (D-1).
 """
 
 import json
+import time
 
 import frappe
 from frappe.tests import IntegrationTestCase
@@ -158,6 +159,19 @@ def ensure_fixtures() -> None:
 	frappe.db.commit()  # nosemgrep: frappe-request-commit -- test setup, the request reads on another connection
 
 
+def mark_strong_sign_in(sid: str) -> None:
+	"""G-163: sensitive operations need a fresh strong Keycloak sign-in (`identity/step_up.py`).
+
+	The password form opens a session without one. The tests of this module are about other rules, so they
+	record a fresh `admin` sign-in in the session. The step-up check has its own tests in the identity module.
+	"""
+	values = {"keycloak_acr": "admin", "keycloak_auth_time": int(time.time())}
+	session = frappe.cache.hget("session", sid)
+	if session:
+		session["data"].update(values)
+		frappe.cache.hset("session", sid, session)
+
+
 class AiTestCase(IntegrationTestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -221,6 +235,8 @@ class AiTestCase(IntegrationTestCase):
 		client = get_test_client(use_cookies=True)
 		response = self.send(client, "POST", "/api/method/login", body={"usr": user, "pwd": PASSWORD})
 		self.assertEqual(response.status_code, 200, response.get_data(as_text=True))
+		# G-163: sensitive operations need a fresh strong sign-in. The step-up check has its own tests.
+		mark_strong_sign_in(client.get_cookie("sid").value)
 		if csrf:
 			sid = client.get_cookie("sid").value
 			session = frappe.cache.hget("session", sid)

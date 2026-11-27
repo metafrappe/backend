@@ -16,6 +16,15 @@ MAX_TOKEN_LENGTH = 8192
 MAX_CODE_LENGTH = 4096
 MAX_STATE_LENGTH = 255
 MOBILE_PATH_PREFIX = "/api/method/platform_core.api.mobile.v1_"
+# G-163: Keycloak `acr` names and their levels (`acr.loa.map` of the tenant client).
+EMPLOYEE_ACR = "employee"
+ADMIN_ACR = "admin"
+ACR_LEVELS = {EMPLOYEE_ACR: 1, ADMIN_ACR: 2}
+
+
+def acr_level(value: object) -> int:
+	"""Level of an `acr` value. An unknown or missing value is level 0."""
+	return ACR_LEVELS.get(value, 0) if isinstance(value, str) else 0
 
 
 def realm_url(base_url: str, realm: str) -> str:
@@ -64,6 +73,11 @@ def session_claims(claims: dict, issuer: str) -> dict:
 	sid = claims.get("sid")
 	if is_session_id(sid):
 		data["keycloak_sid"] = sid
+	# G-163: the step-up check of sensitive operations reads these two values.
+	acr = claims.get("acr")
+	data["keycloak_acr"] = acr if isinstance(acr, str) and acr in ACR_LEVELS else None
+	auth_time = claims.get("auth_time")
+	data["keycloak_auth_time"] = auth_time if type(auth_time) is int else None
 	return data
 
 
@@ -115,6 +129,8 @@ def authorize_url(
 	nonce: str,
 	challenge: str,
 	prompt: str | None = None,
+	acr_values: str | None = None,
+	max_age: int | None = None,
 ) -> str:
 	params = {
 		"client_id": client_id,
@@ -128,6 +144,10 @@ def authorize_url(
 	}
 	if prompt:
 		params["prompt"] = prompt
+	if max_age is not None:
+		params["max_age"] = str(max_age)
+	if acr_values:
+		params["acr_values"] = acr_values
 	return realm_url(public_url, realm) + "/protocol/openid-connect/auth?" + urlencode(params)
 
 

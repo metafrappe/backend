@@ -194,8 +194,9 @@ class TestApproval(AiTestCase):
 
 		self.assertEqual(response.status_code, 403)
 		self.assertEqual(self.value(name), "Eski")
-		log = self.last_log(deny_reason="not_human_session", stage="approve")
-		self.assertEqual((log.user, log.principal, log.decision), (USER_A, "other", "denied"))
+		# G-163: approval is a sensitive operation. The step-up check refuses a token request in the first
+		# statement, before the approval layer runs. So the layer writes no denial record for this request.
+		self.assertEqual(response.json.get("error"), "reauthentication_required")
 
 	def test_another_users_approval_is_rejected(self):
 		name = self.make_record(USER_A, title="Eski")

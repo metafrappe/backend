@@ -152,8 +152,46 @@ Colima'nın factory profili depo klasörünü sanal makineye bağlamaz. Bu yüzd
 - Sihirli bağlantıyı `cloudflightio/keycloak-magic-link` eklentisi sağlar. Jar adı `keycloak-magic-link` olur. Eklenti imaj derlemesinde sabit bir commit'ten derlenir. Bağlantı akışın adımıdır. Tıklamadan sonra ikinci adım sorulur. Bağlantı yalnız isteyen tarayıcıda, 300 saniye ve tek kullanım geçerlidir. REST ucu ve çapraz cihaz yolu `conf/keycloak.conf` ayarıyla kapalıdır.
 - Sihirli bağlantıdan sonra kullanıcının sahip olduğu her güçlü anahtar sorulur (G-163). Güçlü anahtar geçiş anahtarı ya da donanım anahtarıdır. Yalnız geçiş anahtarı olan hesap da e-postayla tek başına açılmaz.
 - Parola sıfırlama `atonota-reset-credentials` akışıyla yürür (G-163). E-posta bağlantısı yalnız posta kutusunu kanıtlar. Kullanıcının ikinci adımı varsa yeni paroladan önce bu adım sorulur. Akış TOTP'yi ya da anahtarı silmez ve yenisini kurdurmaz. Keycloak'ın hazır akışı e-postadan sonra yeni TOTP kurduruyordu.
-- İlk anahtar kaydı ile kayıp anahtar değişimi ayrıdır. Anahtarı olmayan kullanıcı ilk anahtarını sihirli bağlantıyla girdikten sonra kaydeder. Anahtarını kaybeden kullanıcı Press'te kurtarma isteği açar. İstek `PTR Recovery Review` kaydı olur. Kaydı "Recovery Reviewer" rolündeki bir inceleyici onaylar ya da reddeder. Bu rolü yalnız Administrator verir. İnceleyici kendi hesabının kaydına karar veremez.
+- İlk anahtar kaydı ile kayıp anahtar değişimi ayrıdır. Anahtarı olmayan kullanıcı ilk anahtarını sihirli bağlantıyla girdikten sonra kaydeder. Bu yol yöneticiler için kapalıdır. Yöneticinin yolu “Yönetici girişi ve güçlü anahtar” bölümündedir. Anahtarını kaybeden kullanıcı Press'te kurtarma isteği açar. İstek `PTR Recovery Review` kaydı olur. Kaydı "Recovery Reviewer" rolündeki bir inceleyici onaylar ya da reddeder. Bu rolü yalnız Administrator verir. İnceleyici kendi hesabının kaydına karar veremez.
 - Apple ile girişi `klausbetz/apple-identity-provider-keycloak` 1.17.0 eklentisi sağlar. Jar adı `apple-identity-provider` olur. Sağlayıcı realm'de kapalıdır. Gerçek anahtar gelince `.env` dosyasındaki `ATONOTA_APPLE_*` değerleri doldurulur. Sonra sağlayıcı açılır.
+
+## Yönetici girişi ve güçlü anahtar
+
+Bu bölüm G-163 isteğinin 1. maddesini anlatır.
+
+Güçlü anahtar iki türlüdür. Biri geçiş anahtarıdır. Öteki donanım anahtarıdır. Geçiş anahtarı, telefonda ya da bilgisayarda saklanan giriş anahtarıdır. TOTP güçlü anahtar sayılmaz. TOTP, uygulamanın ürettiği altı haneli koddur.
+
+Platform yöneticisi realm'de `platform-admin` rolünü taşır. Frappe'de “System Manager” olan kullanıcı bu rolü eşitlemeyle alır.
+
+Yönetici her girişte güçlü anahtarını gösterir. Uygulamanın istediği düzey bunu değiştirmez. Örneğin uygulama 1. düzeyi isterse yönetici yine anahtar sorusunu görür. Yöneticiye TOTP sorulmaz.
+
+Güçlü anahtarı olmayan yönetici giremez. Keycloak bu kişiye “Erişim reddedildi” sayfasını gösterir. Yönetici kendi başına anahtar ekleyemez. Sosyal giriş ve e-posta bağlantısı da anahtar eklemez.
+
+Uygulama `admin` düzeyini isteyebilir. Bu düzeyin numarası 2'dir. Bu düzey her istekte güçlü anahtarı yeniden sorar. Anahtarı olmayan kullanıcı bu düzeyde reddedilir.
+
+Yalnız geçiş anahtarı olan kullanıcıya da paroladan sonra anahtar sorulur (AJA-356).
+
+### İlk anahtarı realm yöneticisi açar
+
+Yöneticinin ilk anahtar kaydını yalnız realm yöneticisi açar. Realm yöneticisi, Keycloak yönetim konsoluna giren kişidir.
+
+1. Realm yöneticisi, yöneticiyle kayıt zamanını konuşur.
+2. Realm yöneticisi konsolda “Users” sayfasını açar.
+3. Realm yöneticisi kullanıcıya `strong-key-enrollment` rolünü verir.
+4. Yönetici, kullanıcı adı ve parolasıyla girer.
+5. Yöneticinin TOTP'si varsa Keycloak TOTP kodunu sorar.
+6. Keycloak anahtar kayıt sayfasını açar. Yönetici anahtarını kaydeder.
+7. Realm yöneticisi `strong-key-enrollment` rolünü kaldırır.
+
+Kayıt bitmeden giriş tamamlanmaz. Kayıt sayfasında atlama düğmesi yoktur.
+
+Kayıt yolu yalnız parolayla açılır. Yönetici e-posta bağlantısıyla girerse reddedilir.
+
+Yöneticinin anahtarı varsa kayıt yolu açılmaz. Keycloak önce var olan anahtarı sorar.
+
+Konsoldan yalnız kayıt işi eklemek yetmez. Örneğin `webauthn-register-passwordless` işi eklenirse giriş yine reddedilir. Bunun nedeni şudur: Keycloak kayıt işlerini girişten sonra çalıştırır. Anahtarı olmayan yöneticinin girişi daha önce durur.
+
+Bu yolda kaydedilen anahtar `webauthn` türündedir. Bu tür donanım anahtarını ve cihaz anahtarını kapsar. Kayıp anahtar bu yolla değiştirilmez. Kayıp anahtar Press'teki kurtarma kaydıyla yürür.
 
 ## İmaj çekme hatası
 

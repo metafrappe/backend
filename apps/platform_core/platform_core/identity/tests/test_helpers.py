@@ -69,9 +69,16 @@ class TestPureHelpers(UnitTestCase):
 				"keycloak_iss": "http://identity.localhost:8660/realms/platform",
 				"keycloak_sub": "s-1",
 				"keycloak_sid": "k-1-long-enough",
+				"keycloak_acr": None,
+				"keycloak_auth_time": None,
 			},
 		)
 		self.assertNotIn("keycloak_sid", helpers.session_claims({"sub": "s-1"}, "iss"))
+		# G-163: the step-up check reads the level and the time of the Keycloak sign-in.
+		strong = helpers.session_claims({"sub": "s-1", "acr": "admin", "auth_time": 1700000000}, "iss")
+		self.assertEqual((strong["keycloak_acr"], strong["keycloak_auth_time"]), ("admin", 1700000000))
+		odd = helpers.session_claims({"sub": "s-1", "acr": "gold", "auth_time": "1700000000"}, "iss")
+		self.assertEqual((odd["keycloak_acr"], odd["keycloak_auth_time"]), (None, None))
 
 	def test_normalize_path_matches_frappe_website_resolution(self):
 		for raw, expected in (

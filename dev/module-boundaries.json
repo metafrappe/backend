@@ -13,8 +13,12 @@
       "platform_core.access",
       "platform_core.mobile"
     ],
-    "platform_core.model_gateway": [],
-    "platform_core.access": [],
+    "platform_core.model_gateway": [
+      "platform_core.identity"
+    ],
+    "platform_core.access": [
+      "platform_core.identity"
+    ],
     "platform_core.mobile": [
       "platform_core.identity"
     ],
@@ -33,6 +37,7 @@
     "platform_core.identity": [
       "platform_core.identity.api",
       "platform_core.identity.service_client",
+      "platform_core.identity.step_up",
       "platform_core.api.auth",
       "platform_core.api.identity",
       "platform_core.identity.atonota.decision_api",

@@ -222,6 +222,51 @@ Adres biçimi `/api/method/<yol>` olur.
 - `/panel` sayfası `platform_core/www/` altında durur. Sayfa CSRF belirtecini taşır (G-45). Sahibi platform-core-kabuk işidir.
 - Ayrı arayüz (`atonota-web`) belirteci sayfadan okumaz. Arayüz girişten sonra `get_csrf_token` ucunu çağırır. Arayüz dönen değeri her yazma isteğinde `X-Frappe-CSRF-Token` başlığıyla gönderir. Uç yalnız açık oturumla çalışır. Misafir 403 alır. Uç yalnız `GET` kabul eder. Oturumda belirteç yoksa uç `frappe.sessions.get_csrf_token()` ile üretir. Frappe belirteci yanıtın `message` alanına koyar. Yanıt `{"message": {"csrf_token": "<belirteç>"}}` biçimindedir. Süresi dolmuş oturumun çerezi 401 ve `SessionExpired` alır. Hiç çerez yoksa yanıt 403 olur. Bir oturumun ilk belirtecini yalnız bir istek üretir. Bu istek oturuma bağlı kısa bir Redis kilidi tutar. Bekleyen istek belirteci oturum kaydından okur. Böylece aynı oturumdaki iki sekme aynı belirteci alır. Yanıt `Cache-Control: private, no-store` taşır. Yanıtta `ETag` yoktur. Uç çapraz kökene izin vermez. `allow_cors` ayarı değişmez (G-45). `get_bootstrap` yanıtı belirteç taşımaz. O yanıt önbelleklenir.
 
+### Hassas işlemler (G-163)
+
+Bazı yöntemler taze ve güçlü giriş ister. Bu yöntemlere hassas işlem denir. Liste `contracts/platform_core-identity.openapi.yaml` dosyasının `x-sensitive-operations` alanındadır.
+
+Giriş düzeyine `acr` denir. Keycloak bu değeri kimlik belirtecine yazar. İki düzey vardır:
+
+- `employee` düzeyi 1'dir. Parola, e-posta bağlantısı ya da TOTP ile ulaşılır.
+- `admin` düzeyi 2'dir. Yalnız geçiş anahtarı ya da donanım anahtarı ile ulaşılır.
+
+Giriş dönüşü iki değeri Frappe oturum kaydına yazar. `keycloak_acr` giriş düzeyidir. `keycloak_auth_time` Keycloak'taki son gerçek girişin zamanıdır.
+
+Listedeki her yöntem ilk satırda `platform_core.identity.step_up.require` işlevini çağırır. İşlev iki durumda isteği reddeder:
+
+1. Son giriş 300 saniyeden eskidir.
+2. Oturumun düzeyi, yöntemin istediği düzeyden düşüktür.
+
+Altı yöntem `admin` düzeyini ister. `approve_proposal` yöntemi yalnız `employee` düzeyini ister. Bunun nedeni şudur: Son kullanıcı kendi yapay zekâ önerisini onaylar. Son kullanıcının güçlü anahtarı yoktur. Son kullanıcı yine de son 300 saniye içinde giriş yapmış olmalıdır.
+
+Ret yanıtı 403 olur. Yanıtta `error: reauthentication_required` yazar. Yanıt `reauthentication_url` alanını da taşır. Bu alan sitenin `start_login` adresidir. Adres `prompt=login`, `max_age=0` ve `acr_values` değerlerini taşır. `acr_values` yöntemin istediği düzeydir. Kullanıcı bu adrese gidince Keycloak girişi yeniden ister.
+
+Token ile gelen istek oturum kaydı taşımaz. Bu yüzden token ile gelen istek bu yöntemleri çağıramaz. Böyle bir istek de 403 alır.
+
+300 saniye, press_tr hesap silmedeki `REAUTHENTICATION_TTL` değeriyle aynıdır.
+
+İlk liste şu yedi yöntemdir:
+
+- `platform_core.api.access.set_field_level`
+- `platform_core.api.access.set_level_access`
+- `platform_core.api.ai.approve_proposal`
+- `platform_core.api.ai.purge_logs`
+- `platform_core.api.model.save_connection`
+- `platform_core.api.model.clear_api_credential`
+- `platform_core.api.model.purge_usage`
+
+İki yöntem listede yoktur:
+
+- Hesap silme `press_tr` içinde kalır. press_tr bu işlemi kendisi denetler.
+- `platform_core.api.mobile.revoke_user_installations` yöntemini yalnız identity-sync servisi çağırır. Servis bu çağrıyı servis belirteciyle yapar. Denetim token isteğini reddeder. Bu yüzden denetim, kapanan kullanıcının telefon kayıtlarının silinmesini durdururdu. Bu yöntemi servis belirteci denetimi korur.
+
+Bilinen bir sınır vardır. Denetim yalnız listedeki yöntemleri korur. Frappe'nin hazır uçları aynı kayıtları yine değiştirebilir. Örneğin sistem yöneticisi `Custom DocPerm` kaydını `frappe.client.save` ile yazabilir. Bu kayıtlara da denetim gerekip gerekmediğine ayrı bir iş karar verir.
+
+Geliştirici başka bir hassas yöntem bulursa listeye ekler. Eklediği yöntemin nedenini commit mesajına yazar. `identity/tests/test_step_up.py` testi koddaki liste ile sözleşmedeki listenin aynı olduğunu denetler.
+
+Sistem yöneticisi rolü olan kişi yalnız `admin` düzeyiyle oturum açar. Giriş dönüşü başka bir düzey görürse oturum açmaz. Giriş `acr_values=admin` ile yeniden başlar. İkinci denemede de düzey `admin` değilse giriş reddedilir.
+
 ### Ayrı arayüzün üretimde sunulması
 
 Ayrı arayüz üretimde aynı kökende düz dosya olarak sunulur. Dosyalar kiracı sitesinin adresinden iner. Sayfanın içinde CSRF belirteci yoktur. Arayüz belirteci `get_csrf_token` ucundan alır. Arayüz yerelde ve üretimde aynı ucu kullanır. Güvenlik başlıklarını sunucu katmanı verir. Bu başlıklar `Content-Security-Policy` ve `Referrer-Policy` başlıklarıdır. `frame-ancestors` ayrı bir başlık değildir. Bu kural sayfayı hangi sitelerin çerçeve içine alabileceğini belirler. Kural `Content-Security-Policy` başlığının içinde yazılır. Örneğin `Content-Security-Policy: frame-ancestors 'none'` yazılır. Bu kurulum kıdemli DevOps mühendisinin işidir. Bu depo bunun için sunucu ayarı içermez.

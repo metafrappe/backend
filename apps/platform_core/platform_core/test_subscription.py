@@ -192,3 +192,156 @@ class SubscriptionTest(unittest.TestCase):
 		self.response["plan"] = "basic"
 		self.assertFalse(self.gate.has_feature("example", "export_report"))
 		self.assertEqual(self.post.call_count, 2)
+
+
+class AppStateModelTest(unittest.TestCase):
+	"""Acceptance checks for G-35 and G-127 (AJA-2487)."""
+
+	setUp = SubscriptionTest.setUp
+	raise_permission = SubscriptionTest.raise_permission
+	cache_get = SubscriptionTest.cache_get
+	cache_set = SubscriptionTest.cache_set
+
+	def guarded(self, operation):
+		@self.gate.require_feature("example", "export_report", operation=operation)
+		def action():
+			return operation
+
+		return action
+
+	def assert_operations(self, read, write, export):
+		self.assertEqual(self.gate.has_feature("example", "export_report", operation="read"), read)
+		self.assertEqual(self.gate.has_feature("example", "export_report", operation="write"), write)
+		self.assertEqual(self.gate.has_feature("example", "export_report", operation="export"), export)
+
+	def assert_write_forbidden(self):
+		with self.assertRaises(PermissionDeniedError) as denied:
+			self.guarded("write")()
+		self.assertEqual(denied.exception.http_status_code, 403)
+
+	def state(self):
+		return self.gate.feature_decision("example", "export_report")["state"]
+
+	# G-35: subscription information
+
+	def test_press_result_is_cached_on_the_tenant(self):
+		for _ in range(3):
+			self.assertTrue(self.gate.has_feature("example", "export_report"))
+		self.post.assert_called_once()
+		self.clock += self.gate.CACHE_SECONDS - 1
+		self.assertTrue(self.gate.has_feature("example", "export_report"))
+		self.post.assert_called_once()
+
+	def test_missing_key_denies_feature_without_calling_press(self):
+		del self.config["sk_example"]
+		self.assert_operations(read=False, write=False, export=True)
+		self.assertFalse(self.state()["subscribed"])
+		self.post.assert_not_called()
+
+	def test_unreachable_press_denies_feature_and_retries_shortly(self):
+		self.post.side_effect = OSError("connection refused")
+		self.assert_operations(read=False, write=False, export=True)
+		self.assertEqual(self.post.call_count, 1)
+		self.post.side_effect = None
+		self.clock += 5
+		self.assert_operations(read=True, write=True, export=True)
+		self.assertEqual(self.post.call_count, 2)
+
+	def test_press_server_error_denies_feature(self):
+		self.post.return_value.status_code = 502
+		self.assert_operations(read=False, write=False, export=True)
+		self.assertFalse(self.state()["subscribed"])
+
+	# G-127: five separate states and the server gate
+
+	def test_five_states_are_reported_separately(self):
+		self.assertEqual(
+			self.state(),
+			{
+				"installed": True,
+				"subscribed": True,
+				"enabled": True,
+				"suspended": False,
+				"read_only": False,
+			},
+		)
+
+	def test_suspended_app_rejects_api_write_with_403_and_keeps_export(self):
+		self.post.return_value.status_code = 401
+		self.assertTrue(self.state()["suspended"])
+		self.assert_write_forbidden()
+		self.assertEqual(self.guarded("export")(), "export")
+
+	def test_read_only_app_rejects_write_and_keeps_read_and_export(self):
+		self.response["plan"] = "basic"
+		self.config["platform_subscriptions"]["example"]["plans"]["basic"]["features"].append(
+			"export_report"
+		)
+		self.assertTrue(self.state()["read_only"])
+		self.assert_write_forbidden()
+		self.assertEqual(self.guarded("read")(), "read")
+		self.assertEqual(self.guarded("export")(), "export")
+
+	# G-127: every transition drops the cached G-35 result
+
+	def test_transition_subscribed_to_suspended_drops_cache(self):
+		self.assertEqual(self.guarded("write")(), "write")
+		self.post.return_value.status_code = 401
+		self.assertEqual(self.guarded("write")(), "write")
+		self.gate.subscription_update_hook()
+		self.assert_write_forbidden()
+		self.assertTrue(self.state()["suspended"])
+
+	def test_transition_suspended_to_subscribed_drops_cache(self):
+		self.post.return_value.status_code = 401
+		self.assert_write_forbidden()
+		self.post.return_value.status_code = 200
+		self.assert_write_forbidden()
+		self.gate.subscription_update_hook()
+		self.assertEqual(self.guarded("write")(), "write")
+		self.assertFalse(self.state()["suspended"])
+
+	def test_transition_subscribed_to_read_only_drops_cache(self):
+		self.assertFalse(self.gate.has_feature("example", "overview", operation="read"))
+		self.response["plan"] = "basic"
+		self.assertEqual(self.guarded("write")(), "write")
+		self.gate.subscription_update_hook()
+		self.assertTrue(self.state()["read_only"])
+		self.assertTrue(self.gate.has_feature("example", "overview", operation="read"))
+		self.assertFalse(self.gate.has_feature("example", "overview", operation="write"))
+
+	def test_transition_read_only_to_subscribed_drops_cache(self):
+		self.response["plan"] = "basic"
+		self.assertTrue(self.state()["read_only"])
+		self.response["plan"] = "pro"
+		self.assertTrue(self.state()["read_only"])
+		self.gate.subscription_update_hook()
+		self.assertFalse(self.state()["read_only"])
+		self.assertEqual(self.guarded("write")(), "write")
+
+	def test_transition_enabled_and_disabled_applies_immediately(self):
+		settings = self.config["platform_subscriptions"]["example"]
+		self.assertEqual(self.guarded("write")(), "write")
+		settings["enabled"] = False
+		self.assert_write_forbidden()
+		self.assertFalse(self.state()["enabled"])
+		settings["enabled"] = True
+		self.assertEqual(self.guarded("write")(), "write")
+		self.post.assert_called_once()
+
+	def test_transition_installed_and_uninstalled_applies_immediately(self):
+		self.assertEqual(self.guarded("write")(), "write")
+		self.frappe.get_installed_apps.return_value = []
+		self.assert_operations(read=False, write=False, export=False)
+		self.assertFalse(self.state()["installed"])
+		self.frappe.get_installed_apps.return_value = ["example"]
+		self.assertEqual(self.guarded("write")(), "write")
+
+	def test_clear_cache_hook_drops_subscription_cache(self):
+		hooks = (Path(__file__).with_name("hooks.py")).read_text()
+		self.assertIn('"platform_core.subscription.subscription_update_hook"', hooks)
+		self.assertTrue(self.gate.has_feature("example", "export_report"))
+		self.response["plan"] = "basic"
+		self.gate.subscription_update_hook()
+		self.assertFalse(self.gate.has_feature("example", "export_report"))
+		self.assertEqual(self.post.call_count, 2)

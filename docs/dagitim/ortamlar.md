@@ -645,6 +645,13 @@ Bir yorum satırı listedeki anahtarın kuralını söyleyebilir:
 - `[sabit]` etiketli anahtarın değeri listedeki değerle aynı olur. Örneğin `ATONOTA_SSL_REQUIRED=all` böyledir.
 - Etiketsiz anahtar zorunludur.
 
+Bazı site ayarlarının kuralı ortama göre değişir. Bu kurallar `deploy/remote/settings.py` dosyasındaki `ENV_SITE_FIXED` tablosundadır.
+
+- `identity_keycloak_only` ayarı listede `[isteğe bağlı]` yazılıdır. alpha ve beta ortamında ayar kapalı kalabilir.
+- rc ve prod ortamında bu ayarın değeri `1` olmalıdır (G-163, AJA-422).
+- Değer `1` değilse ya da ayar yazılmamışsa rc ve prod dağıtımı durur. Çalışan sürüm değişmez.
+- Hata iletisi ayarın adını ve beklenen değeri yazar. İleti sitedeki değeri yazmaz.
+
 ### Sırlar nereye konur
 
 Sırlar yalnız sunucuda durur. Depoya, Jenkins'e ve sohbet kayıtlarına yazılmaz.

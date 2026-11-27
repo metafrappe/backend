@@ -11,8 +11,8 @@ Design: backend/docs/dagitim/ortamlar.md. Python 3.9+, standard library only.
 
 Usage:
   settings.py check-files <env> <lists folder> --etc <folder> --press 0|1 --offsite 0|1
-  settings.py check-sites <lists folder> <probe json> [--first-install 0|1] <site>...
-  settings.py site-fixed <lists folder>     prints the fixed site values as JSON for site-probe.py
+  settings.py check-sites <lists folder> <probe json> --env <env> [--first-install 0|1] <site>...
+  settings.py site-fixed <lists folder> --env <env>   prints the fixed site values as JSON for site-probe.py
 """
 
 import argparse
@@ -47,6 +47,13 @@ LISTS = {
 # Lists the deployment does not check yet, with the reason in docs/dagitim/ortamlar.md.
 NOT_CHECKED = ("press-site",)
 ENVIRONMENTS = ("alpha", "beta", "rc", "prod")
+# Site values an environment requires on top of the list (G-163, AJA-422). The list keeps the key
+# optional; rc and prod accept only Keycloak sign-in. Like ATONOTA_REQUIRE_OFFSITE_BACKUP, the rule
+# lives here and not in the list. The probe compares the value inside the container.
+ENV_SITE_FIXED = {
+    "rc": {"identity_keycloak_only": "1"},
+    "prod": {"identity_keycloak_only": "1"},
+}
 LIST_KEY = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 PLACEHOLDER = re.compile(r"<[^<>]*>")
 
@@ -129,8 +136,7 @@ def compare(entries, present):
 
 
 def check_files(env, lists, etc, press=False, offsite_required=False):
-    if env not in ENVIRONMENTS:
-        raise SettingsError(f"unknown environment: {env}")
+    known_environment(env)
     problems = []
     for name, target in LISTS.items():
         if target.kind != "env":
@@ -160,17 +166,26 @@ def check_files(env, lists, etc, press=False, offsite_required=False):
     return problems
 
 
-def site_fixed_values(lists):
-    """[sabit] keys of the tenant site list and their values. site-probe.py compares them inside
-    the container, so no site value leaves it. The values are listed in the repository."""
-    return {entry.key: entry.value for entry in parse_list(Path(lists) / LISTS["tenant-site"].list_file)
-            if entry.fixed}
+def known_environment(env):
+    if env not in ENVIRONMENTS:
+        raise SettingsError(f"unknown environment: {env}")
 
 
-def check_sites(lists, probe, sites, first_install=False):
+def site_fixed_values(lists, env):
+    """[sabit] keys of the tenant site list and the rules of the environment, with their values.
+    site-probe.py compares them inside the container, so no site value leaves it. The values are
+    in the repository."""
+    known_environment(env)
+    fixed = {entry.key: entry.value for entry in parse_list(Path(lists) / LISTS["tenant-site"].list_file)
+             if entry.fixed}
+    return {**fixed, **ENV_SITE_FIXED.get(env, {})}
+
+
+def check_sites(lists, probe, sites, env, first_install=False):
     """probe: {site: {"set": [non-empty keys], "differs": [fixed keys with another value]}}."""
     entries = parse_list(Path(lists) / LISTS["tenant-site"].list_file)
-    fixed = site_fixed_values(lists)
+    fixed = site_fixed_values(lists, env)
+    required = ENV_SITE_FIXED.get(env, {})
     problems = []
     for site in sites:
         if site not in probe:
@@ -185,6 +200,8 @@ def check_sites(lists, probe, sites, first_install=False):
         present = {key: None for key in report["set"]}
         for problem in compare(entries, present):
             problems.append(f"site {site}, site_config.json: {problem}")
+        for key in sorted(required.keys() - present.keys()):
+            problems.append(f"site {site}, site_config.json: {key} is missing (must be {required[key]} in {env})")
         for key in sorted(set(report["differs"]) & fixed.keys()):
             problems.append(f"site {site}, site_config.json: {key} (must be {fixed[key]})")
     return problems
@@ -202,10 +219,12 @@ def main(argv=None):
     sites = commands.add_parser("check-sites", help="check the site settings of the tenant sites")
     sites.add_argument("lists")
     sites.add_argument("probe")
+    sites.add_argument("--env", choices=ENVIRONMENTS, required=True)
     sites.add_argument("--first-install", choices=("0", "1"), default="0")
     sites.add_argument("sites", nargs="+")
     fixed = commands.add_parser("site-fixed", help="print the fixed site values for site-probe.py")
     fixed.add_argument("lists")
+    fixed.add_argument("--env", choices=ENVIRONMENTS, required=True)
     host = commands.add_parser("host-env", help="read generated host values without shell evaluation")
     host.add_argument("path")
     arguments = parser.parse_args(argv)
@@ -222,7 +241,7 @@ def main(argv=None):
                 print(f"{key}={value}")
             return 0
         if arguments.command == "site-fixed":
-            print(json.dumps(site_fixed_values(arguments.lists), sort_keys=True))
+            print(json.dumps(site_fixed_values(arguments.lists, arguments.env), sort_keys=True))
             return 0
         if arguments.command == "check-files":
             problems = check_files(arguments.env, arguments.lists, arguments.etc,
@@ -231,7 +250,7 @@ def main(argv=None):
             probe = json.loads(Path(arguments.probe).read_text(encoding="utf-8"))
             if not isinstance(probe, dict):
                 raise SettingsError("the site probe did not print a JSON object")
-            problems = check_sites(arguments.lists, probe, arguments.sites,
+            problems = check_sites(arguments.lists, probe, arguments.sites, arguments.env,
                                    first_install=arguments.first_install == "1")
     except (SettingsError, OSError, json.JSONDecodeError) as error:
         print(f"settings: {error}", file=sys.stderr)

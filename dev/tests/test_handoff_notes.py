@@ -29,6 +29,7 @@ LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 CODE = re.compile(r"`([^`\n]+)`")
 TOP_FOLDERS = ("apps/", "contracts/", "deploy/", "dev/", "docs/", "e2e/", "identity/", "libs/")
 COMMIT = re.compile(r"\b[0-9a-f]{7,40}\b")
+OLD_PREFIX = re.compile(r"(?<![\w/.-])backend/[\w./-]*")
 
 
 def relative_links(text):
@@ -66,8 +67,10 @@ class HandoffNotes(unittest.TestCase):
             path = HANDOFF / name
             if not path.is_file():
                 continue
-            for word in code_paths(path.read_text()):
-                if word.startswith("backend/") or not (ROOT / word).exists():
+            text = path.read_text()
+            problems += [f"{name}: {word}" for word in OLD_PREFIX.findall(text)]
+            for word in code_paths(text):
+                if not word.startswith("backend/") and not (ROOT / word).exists():
                     problems.append(f"{name}: {word}")
         self.assertEqual(problems, [])
 

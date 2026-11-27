@@ -161,23 +161,26 @@ class SkillAndAgentTests(unittest.TestCase):
 
 
 class DocsTests(unittest.TestCase):
-    PAGES = ["ai-bakis", "ai-mcp", "ai-skills", "ai-agents", "ai-press-yetkinlik", "ai-gelistirme"]
+    """Backend belgeleri: kapsam tablosu `docs/press-ai/coverage.md` dosyasındadır."""
 
-    def read(self, page):
-        with open(os.path.join(REPO, "src", "content", "docs", page + ".md"), encoding="utf-8") as handle:
+    COVERAGE = os.path.join(REPO, "docs", "press-ai", "coverage.md")
+    DOCS = [COVERAGE, os.path.join(PACKAGE, "README.md"), os.path.join(PACKAGE, "INTERFACE.md")]
+
+    def read(self, path):
+        with open(path, encoding="utf-8") as handle:
             return handle.read()
 
-    def test_coverage_block_is_generated_from_the_contract(self):
-        text = self.read("ai-press-yetkinlik")
+    def test_coverage_doc_matches_coverage_markdown_output(self):
+        text = self.read(self.COVERAGE)
         match = re.search(re.escape(COVERAGE_START) + r".*?" + re.escape(COVERAGE_END), text, re.S)
-        self.assertIsNotNone(match, "coverage markers missing in ai-press-yetkinlik.md")
+        self.assertIsNotNone(match, "coverage markers missing in docs/press-ai/coverage.md")
         self.assertEqual(match.group(0), coverage_markdown(Contract(os.path.join(PACKAGE, "contracts"))))
 
-    def test_pages_do_not_score_or_claim_live_verification(self):
-        for page in self.PAGES:
-            text = self.read(page)
-            self.assertNotRegex(text, r"\|\s*Puan\s*\|", page)
-            self.assertNotRegex(text.lower(), r"canlı press'te (doğrulandı|çalışıyor|test edildi)", page)
+    def test_docs_do_not_score_or_claim_live_verification(self):
+        for path in self.DOCS:
+            text = self.read(path)
+            self.assertNotRegex(text, r"\|\s*Puan\s*\|", path)
+            self.assertNotRegex(text.lower(), r"canlı press'te (doğrulandı|çalışıyor|test edildi)", path)
 
 
 if __name__ == "__main__":

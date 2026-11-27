@@ -62,6 +62,13 @@ class BoundaryTests(unittest.TestCase):
     def errors(self):
         return CHECKER.check(self.root, self.policy)
 
+    def test_tools_folder_is_outside_module_boundaries(self):
+        # tools/press-ai is a standalone package, not a Frappe module.
+        tool = self.root / "tools/press-ai/press_ai/client.py"
+        tool.parent.mkdir(parents=True)
+        tool.write_text("import openai\nfrom platform_core.identity.internal import secret\n")
+        self.assertEqual(self.errors(), [])
+
     def test_rejects_import_and_relative_alias(self):
         for code in [
             "import platform_core.identity.api",

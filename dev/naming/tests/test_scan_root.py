@@ -53,6 +53,13 @@ class ScanRootTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stderr)
         self.assertIn("libs/sample.py:1 [turkish-name]", result.stdout)
 
+    def test_tools_folder_is_scanned(self):
+        # tools/press-ai is not a Frappe app, but its names follow the same rules.
+        self.write("tools/press-ai/sample.py", "giris = 1\n")
+        result = run_check(self.root)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("tools/press-ai/sample.py:1 [turkish-name]", result.stdout)
+
     def test_empty_scan_fails(self):
         result = run_check(self.root)
         self.assertNotEqual(result.returncode, 0, result.stdout)

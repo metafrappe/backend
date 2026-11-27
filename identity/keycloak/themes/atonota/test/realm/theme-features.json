@@ -1,0 +1,83 @@
+{
+  "realm": {
+    "organizationsEnabled": true,
+    "identityProviders": [
+      {
+        "alias": "sample-idp",
+        "displayName": "Örnek giriş hizmeti",
+        "providerId": "oidc",
+        "enabled": true,
+        "config": {
+          "authorizationUrl": "https://idp.ornek.test/authorize",
+          "tokenUrl": "https://idp.ornek.test/token",
+          "clientId": "theme-test",
+          "clientAuthMethod": "private_key_jwt",
+          "syncMode": "IMPORT"
+        }
+      }
+    ],
+    "groups": [
+      {
+        "name": "Örnek ekip",
+        "path": "/Örnek ekip",
+        "subGroups": [
+          {
+            "name": "Örnek alt ekip",
+            "path": "/Örnek ekip/Örnek alt ekip"
+          }
+        ]
+      }
+    ]
+  },
+  "organizations": [
+    {
+      "name": "Örnek kuruluş",
+      "alias": "sample-org",
+      "enabled": true,
+      "domains": [
+        {
+          "name": "ornek.test",
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "userProfileAttributes": [
+    {
+      "name": "city",
+      "displayName": "Şehir",
+      "multivalued": false,
+      "validations": {
+        "options": {
+          "options": [
+            "Adana",
+            "Ankara",
+            "Antalya",
+            "Bursa",
+            "Diyarbakır",
+            "Erzurum",
+            "Eskişehir",
+            "İstanbul",
+            "İzmir",
+            "Konya",
+            "Samsun",
+            "Trabzon"
+          ]
+        }
+      },
+      "annotations": {
+        "inputType": "select"
+      },
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin",
+          "user"
+        ]
+      }
+    }
+  ]
+}

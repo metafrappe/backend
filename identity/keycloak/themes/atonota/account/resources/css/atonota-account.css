@@ -682,6 +682,38 @@ body[data-page-id="account"] {
   padding-inline: var(--at-space-sm);
 }
 
+/*
+ * A search field without a toggle, for example on the linked accounts page, is a text input group inside an input group.
+ * It gets the same surface, border and radius as the other fields.
+ * The stock dark theme paints it grey and draws no border around it.
+ */
+[data-page-id="account"] .pf-v5-c-input-group .pf-v5-c-text-input-group {
+  --pf-v5-c-text-input-group--BackgroundColor: var(--at-color-bg-input);
+  --pf-v5-c-text-input-group__text-input--BackgroundColor: transparent;
+  background: var(--at-color-bg-input);
+  border: var(--at-border-width) solid var(--at-color-field-border);
+  border-radius: var(--at-radius);
+  color: var(--at-color-text);
+  /* The wrapper grows by its border, so the field itself reaches the touch target size. */
+  min-block-size: calc(var(--at-hit-target) + 2 * var(--at-border-width));
+  transition: border-color var(--at-motion-duration-mid) var(--at-motion-easing-standard);
+}
+
+[data-page-id="account"] .pf-v5-c-input-group .pf-v5-c-text-input-group
+  :is(.pf-v5-c-text-input-group__main, .pf-v5-c-text-input-group__text, .pf-v5-c-text-input-group__text-input) {
+  min-block-size: var(--at-hit-target);
+}
+
+[data-page-id="account"] .pf-v5-c-input-group .pf-v5-c-text-input-group:hover {
+  border-color: var(--at-color-text);
+}
+
+/* The stock theme draws this border with pseudo-elements. The wrapper above draws it instead. */
+[data-page-id="account"] .pf-v5-c-input-group .pf-v5-c-text-input-group__text::before,
+[data-page-id="account"] .pf-v5-c-input-group .pf-v5-c-text-input-group__text::after {
+  content: none;
+}
+
 [data-page-id="account"] .pf-v5-c-helper-text__item-text {
   font-size: var(--at-font-min);
 }
@@ -772,6 +804,20 @@ body[data-page-id="account"] {
   content: none;
 }
 
+/*
+ * A type-ahead select: the field and its arrow button fill the whole toggle.
+ * The toggle grows by its border, so the field itself reaches the touch target size.
+ */
+[data-page-id="account"] .pf-v5-c-menu-toggle.pf-m-typeahead {
+  min-block-size: calc(var(--at-hit-target) + 2 * var(--at-border-width));
+  align-items: stretch;
+}
+
+[data-page-id="account"] .pf-v5-c-menu-toggle.pf-m-typeahead
+  :is(.pf-v5-c-text-input-group, .pf-v5-c-text-input-group__main, .pf-v5-c-text-input-group__text, .pf-v5-c-text-input-group__text-input, .pf-v5-c-menu-toggle__button) {
+  min-block-size: var(--at-hit-target);
+}
+
 [data-page-id="account"] .pf-v5-c-menu {
   --pf-v5-c-menu--BackgroundColor: var(--at-color-bg-elevated);
   /* A menu that opens from the masthead sits on the raised surface. */
@@ -839,6 +885,19 @@ body[data-page-id="account"] {
   min-inline-size: 0;
 }
 
+/*
+ * A linked account row: a provider icon, the provider name and a short status label such as "Sistem tanımlı".
+ * The icon keeps its size, so the name never runs into it.
+ * The label cell is at least as wide as the label, so the label text is never cut.
+ */
+[data-page-id="account"] .pf-v5-c-data-list__item[id$="-idp"] .pf-v5-l-split__item:not(.pf-m-fill) {
+  flex-shrink: 0;
+}
+
+[data-page-id="account"] .pf-v5-c-data-list__item[id$="-idp"] .pf-v5-c-data-list__cell:has([id$="-idp-label"] > .pf-v5-c-label) {
+  min-inline-size: max-content;
+}
+
 /* Layout containers may shrink below their content, so a large root font size does not overflow the page. */
 [data-page-id="account"] .pf-v5-l-grid,
 [data-page-id="account"] .pf-v5-c-toolbar__content,
@@ -850,6 +909,20 @@ body[data-page-id="account"] {
 
 [data-page-id="account"] .pf-v5-c-toolbar__content-section {
   flex-wrap: wrap;
+}
+
+/*
+ * Tables, for example on the organizations page.
+ * The stock table binds its own background to a light-theme colour, which turns grey in the dark theme.
+ * On narrow screens the stacked table also draws a thick grey band above its first row.
+ */
+[data-page-id="account"] table.pf-v5-c-table {
+  --pf-v5-global--BackgroundColor--100: var(--at-color-bg-panel);
+  --pf-v5-c-table--BackgroundColor: var(--at-color-bg-panel);
+  --pf-v5-c-table--responsive--BorderColor: var(--at-color-line);
+  --pf-v5-c-table__tbody--responsive--border-width--base: var(--at-border-width);
+  --pf-v5-c-table__tr--responsive--border-width--base: var(--at-border-width);
+  background-color: var(--at-color-bg-panel);
 }
 
 [data-page-id="account"] .pf-v5-c-alert {
@@ -1037,9 +1110,13 @@ html:not([data-at-js]) [data-page-id="account"] a.pf-v5-c-masthead__brand:focus-
     0 calc(var(--at-radius) + var(--at-focus-gap) + var(--at-focus-indicator-size)) 0 calc(-1 * var(--at-radius)) var(--at-focus-local, var(--at-focus-indicator-color));
 }
 
-/* A field inside its wrapper: the line goes under the wrapper. The rule is separate because :has() is not everywhere. */
+/*
+ * A field inside its wrapper: the line goes under the wrapper. A search field without a toggle, for example on the
+ * linked accounts page, has the text input group as its wrapper. The rule is separate because :has() is not everywhere. */
 :is(html[data-at-focus="keyboard"], html:not([data-at-js])) [data-page-id="account"]
-  :is(.pf-v5-c-form-control, .pf-v5-c-menu-toggle):has(> :is(input, select, textarea):focus-visible, .pf-v5-c-text-input-group input:focus-visible) {
+  :is(.pf-v5-c-form-control, .pf-v5-c-menu-toggle):has(> :is(input, select, textarea):focus-visible, .pf-v5-c-text-input-group input:focus-visible),
+:is(html[data-at-focus="keyboard"], html:not([data-at-js])) [data-page-id="account"]
+  .pf-v5-c-text-input-group:not(.pf-v5-c-menu-toggle .pf-v5-c-text-input-group):has(input:focus-visible) {
   box-shadow:
     0 calc(var(--at-radius) + var(--at-focus-gap)) 0 calc(-1 * var(--at-radius)) var(--at-focus-gap-local, var(--at-color-bg-panel)),
     0 calc(var(--at-radius) + var(--at-focus-gap) + var(--at-focus-indicator-size)) 0 calc(-1 * var(--at-radius)) var(--at-focus-local, var(--at-focus-indicator-color));

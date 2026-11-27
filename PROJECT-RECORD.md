@@ -435,6 +435,15 @@ Proje sahibi 22 Kasım 2026 Pazar günü şöyle yazdı: “Herşeyi onaylıyoru
   - Eklerin listesi ve test adımları [devir notundadır](docs/handoff/press-tr-extension-test.md).
   - Bu karar önce O-54 numarasını taşıyordu. O-54 ile O-61 arasındaki numaralar başka kararlara verildi. Karar 25 Kasım 2026 Çarşamba günü O-62 oldu.
 
+- **O-63. Tema testlerindeki ek konsol ekranları ayrı bir deneme realm'inde sınanır.** Karar 23 Kasım 2026 Pazartesi günü alındı.
+  - Bağlı hesaplar, gruplar ve kuruluşlar konsolun menüsüne yeni satırlar ekler.
+  - Bu özellikler asıl deneme realm'inde açılsaydı var olan görsel referansların hepsi değişirdi.
+  - Bu yüzden testler `theme-test-features` adlı ikinci bir realm kurar. Kaynak asıl realm dosyasıdır. Ek ayarlar `theme-features.json` dosyasındadır.
+  - Yazarak aranan seçim alanı da bu realm'dedir. Alan 12 seçenekli bir kullanıcı profili alanıdır.
+  - Tema betiği bir durumda odağı taşır. Konsol, seçim alanında seçilen seçenekten sonra odağı sayfa gövdesine düşürür. Betik odağı alana geri verir.
+  - Ayrıntı [tema belgesindedir](identity/keycloak/themes/atonota/README.md).
+  - Bu karar eski depoda O-57 numarasını taşıyordu. O-57 numarası burada başka bir karara verildi. Karar 28 Kasım 2026 Cumartesi günü O-63 oldu.
+
 ## Karar sitesine işlenecek farklar
 
 Backend kararları karar sitesinin bazı maddelerini değiştirdi. Site ayrı bir işte, kendi denetimleriyle güncellenir. Farklar şunlardır:

@@ -192,11 +192,14 @@ Hesap konsolunun bilinen sınırları şunlardır:
 - Keycloak bazı “daha fazla” düğmelerine erişilebilir ad vermez. Tema betiği bu düğmelere ileti dosyasından ad verir. Betik çalışmazsa düğmeler adsız kalır.
 - Yükleme yazısı İngilizcedir. Bu metin Keycloak'ın şablonunda sabit durur.
 - Sayfa başlığı marka adıdır. Başlık bütün dillerde aynıdır.
-- Yazarak aranan seçim alanının odak çizgisi için kural yazıldı ama sınanmadı. Deneme realm'inde böyle bir alan yok.
-- Etiketsiz onay kutusunun odak göstergesi yok. Konsolun böyle bir kutu kullandığı doğrulanmadı.
+- Yazarak aranan seçim alanı, 10 ya da daha çok seçeneği olan seçim alanıdır. Konsol bu alanı kişisel bilgiler sayfasında çizer. Alanın odak çizgisi sınandı. Çizgi alanın ve ok düğmesinin altında durur.
+- Konsol bu alanda bir seçeneği klavyeyle seçince odağı sayfa gövdesine düşürür. Tema betiği odağı alana geri verir. Betik çalışmazsa odak gövdede kalır.
+- Gruplar sayfasındaki satır onay kutularının etiketi yoktur. Konsol bu kutuları kapalı çizer. Kapalı kutu odak almaz, bu yüzden odak çizgisi gerekmez. Tema betiği her kutuya satırın ve sütunun adını verir. Örnek: “Örnek ekip: Doğrudan üyelik”.
+- Sayfalama alanlarının adı Keycloak'ta İngilizcedir ve iki alan aynı adı taşır. Tema betiği her alana listenin başlığını ve yerini verir. Örnek: “Bağlı hesaplar: Sayfalar”.
+- Seçim alanının, ok düğmesinin ve sayfa düğmelerinin ekran okuyucu adları İngilizcedir. Bu adlar Keycloak'ın bileşenlerinde sabittir.
 - Betik çalışmazsa başlıkta marka adı görünmez, yalnız marka işareti durur.
 - Seyrek koşularda tarayıcı Keycloak'ın bir yazı tipi dosyasını aynı sunucudan istedi. Nedeni doğrulanmadı. Test bu dosyaya adıyla izin verir, başka yazı tipi isteğini reddeder. Ekrandaki metin Outfit ile çizilir.
-- Bağlı hesaplar, gruplar ve kuruluşlar sayfaları testle sınanmadı. Deneme realm'inde bu özellikler kapalıdır.
+- Bağlı hesaplar, gruplar ve kuruluşlar sayfaları testle sınandı. Bu sayfalar ikinci bir deneme realm'inde açılır. Realm'in adı `theme-test-features` olur.
 
 ## Temel temadan kopyalanan şablonlar
 
@@ -274,6 +277,17 @@ Depoda sabit deneme parolası ve TOTP gizli değeri yoktur. Betik `up` komutunda
 
 Deneme realm'inin adı `theme-test` olur. Tema yalnız bu realm'de seçilidir.
 
+Testler ikinci bir deneme realm'i de kurar. Adı `theme-test-features` olur. Bu realm şu ekranları açar:
+
+1. Bağlı hesaplar sayfası. Realm'de sahte bir kimlik sağlayıcı vardır. Sağlayıcının adresleri çalışmaz.
+2. Gruplar sayfası. Deneme kullanıcısı bir alt gruba üyedir.
+3. Kuruluşlar sayfası. Deneme kullanıcısı bir kuruluşa üyedir.
+4. Yazarak aranan seçim alanı. Kişisel bilgilerde 12 seçenekli “Şehir” alanı vardır.
+
+Bu özellikler konsolun menüsüne yeni satırlar ekler. Bu yüzden ayrı realm'de durur. Asıl deneme realm'i ve görsel referansları değişmez.
+
+Realm'i test başlarken `tests/helpers.ts` kurar. Kaynak `realm/theme-test-realm.json` dosyasıdır. Ek ayarlar `realm/theme-features.json` dosyasındadır. Kuruluşlar açık olunca Keycloak önce e-postayı, sonra parolayı ayrı ekranda ister.
+
 ## Testler
 
 Testler Playwright ile yazıldı. Tarayıcılar Chromium ve WebKit'tir. Firefox testi yoktur.
@@ -295,7 +309,7 @@ npx playwright test
 | `tests/motion.spec.ts` | Hareket eğrisi, süre, azaltılmış hareket ve stil kaynağı denetimi |
 | `tests/accessibility.spec.ts` | axe denetimi, açık ve koyu tema |
 | `tests/email.spec.ts` | E-posta şablonları ve Mailpit |
-| `tests/account.spec.ts` | Hesap konsolu: yerleşim, odak, hareket, axe, Türkçe iletiler ve token eşliği |
+| `tests/account.spec.ts` | Hesap konsolu: yerleşim, odak, hareket, axe, Türkçe iletiler ve token eşliği. Bağlı hesaplar, gruplar, kuruluşlar ve yazarak aranan seçim alanı da sınanır. Odak ölçümü, alanı çevreleyen bir halkayı yakalar. Bir test bunu kasıtlı bir halkayla kanıtlar. |
 | `tests/focus-diff.ts` | Odak çizgisini ölçen ortak yardımcı |
 | `tests/delete-account.spec.ts` | Hesap silme bağlantısı: müşteri görür, çalışan görmez, adres ayardan gelir |
 | `tests/session-states.spec.ts` | Misafir, oturumlu kullanıcı ve sunucuda biten oturum: giriş, hesap konsolu ve silme bağlantısı doğru davranır |

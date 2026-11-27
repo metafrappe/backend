@@ -50,13 +50,13 @@ Her klasörün tek sahibi vardır. Başka işin klasörünü değiştirmeyin. De
 | `dev/naming/` | Geçmiş adların düzeltilmesi | naming-history-fix |
 | `dev/ai_readiness/`, `dev/bin/ai-readiness` | Yapay zekâ uygunluk kapısı | ai-readiness-gate |
 | `contracts/` | Uçların OpenAPI sözleşmeleri | Her uç kendi sahibinde |
-| `docs/`, `AGENTS.md`, `PROJE-KAYDI.md` | Talimat, kayıt ve sözleşme | Orkestratör |
+| `docs/`, `AGENTS.md`, `PROJE-KAYDI.md` | Talimat, kayıt ve sözleşme | PO, değişiklik PR ile girer |
 
 `hooks.py` ortak bir dosyadır. Yalnız kendi işinizin satırlarını ekleyin. Var olan satırları değiştirmeyin.
 
 Her liste kancası dosyada yalnız bir kez atanır. Örneğin `auth_hooks` ya da `ai_write_closed_doctypes` böyledir. Kanca dosyada varsa kendi değerinizi o listeye ekleyin. Yeni bir atama satırı yazmayın. Python'da son atama öncekileri siler ve Git bunu çakışma saymaz. Birleştirme önizlemesi aynı adın iki kez atanmasını yakalar.
 
-`platform_core/translations/tr.csv` de ortak bir dosyadır. Kullanıcıya görünen metnin kaynağı İngilizcedir. Türkçesini bu dosyaya ekleyin. Yalnız kendi satırlarınızı ekleyin. Çakışmayı orkestratör birleştirmede çözer.
+`platform_core/translations/tr.csv` de ortak bir dosyadır. Kullanıcıya görünen metnin kaynağı İngilizcedir. Türkçesini bu dosyaya ekleyin. Yalnız kendi satırlarınızı ekleyin. Çakışma çıkarsa dalın geliştiricisi çözer. Dalınızı güncel `origin/main` ile birleştirip çakışmayı giderin.
 
 ## Zorunlu çalışma kuralları
 
@@ -171,7 +171,8 @@ kimlik-realm işi 22 Kasım 2026 Pazar günü bu sorunları buldu. Çözümler �
   ```
 
 - `--no-verify` kullanmayın. Yazar korumasını ve `core.hooksPath` ayarını değiştirmeyin.
-- Push yapmayın. Pull request açmayın. Dalları orkestratör birleştirir.
+- Dalınızı GitHub'a gönderin. Sonra `main` dalına PR açın. Sıra aşağıdaki “Standart akış” bölümündedir.
+- PR'ı kendiniz birleştirmeyin. PR'ı ProPR birleştirir.
 - Commit mesajını yalın Türkçe yazın. Yapay zekâ imzası ve ortak yazar satırı eklemeyin.
 
 ### Alt ajanlar
@@ -197,6 +198,26 @@ Proje sahibi çok sayıda paralel ajan istedi. Bu yüzden alt ajan kullanabilirs
 - Doğrulanan davranışı raporda dosya ve satırla yazın.
 - Frappe'nin ve Press'in kodunu değiştirmeyin (M-4). Kanca ve kendi uygulamanızı kullanın.
 
+## Standart akış
+
+Bu akış müşterinin 27 Kasım 2026 Cuma günkü kararıdır. PR, `main` dalına açılan birleştirme isteğidir. ProPR, PR'ları inceleyen ve birleştiren araçtır.
+
+Her geliştirme işi şu sırayla yürür:
+
+1. Geliştirici işi yerel dalda yapar. Dalı güncel `origin/main` ucundan açar.
+2. Geliştirici önce düşen testi yazar. Sonra kodu yazar.
+3. Geliştirici dalı GitHub'a gönderir. Sonra `main` dalına PR açar.
+4. GitHub CI, PR üzerinde koşar.
+5. QA ve Committer PR'ı kural listesiyle inceler (AJA-1303).
+6. İnceleme ve birleştirme ProPR'da yürür. PR'ı ProPR birleştirir.
+7. Hiçbir ajan `main` dalına doğrudan push etmez. Hiçbir ajan PR'ı GitHub düğmesiyle ya da `gh pr merge` ile birleştirmez.
+
+ProPR için şu kurallar da geçerlidir:
+
+- Takım isterse işi doğrudan ProPR'a verebilir.
+- ProPR'ın commit kimliği `karacaismail` olur (AJA-1489).
+- ProPR yerel dalları göremez. Bu yüzden yerel dalı önce GitHub'a gönderin.
+
 ## Rapor ve soru
 
 Her çalışma parçasını tek komutla bitirin:
@@ -207,13 +228,13 @@ runpane report --state <ready|blocked|failed|done> --summary-file <durum dosyas�
 
 - Durum dosyasını `.pane/prompts/durum.md` yoluna yazın. Bu klasör Git'e girmez.
 - Durum dosyasına her denetimin komutunu ve sonucunu yazın. Sonuç `pass`, `fail`, `not_run` ya da `not_applicable` olur.
-- Kontrol noktasında `ready` raporlayın. Orkestratör dalınızı inceler ve birleştirir.
+- Kontrol noktasında `ready` raporlayın. Dalınız PR ile incelenir. PR'ı ProPR birleştirir.
 - Rapordan sonra durmayın. Beklemeden sonraki kontrol noktasına geçin. Proje sahibi işin hiç durmamasını istedi.
-- Bütün kontrol noktaları bitince `done` raporlayın. Orkestratör size yeni iş verir.
+- Bütün kontrol noktaları bitince `done` raporlayın. PO size yeni iş verir.
 - Bir önkoşul henüz gelmediyse onu beklemeyin. O işe bağlı olmayan bölümü yapın. Örneğin testleri ve sözleşmeyi önce yazın.
 - Proje sahibi kararları ajana bıraktı (D-10). Proje sahibine soru sormayın.
 - Karar gerekiyorsa en güvenli ve en yalın seçeneği seçin. Kararı gerekçesiyle durum dosyasına ve gerekiyorsa `docs/kararlar/` notuna yazın. Sonra işe devam edin.
-- Orkestratör kararı birleştirmede inceler. Gerekirse değiştirir.
+- QA ve Committer kararı PR incelemesinde denetler. Gerekirse değişiklik ister.
 - Yalnız şu durumda `blocked` raporlayın: iş ilerleyemiyor ve seçim geri alınamaz bir sonuç doğuruyor. Örneğin veri silme ya da dış servise yazma böyledir. Soruyu ve seçenekleri şöyle verin:
 
   ```bash

@@ -22,9 +22,23 @@ Bir koşul eksikse PO işi kapatmaz. PO eksik kanıtı veya düzeltmeyi ilgili k
 
 ## Birleştirme
 
-Ajanlar `backend` dalına kendileri birleştirme yapmaz. Committer onay verince göreve “birleştirmeye hazır” yazar. Birleştirmeyi kimin yapacağı henüz belli değildir.
+PR, bir dalı ana dala katma isteğidir. ProPR, PR'ları birleştiren araçtır. CI, GitHub'da kendiliğinden koşan testlerdir.
 
-Kaynak: orkestratör çalışma düzeni, müşteri kararı bekleniyor.
+Bir dal şu sırayla ana dala girer:
+
+1. Geliştirici dalı GitHub'a gönderir.
+2. Geliştirici `main` dalına PR açar.
+3. GitHub CI kendiliğinden koşar.
+4. QA ve Committer PR'ı inceler.
+5. Committer onay verince göreve “birleştirmeye hazır” yazar.
+6. ProPR, PR'ı birleştirir.
+
+İki yasak vardır:
+
+- Hiçbir ajan `main` dalına doğrudan push etmez.
+- Hiçbir ajan PR'ı GitHub düğmesiyle ya da `gh pr merge` ile birleştirmez.
+
+Kaynak: müşteri kararı, 27 Kasım 2026 Cuma (AJA-1548).
 
 ## Kabul edilen kanıt
 

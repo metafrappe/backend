@@ -152,7 +152,7 @@ class RestoreDrillTests(unittest.TestCase):
         self.assertEqual(bench.sites[SOURCE]["Note"], {"n-old"})
 
     def test_failed_restore_is_reported_and_the_drill_site_is_dropped(self):
-        bench = FakeBench(fail_on=" restore ")
+        bench = FakeBench(fail_on="--force restore")
         bench.sites[DRILL] = {"DocType": 0, "User": 0, "Note": set()}  # half-created by restore
         result = drill(bench)
         self.assertEqual(result["status"], "fail")

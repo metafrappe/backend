@@ -1,0 +1,38 @@
+{
+  "requirement": "G-37",
+  "kind": "restore-drill",
+  "stack": "local",
+  "started_at": "2026-11-27T23:18:11+00:00",
+  "source_site": "tenant1.localhost",
+  "drill_site": "restore-drill-783ebdad.localhost",
+  "parts": [
+    "database",
+    "public",
+    "private"
+  ],
+  "checks": {
+    "marker_restored": true,
+    "counts": {
+      "DocType": [
+        301,
+        301
+      ],
+      "User": [
+        2,
+        2
+      ],
+      "Note": [
+        1,
+        1
+      ]
+    }
+  },
+  "cleanup": {
+    "drill_site_dropped": true,
+    "backup_removed": true,
+    "marker_removed": true
+  },
+  "error": null,
+  "finished_at": "2026-11-27T23:18:38+00:00",
+  "status": "pass"
+}

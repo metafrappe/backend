@@ -1,17 +1,16 @@
 """G-37 contract tests with synthetic backups and no network access."""
 
-import importlib.util
 import http.client
+import importlib.util
 import io
 import json
-from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from unittest.mock import patch
-
 
 SOURCE = Path(__file__).resolve().parents[1] / "backup_export.py"
 spec = importlib.util.spec_from_file_location("backup_export", SOURCE)

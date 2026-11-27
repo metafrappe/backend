@@ -435,6 +435,17 @@ Proje sahibi 22 Kasım 2026 Pazar günü şöyle yazdı: “Herşeyi onaylıyoru
   - Eklerin listesi ve test adımları [devir notundadır](docs/handoff/press-tr-extension-test.md).
   - Bu karar önce O-54 numarasını taşıyordu. O-54 ile O-61 arasındaki numaralar başka kararlara verildi. Karar 25 Kasım 2026 Çarşamba günü O-62 oldu.
 
+- **O-70. G-132 adres testleri kimlik sınırını ayrı doğrular.**
+  - Sistem Mimarı, AJA-81 görevinde bu sınırı değerlendirdi.
+  - `is_safe_redirect` yalnız güvenli dönüş yolunu denetler. Bu işleve kişisel veri sezgisi eklenmez.
+  - Testler, Keycloak'a giden giriş ve çıkış adreslerini denetler.
+  - Giriş adresinin alanları sözleşmedeki listeyle aynı kalır. Kişisel değerler adrese taşınmaz.
+  - Giriş sonrası dönüş yolunu çağıran ekran verir. Backend bu yolu aynen döndürür.
+  - Kişisel adlı kayıtlar için kalıcı vekil kimlik gerekir. Bu ayrı bir backend işidir.
+  - Ekranı ve filtreleri yeniden açma işi `atonota-web` kapsamındadır.
+  - G-132 gereksinimi bu testlerle bütünüyle kapanmaz.
+  - Bu karar önce eski depoda O-57 numarasını taşıyordu. Karar 27 Kasım 2026 Cuma günü bu depoda O-70 oldu. O-63 ile O-69 arasındaki numaraları açık PR'lar kullanıyor.
+
 ## Karar sitesine işlenecek farklar
 
 Backend kararları karar sitesinin bazı maddelerini değiştirdi. Site ayrı bir işte, kendi denetimleriyle güncellenir. Farklar şunlardır:

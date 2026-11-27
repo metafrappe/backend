@@ -169,7 +169,7 @@ def inventory(apps: Path, reviewed: frozenset = frozenset()) -> tuple[list[str],
                         reviewed_logout = (
                             module == "press_tr.api"
                             and name == "keycloak_backchannel_logout"
-                            and (GUEST_LIMIT, f"backend/apps/{relative.as_posix()}", decorator.lineno) in reviewed
+                            and (GUEST_LIMIT, f"apps/{relative.as_posix()}", decorator.lineno) in reviewed
                         )
                         if not reviewed_logout and not has_rate_limit(
                             statement.decorator_list[index + 1:], modules, limiters
@@ -194,9 +194,9 @@ def inventory(apps: Path, reviewed: frozenset = frozenset()) -> tuple[list[str],
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Check Frappe endpoints and permission test names.")
-    parser.add_argument("backend", type=Path, help="Backend directory")
+    parser.add_argument("backend", type=Path, help="Repository root")
     args = parser.parse_args()
-    reviewed = frozenset(approved_keys(args.backend.resolve().parent, CONFIG))
+    reviewed = frozenset(approved_keys(args.backend.resolve(), CONFIG))
     routes, guest_routes, errors = inventory(args.backend / "apps", reviewed)
     for heading, entries in (("All endpoints", routes), ("Guest endpoints", guest_routes)):
         print(f"{heading} ({len(entries)})")

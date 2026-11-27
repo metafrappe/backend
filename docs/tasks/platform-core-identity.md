@@ -8,7 +8,7 @@ Bu iş kiracı sitesinde Keycloak ile girişi ve çıkışı kurar. Servis belir
 2. `backend/PROJECT-RECORD.md`
 3. `backend/docs/contracts.md`, özellikle 2, 3, 4, 5 ve 8. bölümler
 4. Karar sitesinde `src/content/docs/rail-4-keycloak.md`
-5. `docs/standartlar/mobile.md` içindeki AU-3, AU-4, AU-5 ve AU-19 kuralları
+5. `docs/standards/mobile.md` içindeki AU-3, AU-4, AU-5 ve AU-19 kuralları
 
 ## Sahip olduğunuz yerler
 

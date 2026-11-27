@@ -15,10 +15,10 @@ Every holder is a "Website User". No role and no profile holds "System Manager".
 Two kinds of tests use this file:
 
 1. Setup tests read `setup/*.json`, `fixtures/*.json` and `hooks.py` only. They run without Frappe:
-   `python3 -I -m unittest discover -s backend/apps/platform_core/platform_core/access/tests
-   -t backend/apps/platform_core -p 'test_role_*.py'`
+   `python3 -I -m unittest discover -s apps/platform_core/platform_core/access/tests
+   -t apps/platform_core -p 'test_role_*.py'`
 2. HTTP tests send requests through the WSGI application of Frappe (D-6). They run with
-   `backend/dev/bin/test platform_core`. Without Frappe they are skipped.
+   `dev/bin/test platform_core`. Without Frappe they are skipped.
 
 Contract chosen by QA for the reseller tests (AJA-833 may change it with the PO):
 
@@ -221,7 +221,7 @@ def endpoint_exists(dotted: str) -> bool:
 	return function in frappe.whitelisted
 
 
-@unittest.skipIf(frappe is None, "Frappe is not installed: the HTTP tests run with backend/dev/bin/test")
+@unittest.skipIf(frappe is None, "Frappe is not installed: the HTTP tests run with dev/bin/test")
 class PanelRoleHttpCase(IntegrationTestCase):
 	"""HTTP tests of one panel role. A subclass sets `ROLE`, `USER` and `FORBIDDEN_ROLES`."""
 

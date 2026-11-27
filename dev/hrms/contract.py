@@ -16,8 +16,8 @@ import sys
 import threading
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
-CONTRACT = "backend/contracts/hrms_tr.openapi.yaml"
+ROOT = Path(__file__).resolve().parents[2]
+CONTRACT = "contracts/hrms_tr.openapi.yaml"
 COMPOSE = Path(__file__).with_name("compose")
 RELAY = (
     "import os, socket, sys, threading\n"
@@ -110,7 +110,7 @@ def employee_credentials(prefix, manifest):
 
 
 def run(site, prefix, manifest, modes):
-    sys.path.insert(0, str(ROOT / "backend/dev/security"))
+    sys.path.insert(0, str(ROOT / "dev/security"))
     os.chdir(ROOT)
     from scans import contract_session, run_contract
 
@@ -141,7 +141,7 @@ def main(argv=None):
     parser.add_argument(
         "--compose",
         default=str(COMPOSE),
-        help="Compose wrapper for this stack. The default is backend/dev/hrms/compose.",
+        help="Compose wrapper for this stack. The default is dev/hrms/compose.",
     )
     parser.add_argument(
         "--manifest",

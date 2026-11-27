@@ -1,7 +1,7 @@
 """Tests for the release manifest and the promotion rules (docs/dagitim/ortamlar.md).
 
 Run from the repository root:
-    python3 -I -m unittest discover -s backend/deploy/tests
+    python3 -I -m unittest discover -s deploy/tests
 """
 
 import json

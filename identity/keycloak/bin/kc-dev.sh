@@ -13,7 +13,7 @@ ENV_FILE="${KC_ENV_FILE:-$SCRIPT_DIR/.env}"
 BRAND_FILE="$BACKEND/brand.env"
 PROJECT="${COMPOSE_PROJECT_NAME:-fs-kimlik-realm}"
 # FS_COLIMA_PROFILE selects the Colima profile. Use "default" for the standard Colima profile.
-# See the disk space guidance in backend/AGENTS.md.
+# See the disk space guidance in AGENTS.md.
 if [ "${FS_COLIMA_PROFILE:-factory}" = "default" ]; then
   CONTEXT="${DOCKER_CONTEXT:-colima}"
   LIMA_DEFAULT="colima"
@@ -91,13 +91,13 @@ load_environment() {
   export ATONOTA_PRESS_URL="http://press.localhost:$((PANE_PORT + 3))"
 }
 
-# Reads backend/brand.env with the same rules as .env. Only PRODUCT_NAME and BRAND_DOMAIN are allowed,
+# Reads brand.env with the same rules as .env. Only PRODUCT_NAME and BRAND_DOMAIN are allowed,
 # and both must have a value. Keycloak gets PRODUCT_NAME as IDENTITY_BRAND_NAME (AJA-1062).
 # .env may still hold IDENTITY_BRAND_NAME from an older copy. The same value or the example placeholder
 # is accepted. Any other value stops the script, so two names never compete.
 load_brand() {
   if [ ! -f "$BRAND_FILE" ]; then
-    printf 'The brand file is missing: %s (backend/brand.env).\n' "$BRAND_FILE" >&2
+    printf 'The brand file is missing: %s (brand.env).\n' "$BRAND_FILE" >&2
     exit 2
   fi
   local line key value number=0 product="" domain=""
@@ -120,13 +120,13 @@ load_brand() {
     esac
   done < "$BRAND_FILE"
   if [ -z "$product" ] || [ -z "$domain" ]; then
-    printf '%s: PRODUCT_NAME and BRAND_DOMAIN both need a value (backend/brand.env).\n' "$BRAND_FILE" >&2
+    printf '%s: PRODUCT_NAME and BRAND_DOMAIN both need a value (brand.env).\n' "$BRAND_FILE" >&2
     exit 2
   fi
   case "${IDENTITY_BRAND_NAME-}" in
     '' | '<PRODUCT_NAME>' | "$product") ;;
     *)
-      printf '%s sets IDENTITY_BRAND_NAME to a different name. Delete that line: the name comes from backend/brand.env.\n' \
+      printf '%s sets IDENTITY_BRAND_NAME to a different name. Delete that line: the name comes from brand.env.\n' \
         "$ENV_FILE" >&2
       exit 2
       ;;
@@ -303,7 +303,7 @@ case "$command" in
     done
     echo "Plain HTTP event address refused: $PROD_HTTP_REFUSED"
     prod_run "$prod_name" "https://identity-sync.example.test/v1/events" -p "127.0.0.1:$prod_port:8080"
-    # Colima's port forwarding does not carry new ports (backend/AGENTS.md, known issue 2).
+    # Colima's port forwarding does not carry new ports (AGENTS.md, known issue 2).
     curl -fs -o /dev/null --max-time 2 "http://127.0.0.1:$prod_port/" 2>/dev/null || ssh_tunel "$prod_tunnel_pid" "$prod_port"
     prod_ready=no
     for _ in $(seq 1 90); do

@@ -209,7 +209,7 @@ def deletion_records(doctype, lifecycle, issuer):
 
 
 def stack_tenant():
-    """Seed the shared development stack's tenant (`backend/e2e/stack seed-preview`).
+    """Seed the shared development stack's tenant (`e2e/stack seed-preview`).
 
     The stack already wrote the Keycloak client settings, so this mode changes only the test
     settings. Settings arrive on stdin. No secret is read or written here.

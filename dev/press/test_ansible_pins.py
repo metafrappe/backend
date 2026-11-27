@@ -5,10 +5,10 @@ import unittest
 from pathlib import Path
 
 PRESS_DEV = Path(__file__).resolve().parent
-REPO = PRESS_DEV.parents[2]
+REPO = PRESS_DEV.parents[1]
 PINS = PRESS_DEV / "ansible-requirements.txt"
 LOCK = PRESS_DEV / "ansible-requirements.lock.txt"
-DECISION = REPO / "backend/docs/decisions/0018-press-ansible-python314.md"
+DECISION = REPO / "docs/decisions/0018-press-ansible-python314.md"
 
 
 def read_pins(text):

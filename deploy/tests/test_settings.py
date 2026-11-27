@@ -5,7 +5,7 @@ Two kinds of tests:
   the code; a new setting without a list line fails here.
 - remote/settings.py refuses an environment with a missing, empty or placeholder setting before
   anything changes on the server.
-Design: backend/docs/dagitim/ortamlar.md, section "Üretim ayarları".
+Design: docs/dagitim/ortamlar.md, section "Üretim ayarları".
 """
 
 import ast

@@ -19,14 +19,14 @@ if [ -z "$container" ] || [ "$(printf '%s\n' "$container" | wc -l)" -ne 1 ]; the
     printf 'Expected exactly one running web service in Compose project %s.\n' "$project" >&2
     exit 2
 fi
-repo_app=backend/apps/press_tr
+repo_app=apps/press_tr
 container_app=/home/frappe/benches/source/press_tr
 
-python3.14 -B -m unittest discover -s backend/dev/press
+python3.14 -B -m unittest discover -s dev/press
 
 docker --context "$press_context" cp "$repo_app/press_tr/." "$container:$container_app/press_tr/"
 docker --context "$press_context" cp "$repo_app/tests/." "$container:$container_app/tests/"
-docker --context "$press_context" cp backend/contracts/press_tr.openapi.yaml "$container:$container_app/tests/"
+docker --context "$press_context" cp contracts/press_tr.openapi.yaml "$container:$container_app/tests/"
 docker --context "$press_context" exec -i -e PRESS_TEST_PORT -e PRESS_TEST_PANEL_URL \
     -e PRESS_TEST_MEASURE_ANONYMIZATION "$container" bash -s <<'BENCH'
 set -eu

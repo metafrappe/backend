@@ -31,12 +31,12 @@ class ReportSafetyTests(unittest.TestCase):
             root = Path(directory)
             config = root / scans.SECURITY / "bandit-exceptions.json"
             config.parent.mkdir(parents=True)
-            config.write_text('[{"rule":"B603","file":"backend/a.py","line":1,"owner":"first","owner":"second",'
+            config.write_text('[{"rule":"B603","file":"a.py","line":1,"owner":"first","owner":"second",'
                               '"reason":"Local test","ignoreUntil":"2100-01-01"}]')
-            (root / "backend/a.py").touch()
+            (root / "a.py").touch()
             fixture = [{"test_id": "B101", "line_number": 1}]
-            finding = {"test_id": "B603", "line_number": 1, "filename": "backend/a.py"}
-            with patch.object(scans, "ROOT", root), patch.object(scans, "git", return_value="backend/a.py\0"), \
+            finding = {"test_id": "B603", "line_number": 1, "filename": "a.py"}
+            with patch.object(scans, "ROOT", root), patch.object(scans, "git", return_value="a.py\0"), \
                     patch.object(scans, "bandit_findings", side_effect=[fixture, [finding]]) as bandit:
                 self.assertEqual(scans.scan_bandit().status, "fail")
                 self.assertEqual(bandit.call_count, 1)
@@ -45,7 +45,7 @@ class ReportSafetyTests(unittest.TestCase):
     def test_bandit_exception_moves_with_code_and_fails_for_changed_or_duplicate_code(self):
         original = 'run(\n    "reviewed",\n)'
         signature = hashlib.sha256(("\n" + original).encode()).hexdigest()
-        entry = {"rule": "B603", "file": "backend/a.py", "code": "run(",
+        entry = {"rule": "B603", "file": "a.py", "code": "run(",
                  "statementSha256": signature, "owner": "dev", "reason": "Reviewed test command",
                  "ignoreUntil": "2100-01-01"}
         fixture = [{"test_id": "B101", "line_number": 1}]
@@ -54,7 +54,7 @@ class ReportSafetyTests(unittest.TestCase):
             config = root / scans.SECURITY / "bandit-exceptions.json"
             config.parent.mkdir(parents=True)
             config.write_text(json.dumps([entry]))
-            source = root / "backend/a.py"
+            source = root / "a.py"
             for content, lines, expected in (
                 (original, [1], "pass"),
                 ("\n\n" + original, [3], "pass"),
@@ -64,15 +64,15 @@ class ReportSafetyTests(unittest.TestCase):
             ):
                 with self.subTest(lines=lines, expected=expected):
                     source.write_text(content)
-                    findings = [{"test_id": "B603", "line_number": line, "filename": "backend/a.py"}
+                    findings = [{"test_id": "B603", "line_number": line, "filename": "a.py"}
                                 for line in lines]
-                    with patch.object(scans, "ROOT", root), patch.object(scans, "git", return_value="backend/a.py\0"), \
+                    with patch.object(scans, "ROOT", root), patch.object(scans, "git", return_value="a.py\0"), \
                             patch.object(scans, "bandit_findings", side_effect=[fixture, findings]):
                         result = scans.scan_bandit()
                     self.assertEqual(result.status, expected)
                     if expected == "fail":
                         self.assertIn("Unused exception", " ".join(result.findings))
-                        self.assertIn("B603 · backend/a.py:1", result.findings)
+                        self.assertIn("B603 · a.py:1", result.findings)
 
     def test_bandit_exception_requires_exact_reviewed_count(self):
         source_text = 'example = {"password": "fixture", "secret": "fixture"}'
@@ -82,12 +82,12 @@ class ReportSafetyTests(unittest.TestCase):
             config = root / scans.SECURITY / "bandit-exceptions.json"
             config.parent.mkdir(parents=True)
             config.write_text(json.dumps([{
-                "rule": "B105", "file": "backend/a.py", "code": code, "statementSha256": digest,
+                "rule": "B105", "file": "a.py", "code": code, "statementSha256": digest,
                 "owner": "dev", "reason": "Two fixture fields", "ignoreUntil": "2100-01-01",
                 "occurrences": 2,
             }]))
-            source = root / "backend/a.py"
-            finding = {"test_id": "B105", "line_number": 1, "filename": "backend/a.py"}
+            source = root / "a.py"
+            finding = {"test_id": "B105", "line_number": 1, "filename": "a.py"}
             for lines, content, expected in (
                 ([1, 1], source_text, "pass"),
                 ([1], source_text, "fail"),
@@ -98,7 +98,7 @@ class ReportSafetyTests(unittest.TestCase):
                 with self.subTest(lines=lines, content=content):
                     source.write_text(content)
                     findings = [dict(finding, line_number=line) for line in lines]
-                    with patch.object(scans, "ROOT", root), patch.object(scans, "git", return_value="backend/a.py\0"), \
+                    with patch.object(scans, "ROOT", root), patch.object(scans, "git", return_value="a.py\0"), \
                             patch.object(scans, "bandit_findings", side_effect=[[{"test_id": "B101", "line_number": 1}], findings]):
                         self.assertEqual(scans.scan_bandit().status, expected)
 
@@ -109,7 +109,7 @@ class ReportSafetyTests(unittest.TestCase):
             self.assertIn("Working tree: unknown.", scans.report(root))
 
     def test_missing_contract_report_discards_raw_tool_output(self):
-        contract = "backend/contracts/example.yaml"
+        contract = "contracts/example.yaml"
         email = "fake-person@example.test"
         cookie = "sid=fake-session; alternate=fake-cookie"
         with tempfile.TemporaryDirectory() as directory:
@@ -131,7 +131,7 @@ class ReportSafetyTests(unittest.TestCase):
         with patch.object(scans.http.client, "HTTPConnection"), patch.object(scans, "contract_session", return_value=None), \
                 patch.object(scans, "contract_fixture_found", return_value=True), \
                 patch.object(scans, "run_contract", return_value=((), 3)), redirect_stdout(output):
-            result = scans.scan_contracts("http://127.0.0.1:1234", contracts=["backend/contracts/example.yaml"])
+            result = scans.scan_contracts("http://127.0.0.1:1234", contracts=["contracts/example.yaml"])
         self.assertEqual(result.status, "pass")
         self.assertIn("3 operations tested (GET only)", output.getvalue())
         self.assertIn("Authorization requires separate role tests.", output.getvalue())

@@ -13,6 +13,7 @@ import json
 import re
 import shutil
 import subprocess
+import sys
 import unicodedata
 from dataclasses import asdict, dataclass
 from fnmatch import fnmatchcase
@@ -96,11 +97,10 @@ def git_output(root: Path, *arguments: str) -> str:
 
 
 def tree_files(root: Path) -> list[Path]:
-    tracked = git_output(root, "ls-files", "-z", "--", "backend/")
-    if tracked or git_output(root, "rev-parse", "--show-toplevel"):
-        return [root / name for name in tracked.split("\0") if name]
-    backend = root / "backend"
-    return [path for path in backend.rglob("*") if path.is_file()]
+    if not git_output(root, "rev-parse", "--show-toplevel"):
+        raise ValueError(f"{root} is not inside a Git work tree.")
+    tracked = git_output(root, "ls-files", "-z")
+    return [root / name for name in tracked.split("\0") if name]
 
 
 def load_json(source: str):
@@ -254,7 +254,7 @@ def check_python(path: Path, relative: str, avoid: set[str], names, roots, legac
         return
     bindings = set(python_bindings(tree))
     attributes = {(node.attr, node.lineno) for node in ast.walk(tree) if isinstance(node, ast.Attribute)}
-    reserves_translation_name = relative.startswith("backend/apps/") or any(
+    reserves_translation_name = relative.startswith("apps/") or any(
         isinstance(node, ast.ImportFrom)
         and (node.module or "").split(".")[0] == "frappe"
         or isinstance(node, ast.Import)
@@ -359,8 +359,8 @@ def check_doctype_copy(path: Path, record: dict, roots: set[str], emit) -> None:
 
 
 def normalized_root(root: Path) -> Path:
-    root = root.resolve()
-    return root.parent if root.name == "backend" and not (root / "backend").is_dir() else root
+    """The repository root. Its folder name does not matter."""
+    return root.resolve()
 
 
 def check_branch(root: Path, entries: list[dict], emit) -> None:
@@ -368,27 +368,26 @@ def check_branch(root: Path, entries: list[dict], emit) -> None:
     if not branch or BRANCH_FORMAT.fullmatch(branch):
         return
     # Existing operational names and Pane jobs use their exact registered name.
-    backend = root / "backend"
     registered = {"main", "backend", "e2e-preview", "standartlar-ve-kararlar", "site-hrms-tr-rename"}
     registered.update(
-        path.stem for folder in ("docs/isler", "docs/tasks") for path in (backend / folder).glob("*.md")
+        path.stem for folder in ("docs/isler", "docs/tasks") for path in (root / folder).glob("*.md")
     )
     registered.update(
         Path(entry["old"]).stem
         for entry in entries
         if entry["type"] == "path"
-        and entry["old"].startswith("backend/docs/isler/")
+        and entry["old"].startswith("docs/isler/")
         and (root / entry["new"]).is_file()
     )
     if branch not in registered and not re.fullmatch(r"_reserve/[0-9a-f]+", branch):
-        emit(backend, "branch-name", "Branch name does not match the project naming pattern.")
+        emit(root, "branch-name", "Branch name does not match the project naming pattern.")
 
 
 def changed_files(root: Path, base: str) -> set[str]:
     outputs = []
     for args in (
-        ("diff", "--name-only", "-z", "--diff-filter=ACMRTUXB", base, "--", "backend/"),
-        ("ls-files", "--others", "--exclude-standard", "-z", "--", "backend/"),
+        ("diff", "--name-only", "-z", "--diff-filter=ACMRTUXB", base),
+        ("ls-files", "--others", "--exclude-standard", "-z"),
     ):
         response = subprocess.run([GIT, "-C", str(root), *args], text=True, capture_output=True, check=False)
         if response.returncode:
@@ -430,9 +429,6 @@ def scan(
 ) -> list[Finding]:
     """Return sorted violations. Legacy mode recognizes mapped pre-transition names."""
     root = normalized_root(root)
-    backend = root / "backend"
-    if not backend.is_dir():
-        return []
     findings = []
 
     def emit(path, rule, message, line=1):
@@ -458,20 +454,20 @@ def scan(
         previous = paths_by_fold.setdefault(canonical, path)
         if previous != path:
             emit(path, "path-collision", f"Case-insensitive collision with {previous.relative_to(root)}.")
-        if relative.parts[:2] == ("backend", "apps") and len(relative.parts) > 3:
-            app_files.setdefault(relative.parts[2], []).append(path)
+        if relative.parts[:1] == ("apps",) and len(relative.parts) > 2:
+            app_files.setdefault(relative.parts[1], []).append(path)
         if selected is not None and relative.as_posix() not in selected:
             continue
-        if not path.is_file() or path.is_symlink() or relative.parts[:3] == ("backend", "dev", "naming"):
+        if not path.is_file() or path.is_symlink() or relative.parts[:2] == ("dev", "naming"):
             continue
         if path.suffix in SCRIPT_SUFFIXES | MARKUP_SUFFIXES:
             check_web(path, relative.as_posix(), roots, names, legacy, emit)
-        elif path.suffix == ".py" and relative.parts[:2] != ("backend", "apps"):
+        elif path.suffix == ".py" and relative.parts[:1] != ("apps",):
             check_python(path, relative.as_posix(), set(), names, roots, legacy, emit)
 
     doctype_paths = {}
     for app_name, sources in app_files.items():
-        app = backend / "apps" / app_name
+        app = root / "apps" / app_name
         prefix = APP_PREFIXES.get(app_name)
         module_file = app / app_name / "modules.txt"
         module_lines = module_file.read_text(encoding="utf-8").splitlines() if module_file.is_file() else []
@@ -482,7 +478,7 @@ def scan(
                 emit(module_file, "module-name", f"Invalid module name: {module!r}.")
         glossary_path = app / "docs/glossary.yaml"
         if legacy and not glossary_path.is_file():
-            glossary_path = backend / "dev/naming/glossaries" / app_name / "docs/glossary.yaml"
+            glossary_path = root / "dev/naming/glossaries" / app_name / "docs/glossary.yaml"
         glossary, avoid = read_glossary(glossary_path)
         for path in sources:
             if not path.is_file() or path.is_symlink():
@@ -629,7 +625,7 @@ def scan_source_text(root: Path, selected: set[str] | None = None) -> list[Findi
             continue
         if path.stem.startswith("test_") or path.stem.endswith(("_test", ".test", ".spec", "_fixture")):
             continue
-        contract = len(relative.parts) > 2 and relative.parts[1] == "contracts"
+        contract = len(relative.parts) > 1 and relative.parts[0] == "contracts"
         if path.suffix == ".json" and ("doctype" in relative.parts or contract):
             keys = {"summary", "description"} if contract else COPY_KEYS
             texts = json_source_text(path.read_text(encoding="utf-8"), keys, doctype=not contract)
@@ -637,7 +633,7 @@ def scan_source_text(root: Path, selected: set[str] | None = None) -> list[Findi
             texts = yaml_source_text(path.read_text(encoding="utf-8"))
         elif path.suffix == ".py":
             texts = python_source_text(path.read_text(encoding="utf-8"), path)
-        elif relative.parts[:3] == ("backend", "dev", "bin") and not path.suffix:
+        elif relative.parts[:2] == ("dev", "bin") and not path.suffix:
             source = path.read_text(encoding="utf-8")
             shebang = source.partition("\n")[0]
             if not re.match(r"^#!.*\bpython(?:3(?:\.\d+)?)?\b", shebang):
@@ -679,17 +675,19 @@ def main() -> int:
         nargs="?",
         const="HEAD",
         metavar="BASE",
-        help="Only report changed backend files relative to BASE (default: HEAD).",
+        help="Only report changed files relative to BASE (default: HEAD).",
     )
     arguments = parser.parse_args()
     if GIT is None:
         parser.exit(2, "Git executable not found on PATH.\n")
     try:
-        selection = (
-            changed_files(normalized_root(arguments.root), arguments.changed_files)
-            if arguments.changed_files
-            else None
-        )
+        root = normalized_root(arguments.root)
+        selection = changed_files(root, arguments.changed_files) if arguments.changed_files else None
+        # A full scan of zero files means a wrong root or layout, never a pass.
+        count = len(tree_files(root)) if selection is None else len(selection)
+        if selection is None and not count:
+            parser.exit(2, f"Naming check scanned no files under {root}.\n")
+        print(f"Scanned {count} files.", file=sys.stderr)
         if arguments.source_text:
             findings = scan_source_text(arguments.root, selection)
         else:

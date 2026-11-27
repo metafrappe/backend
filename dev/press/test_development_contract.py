@@ -14,7 +14,7 @@ from types import ModuleType
 from unittest.mock import MagicMock, Mock, patch
 
 PRESS_DEV = Path(__file__).resolve().parent
-REPO = PRESS_DEV.parents[2]
+REPO = PRESS_DEV.parents[1]
 
 
 class ImageContractTest(unittest.TestCase):
@@ -36,7 +36,7 @@ class ImageContractTest(unittest.TestCase):
             for command in (docker, python):
                 command.chmod(0o755)
             result = subprocess.run(
-                ["sh", "backend/apps/press_tr/tests/run.sh"],
+                ["sh", "apps/press_tr/tests/run.sh"],
                 cwd=REPO,
                 env={
                     **os.environ,
@@ -58,7 +58,7 @@ class ImageContractTest(unittest.TestCase):
         self.assertNotIn("fs-press-tr-web-1", result.stdout)
 
     def test_readme_python_matches_shared_press_image_tag(self):
-        decision = (REPO / "backend/docs/decisions/0009-naming-history-fix.md").read_text()
+        decision = (REPO / "docs/decisions/0009-naming-history-fix.md").read_text()
         image = re.search(r"`fs-press-tr-base:py(?P<version>\d+\.\d+\.\d+)`", decision)
         self.assertIsNotNone(image)
         readme = (PRESS_DEV / "README.md").read_text()
@@ -77,11 +77,11 @@ class ImageContractTest(unittest.TestCase):
         )
 
     def test_oidc_dependency_is_declared_and_bundled(self):
-        metadata = (REPO / "backend/apps/press_tr/pyproject.toml").read_text()
+        metadata = (REPO / "apps/press_tr/pyproject.toml").read_text()
         dockerfile = (PRESS_DEV / "Dockerfile").read_text()
         install = (PRESS_DEV / "install.sh").read_text()
         self.assertRegex(metadata, r'"oidc_verify[<>=~][^"]+"')
-        self.assertIn("backend/libs/oidc_verify", dockerfile)
+        self.assertIn("libs/oidc_verify", dockerfile)
         self.assertIn("--wheel", dockerfile)
         self.assertIn("/opt/press-local/wheels/oidc_verify-*.whl", install)
 
@@ -101,7 +101,7 @@ class ImageContractTest(unittest.TestCase):
         self.assertIn("FS_COLIMA_PROFILE", (PRESS_DEV / "compose.sh").read_text())
 
     def test_direct_runtime_dependencies_are_declared(self):
-        metadata = (REPO / "backend/apps/press_tr/pyproject.toml").read_text()
+        metadata = (REPO / "apps/press_tr/pyproject.toml").read_text()
         dependencies = re.search(r"(?ms)^dependencies = \[(.*?)^\]", metadata).group(1)
         for name in ("oidc_verify", "packaging", "redis", "requests", "Werkzeug"):
             with self.subTest(name=name):

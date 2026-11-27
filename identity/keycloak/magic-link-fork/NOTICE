@@ -7,7 +7,7 @@ License: Apache License, Version 2.0 (the upstream LICENSE file).
 The image build unpacks the pinned upstream archive and copies the files in
 this folder over it. All other files come unchanged from the upstream archive.
 
-Changed on 24 November 2026 for G-162 (design: backend/docs/decisions/0003-keycloak-extensions.md):
+Changed on 24 November 2026 for G-162 (design: docs/decisions/0003-keycloak-extensions.md):
 
 - Modified: src/main/java/io/cloudflight/keycloak/magiclink/authenticators/AbstractMagicLinkAuthenticator.java
   The request does the same work for an existing and an unknown address.

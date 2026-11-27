@@ -1,4 +1,4 @@
-"""Checks from docs/standartlar/frappe-python-disi-standartlari.md that a machine can hold.
+"""Checks from docs/standards/frappe-python-disi-standartlari.md that a machine can hold.
 
 Rule ids are in the test names' comments. The expected values come from the standard, not from the code.
 """

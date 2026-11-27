@@ -392,9 +392,9 @@ def naming_findings(root: Path) -> list[Finding] | None:
         return [Finding(relative, 1, "naming", "Naming checker must be a regular in-tree file.")]
     try:
         result = subprocess.run(
-            [sys.executable, "-I", "-B", str(checker), "--root", str(root.parent),
+            [sys.executable, "-I", "-B", str(checker), "--root", str(root),
              "--json", "--include-source-text"],
-            cwd=root.parent,
+            cwd=root,
             capture_output=True,
             text=True,
             timeout=60,
@@ -421,7 +421,7 @@ def naming_findings(root: Path) -> list[Finding] | None:
                 or not message.strip()
             ):
                 raise ValueError("Naming checker returned an invalid finding.")
-            findings.append(Finding(path.removeprefix("backend/"), line, f"naming.{rule}", message))
+            findings.append(Finding(path, line, f"naming.{rule}", message))
         return findings
     except (KeyError, OSError, TypeError, ValueError, subprocess.TimeoutExpired):
         return [Finding(relative, 1, "naming", "Naming checker could not complete.")]
@@ -671,7 +671,7 @@ def tool_sql_checks(targets, functions, sources, reexports, emit):
 
 DECISION_NUMBER = re.compile(r"^([0-9]{4})(?![0-9])")
 WEBSITE_HOOK = "website_user_allowed_methods"
-# Built-in methods permitted by section 5 of backend/docs/sozlesmeler.md.
+# Built-in methods permitted by section 5 of docs/sozlesmeler.md.
 WEBSITE_CORE_METHODS = {"frappe.auth.get_logged_user", "logout", "frappe.desk.search.search_link"}
 # These repository methods require a manager or a service identity.
 WEBSITE_PRIVILEGED_METHODS = {

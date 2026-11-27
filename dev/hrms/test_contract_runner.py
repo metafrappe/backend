@@ -96,5 +96,5 @@ class CredentialsTest(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    os.chdir(Path(__file__).resolve().parents[3])
+    os.chdir(Path(__file__).resolve().parents[2])
     unittest.main()

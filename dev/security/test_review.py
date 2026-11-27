@@ -2,6 +2,7 @@ import io
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import tarfile
@@ -38,9 +39,10 @@ class ReviewTests(unittest.TestCase):
                 self.assertEqual((root / "local.json").read_bytes(), old)
 
     def test_all_tracked_backend_manifests(self):
-        candidates = "backend/services/new/pyproject.toml\0site/pyproject.toml\0"
+        # The whole repository is the backend now (AJA-1587): every tracked manifest counts.
+        candidates = "services/new/pyproject.toml\0site/README.md\0pyproject.toml\0"
         with patch.object(scans, "git", return_value=candidates):
-            self.assertEqual(scans.python_manifests(), ["backend/services/new/pyproject.toml"])
+            self.assertEqual(scans.python_manifests(), ["pyproject.toml", "services/new/pyproject.toml"])
 
     def test_changed_lock_body_fails_reproducibility_check(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -70,23 +72,23 @@ class ReviewTests(unittest.TestCase):
             config = root / scans.SECURITY / "bandit-exceptions.json"
             config.parent.mkdir(parents=True)
             config.write_text("[]")
-            target = "backend/known.py"
+            target = "known.py"
             (root / target).write_text("assert False\n")
-            (root / "backend/untracked.py").write_text("assert False\n")
-            script = "backend/python-script"
-            direct = "backend/direct-python"
-            root_python = "backend/root-python"
-            env_long = "backend/env-long-python"
-            python_sh = "backend/python-script.sh"
-            shell = "backend/shell-script.sh"
+            (root / "untracked.py").write_text("assert False\n")
+            script = "python-script"
+            direct = "direct-python"
+            root_python = "root-python"
+            env_long = "env-long-python"
+            python_sh = "python-script.sh"
+            shell = "shell-script.sh"
             (root / script).write_text("#!/usr/bin/env -S python3.14 -I\nassert False\n")
             (root / direct).write_text("#! /usr/bin/python3\nassert False\n")
             (root / root_python).write_text("#!/python3\n")
             (root / env_long).write_text("#!/usr/bin/env --split-string=python3 -I\n")
             (root / python_sh).write_text("#!/usr/bin/env python3\nassert False\n")
             (root / shell).write_text("#!/bin/sh\n")
-            (root / "backend/symlink").symlink_to(script.rsplit("/", 1)[1])
-            tracked = "\0".join((target, script, direct, root_python, env_long, python_sh, shell, "backend/symlink", ""))
+            (root / "symlink").symlink_to(script)
+            tracked = "\0".join((target, script, direct, root_python, env_long, python_sh, shell, "symlink", ""))
             fixture = [{"test_id": "B101", "line_number": 1}]
             finding = {**fixture[0], "filename": target}
             with patch.object(scans, "ROOT", root), patch.object(scans, "git", return_value=tracked), \
@@ -99,15 +101,15 @@ class ReviewTests(unittest.TestCase):
             self.assertEqual(result.findings, (f"B101 · {target}:1",))
 
     def test_unused_bandit_exception_fails(self):
-        entry = '{"rule":"B603","file":"backend/a.py","code":"run()","statementSha256":"1111111111111111111111111111111111111111111111111111111111111111","owner":"dev","reason":"Fixed argv","ignoreUntil":"2100-01-01"}'
+        entry = '{"rule":"B603","file":"a.py","code":"run()","statementSha256":"1111111111111111111111111111111111111111111111111111111111111111","owner":"dev","reason":"Fixed argv","ignoreUntil":"2100-01-01"}'
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             config = root / scans.SECURITY / "bandit-exceptions.json"
             config.parent.mkdir(parents=True)
             config.write_text(f"[{entry}]")
-            (root / "backend/a.py").touch()
+            (root / "a.py").touch()
             fixture = [{"test_id": "B101", "line_number": 1}]
-            with patch.object(scans, "ROOT", root), patch.object(scans, "git", return_value="backend/a.py\0"), \
+            with patch.object(scans, "ROOT", root), patch.object(scans, "git", return_value="a.py\0"), \
                     patch.object(scans, "bandit_findings", side_effect=[fixture, []]):
                 result = scans.scan_bandit()
             self.assertEqual(result.status, "fail")
@@ -146,17 +148,19 @@ class ReviewTests(unittest.TestCase):
                         scan.assert_not_called()
 
     def gate_harness(self, root, uv_body):
-        bin_dir = root / "backend/dev/bin"
+        bin_dir = root / "dev/bin"
         bin_dir.mkdir(parents=True)
         tools = root / "tools"
         tools.mkdir()
-        shutil.copy(scans.ROOT / "backend/dev/bin/security-audit", bin_dir)
+        shutil.copy(scans.ROOT / "dev/bin/security-audit", bin_dir)
         security = root / scans.SECURITY
         security.mkdir()
         for name in ("container-settings", "tool-versions.env"):
             shutil.copy(scans.ROOT / scans.SECURITY / name, security)
         for destination, body in {
-            tools / "git": 'case "$1" in merge-base) [ -n "$BASE" ] && printf "%s\\n" "$BASE";; esac',
+            # The gate finds the repository root with git rev-parse (AJA-1587).
+            tools / "git": (f'case "$*" in *"rev-parse --show-toplevel") printf "%s\\n" {shlex.quote(str(root))};; '
+                            '*merge-base*) [ -n "$BASE" ] && printf "%s\\n" "$BASE";; esac'),
             tools / "uvx": "exit 0",
             tools / "uv": uv_body,
             # The system python3 may be 3.9, which cannot read 3.12 syntax (AJA-1101).
@@ -185,14 +189,14 @@ class ReviewTests(unittest.TestCase):
             py = "run --no-project --offline --python 3.12 python -B"
             python_calls = [
                 f"{py} -c import sys; sys.exit(sys.version_info[:2] != (3, 12))",
-                f"{py} backend/dev/security/scans.py bandit",
+                f"{py} dev/security/scans.py bandit",
                 # The gate also scans the Press lock offline (review 1, finding 3).
-                f"{py} backend/dev/security/scans.py press-lock",
-                f"{py} backend/dev/security/semgrep_exceptions.py --snapshot",
-                f"{py} backend/dev/security/semgrep_exceptions.py  0 ",
-                f"{py} -m unittest discover -s backend/dev/security -p test_semgrep_exceptions.py",
-                f"{py} -m unittest discover -s backend/dev/security -p test_endpoints.py",
-                f"{py} backend/dev/security/endpoints.py backend",
+                f"{py} dev/security/scans.py press-lock",
+                f"{py} dev/security/semgrep_exceptions.py --snapshot",
+                f"{py} dev/security/semgrep_exceptions.py  0 ",
+                f"{py} -m unittest discover -s dev/security -p test_semgrep_exceptions.py",
+                f"{py} -m unittest discover -s dev/security -p test_endpoints.py",
+                f"{py} dev/security/endpoints.py .",
             ]
             for base, bandit_status, gate_status, remaining in (
                 ("abc", 0, 0, ["--self-test", "--commit-base abc"]),
@@ -223,32 +227,32 @@ class ReviewTests(unittest.TestCase):
             self.assertEqual(len(calls.read_text().splitlines()), 1)
 
     def test_handoff_describes_database_timestamp_limit(self):
-        handoff = (scans.ROOT / "backend/docs/handoff/ci-security.md").read_text()
+        handoff = (scans.ROOT / "docs/handoff/ci-security.md").read_text()
         self.assertIn("dosyanın değişiklik zamanı", handoff)
 
     def test_decision_lists_exceptions_and_lock_scope(self):
-        decision = (scans.ROOT / "backend/docs/decisions/0011-security-tooling.md").read_text()
+        decision = (scans.ROOT / "docs/decisions/0011-security-tooling.md").read_text()
         for text in ("bandit-exceptions.json", ".gitleaksignore", "isteğe bağlı paketleri"):
             self.assertIn(text, decision)
 
     def test_security_documents_use_current_paths_and_explain_snapshot(self):
         readme = (scans.ROOT / scans.SECURITY / "README.md").read_text()
-        decision = (scans.ROOT / "backend/docs/decisions/0011-security-tooling.md").read_text()
-        handoff = (scans.ROOT / "backend/docs/handoff/ci-security.md").read_text()
-        for text in ("backend/dev/bin/security-audit", "backend/dev/security/fixtures/",
-                     "backend/dev/security/semgrep_exceptions.py --snapshot"):
+        decision = (scans.ROOT / "docs/decisions/0011-security-tooling.md").read_text()
+        handoff = (scans.ROOT / "docs/handoff/ci-security.md").read_text()
+        for text in ("dev/bin/security-audit", "dev/security/fixtures/",
+                     "dev/security/semgrep_exceptions.py --snapshot"):
             self.assertIn(text, readme)
         self.assertIn("`security-audit`", decision)
-        self.assertIn("backend/dev/security/semgrep-exceptions.json", decision)
-        self.assertIn("backend/dev/bin/tunnel open", handoff)
+        self.assertIn("dev/security/semgrep-exceptions.json", decision)
+        self.assertIn("dev/bin/tunnel open", handoff)
 
     def test_access_decision_points_to_the_runtime_scope_list(self):
-        record = (scans.ROOT / "backend/PROJECT-RECORD.md").read_text()
+        record = (scans.ROOT / "PROJECT-RECORD.md").read_text()
         decision = record.split("**O-42.", 1)[1].split("\n\n", 1)[0]
-        self.assertIn("backend/dev/security/semgrep-exceptions.json", decision)
+        self.assertIn("dev/security/semgrep-exceptions.json", decision)
 
     def test_expiry_is_recorded(self):
-        record = (scans.ROOT / "backend/PROJECT-RECORD.md").read_text()
+        record = (scans.ROOT / "PROJECT-RECORD.md").read_text()
         self.assertIn("Bandit istisnaları 22 Şubat 2027 Pazartesi günü", record)
 
     def test_cli_reports_in_english(self):
@@ -307,7 +311,7 @@ class ReviewTests(unittest.TestCase):
     def test_missing_osv_binary_is_not_run(self):
         # osv_scanner() finds no pinned scanner on PATH or in the osv-setup cache. Patch it, because
         # the machine running the test may have the cached copy.
-        with patch.object(scans, "git", return_value="backend/dev/security/requirements.txt"), \
+        with patch.object(scans, "git", return_value="dev/security/requirements.txt"), \
                 patch.object(scans, "osv_scanner", return_value=None), \
                 patch.object(scans, "verify_python_lock") as verify:
             result = scans.scan_dependencies()

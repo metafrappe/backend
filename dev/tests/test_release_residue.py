@@ -11,7 +11,7 @@ Content comes from Git objects, never from the working folder. The default
 snapshot is HEAD. Set RELEASE_REV to another commit, or to ":" to scan the
 staged content before a commit:
 
-    RELEASE_REV=: python3 -B -m unittest backend/dev/tests/test_release_residue.py
+    RELEASE_REV=: python3 -B -m unittest dev/tests/test_release_residue.py
 
 Real names are never written in this file. Only SHA-256 digests of the
 normalised two-word name are stored, the same way the naming gate stores the
@@ -30,7 +30,7 @@ from pathlib import Path
 
 STAGED = ":"
 
-REPO = Path(__file__).resolve().parents[3]
+REPO = Path(__file__).resolve().parents[2]
 
 # SHA-256 of "<first> <last>" after normalise(): lower case, no diacritics.
 NAME_DIGESTS = {
@@ -77,7 +77,7 @@ PUBLIC_EXAMPLES = {"1.1.1.1", "8.8.8.8", "9.9.9.9", "2606:4700:4700::1111", "200
 # A version string such as "WhatsApp/2.23.20.0" is not an address.
 VERSION_PREFIX = re.compile(r"[A-Za-z]/$")
 # Third-party data that is not ours: the common password list for Keycloak.
-PUBLIC_IP_EXEMPT = {"backend/identity/keycloak/realm/password-blacklists/common-passwords.txt"}
+PUBLIC_IP_EXEMPT = {"identity/keycloak/realm/password-blacklists/common-passwords.txt"}
 ENV_FILE = re.compile(r"(?:^|/)(?:\.env(?:\.[^/]+)?|[^/]+\.env(?:\.[^/]+)?)$")
 ENV_SECRET = re.compile(
     r"^\s*(?:export\s+)?([A-Za-z0-9_]*(?:PASSWORD|PASSWD|SECRET|TOKEN|API_KEY|PRIVATE_KEY)[A-Za-z0-9_]*)"

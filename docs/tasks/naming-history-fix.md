@@ -58,7 +58,7 @@ Aynı anda on bir işçi kendi dalında çalışıyor. Adlar yalnız `backend` d
    - koddaki Türkçe yorumlar, hata iletileri ve günlük metinleri,
    - compose servis adları, site adları ve Keycloak istemci adları.
 3. Kapsam dışı olanlar şunlardır:
-   - `docs/standartlar/` klasörü. Bu belgeler proje sahibinindir.
+   - `docs/standards/` klasörü. Bu belgeler proje sahibinindir.
    - Belgelerin Türkçe içeriği. Yalnız belge dosyalarının adı rapora göre değişir.
    - Kullanıcıya görünen Türkçe çeviri dosyaları.
    - Pane ve dal adları.

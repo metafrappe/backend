@@ -88,7 +88,7 @@ _MICROSOFT_SHARED_TENANTS = frozenset(
 SHARED_ISSUER_HOSTS = frozenset({"accounts.google.com", "appleid.apple.com", "www.linkedin.com"})
 
 # Social platforms never take an exception (AJA-212, case 2). The aliases are the records in
-# backend/identity/atonota_login/platforms/; a test keeps the two lists equal. The provider types are
+# identity/atonota_login/platforms/; a test keeps the two lists equal. The provider types are
 # Keycloak's social providers.
 SOCIAL_PROVIDER_ALIASES = frozenset({"apple", "facebook", "google", "linkedin", "x"})
 SOCIAL_PROVIDER_IDS = frozenset(

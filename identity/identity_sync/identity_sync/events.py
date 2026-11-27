@@ -1,7 +1,7 @@
 """Event envelope and conversion from the Keycloak format.
 
 This module is pure. It performs no network or disk operations.
-The envelope contract is in `backend/contracts/identity_sync.openapi.yaml`.
+The envelope contract is in `contracts/identity_sync.openapi.yaml`.
 
 The envelope contains no personal data. The service does not read fields such as email from events.
 The service reads the current user state from Keycloak.

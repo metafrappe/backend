@@ -31,7 +31,7 @@ def shellcheck_snapshot(root, paths):
     files = {}
     for path in paths:
         if shell_script(path):
-            files[f"backend/{path.relative_to(root).as_posix()}"] = path
+            files[path.relative_to(root).as_posix()] = path
     snapshot = io.BytesIO()
     if files:
         with tarfile.open(fileobj=snapshot, mode="w") as archive:

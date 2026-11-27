@@ -1,7 +1,7 @@
 FROM frappe/bench@sha256:a822a0aedf309582c1d5e49e461a88b5b891b446063b74263c896da92281bd70 AS runtime
 
 USER root
-COPY backend/libs/oidc_verify/ /tmp/press-oidc-source/
+COPY libs/oidc_verify/ /tmp/press-oidc-source/
 RUN /home/frappe/.local/bin/uv build --wheel --out-dir /opt/press-local/wheels /tmp/press-oidc-source \
 	&& rm -rf /tmp/press-oidc-source
 USER frappe
@@ -27,9 +27,9 @@ RUN arch="${TARGETARCH:-$(dpkg --print-architecture)}" \
 	&& tar -xzf /tmp/go.tgz -C /usr/local/go1.21 --strip-components=1 \
 	&& rm /tmp/go.tgz
 
-COPY backend/dev/press/uv-overrides.txt /opt/press-local/uv-overrides.txt
-COPY backend/dev/press/patch-py314.sh /opt/press-local/scripts/patch-py314.sh
-COPY backend/dev/press/create_site.py /opt/press-local/scripts/create_site.py
+COPY dev/press/uv-overrides.txt /opt/press-local/uv-overrides.txt
+COPY dev/press/patch-py314.sh /opt/press-local/scripts/patch-py314.sh
+COPY dev/press/create_site.py /opt/press-local/scripts/create_site.py
 RUN touch /opt/press-local/development-image
 ENV GO111MODULE=off \
 	PATH=/usr/local/go1.21/bin:$PATH \

@@ -8,9 +8,9 @@ import sys
 from pathlib import Path
 
 CONFIG = Path(__file__).with_name("semgrep-exceptions.json")
-RULES = Path("backend/dev/security/fixtures/rules.yaml")
+RULES = Path("dev/security/fixtures/rules.yaml")
 REVIEWABLE = {"frappe-missing-permission", "frappe-ignore-permissions"}
-PRESS_LOGOUT = "backend/apps/press_tr/press_tr/api/__init__.py"
+PRESS_LOGOUT = "apps/press_tr/press_tr/api/__init__.py"
 GUEST_LIMIT = "frappe-guest-without-limit"
 
 
@@ -56,19 +56,26 @@ def review_path(value):
     return path
 
 
+def review_scope(value):
+    # "." is the repository root. Only a review with a file list may use it (AJA-1587).
+    return Path(".") if value == "." else review_path(value)
+
+
 def review_scopes(config):
     review = json.loads(config.read_text())
     reviews = [review, *review.get("additionalReviews", [])]
     scopes = set()
     targets = []
     for entry in reviews:
-        scope = review_path(entry["scope"])
+        scope = review_scope(entry["scope"])
         if scope in scopes:
             raise ValueError("Semgrep review scopes overlap or share a snapshot key.")
         scopes.add(scope)
         files = entry.get("files")
         if files is not None and (not isinstance(files, list) or not files):
             raise ValueError("Expected a nonempty Semgrep review file list.")
+        if files is None and scope == Path("."):
+            raise ValueError("A repository root review needs a file list.")
         for target in map(review_path, files if files is not None else [entry["scope"]]):
             if not target.is_relative_to(scope) or (files is not None and target == scope):
                 raise ValueError("Semgrep review target is outside its scope.")

@@ -7,7 +7,7 @@ Bu iş backend için otomatik bir güvenlik kapısı kurar. Kapı her değişikl
 1. `backend/AGENTS.md`
 2. `backend/PROJECT-RECORD.md`
 3. `backend/docs/contracts.md`
-4. `docs/standartlar/frappe-python-standartlari.md`, özellikle 6. bölüm (G-1 ile G-16)
+4. `docs/standards/frappe-python-standartlari.md`, özellikle 6. bölüm (G-1 ile G-16)
 5. Karar sitesinde `src/content/docs/kalite-kurallari.md`
 
 ## Sahip olduğunuz yerler

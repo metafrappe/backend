@@ -13,7 +13,7 @@ No scheduled job runs here. `replay_unknown` runs by hand only, for the System M
 `bench --site <site> execute platform_core.identity.atonota.verification_api.replay_unknown`.
 The provider is not chosen yet. Until the `atonota_verification_secret` site setting exists, every
 notice gets `VerificationNotConfigured` (503). The generic HMAC adapter of the package checks it.
-Contract: `backend/contracts/platform_core-identity.openapi.yaml`, tag `atonota-login`.
+Contract: `contracts/platform_core-identity.openapi.yaml`, tag `atonota-login`.
 """
 
 import time

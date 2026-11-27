@@ -1,4 +1,4 @@
-"""Standards self audit (docs/standartlar/frappe-python-standartlari.md) for this library.
+"""Standards self audit (docs/standards/frappe-python-standartlari.md) for this library.
 
 A-1 and A-2: before writing new code, compare with the ready solution and write down the remaining gap.
 PyJWT, which this library already depends on, ships `jwt.PyJWKClient`.

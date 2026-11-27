@@ -15,7 +15,7 @@ from unittest.mock import patch
 SUITE = Path(__file__).resolve().parents[1]
 COMMAND = SUITE / "bin" / "merge-preview"
 ORDER = (SUITE / "preview" / "branches.txt").read_text().split()
-HOOKS = Path("backend/apps/platform_core/platform_core/hooks.py")
+HOOKS = Path("apps/platform_core/platform_core/hooks.py")
 TRANSLATIONS = HOOKS.parent / "translations/tr.csv"
 
 

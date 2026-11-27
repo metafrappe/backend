@@ -1,4 +1,4 @@
-"""Brand values for the tests, read from backend/brand.env (AJA-1059 plan, section 1).
+"""Brand values for the tests, read from brand.env (AJA-1059 plan, section 1).
 
 The tests never write the product name or the domain. A new brand then needs no test change.
 """

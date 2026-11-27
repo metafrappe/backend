@@ -10,7 +10,7 @@ out="${1:?usage: build-release <out/release.json>}"
 commit="${GIT_COMMIT:?GIT_COMMIT is not set}"
 build="${BUILD_NUMBER:?BUILD_NUMBER is not set}"
 registry="${ATONOTA_REGISTRY:-ghcr.io/karacaismail}"
-backend="$(cd -- "$DEPLOY_DIR/.." && pwd)"
+root="$(cd -- "$DEPLOY_DIR/.." && pwd)"
 tag="${commit:0:12}-b$build"
 # Every release image is built for linux/amd64, on any build agent (E-15, review 1 finding 2).
 # On arm64 the Press image would carry Go code without a pinned version (press.Dockerfile). An
@@ -19,10 +19,10 @@ platform=linux/amd64
 
 # name|context|dockerfile|target
 components=(
-    "tenant|$backend|$backend/deploy/images/tenant.Dockerfile|"
-    "keycloak|$backend/identity/keycloak|$backend/identity/keycloak/Dockerfile|prod"
-    "identity-sync|$backend|$backend/identity/identity_sync/Dockerfile|"
-    "press|$backend|$backend/deploy/images/press.Dockerfile|"
+    "tenant|$root|$root/deploy/images/tenant.Dockerfile|"
+    "keycloak|$root/identity/keycloak|$root/identity/keycloak/Dockerfile|prod"
+    "identity-sync|$root|$root/identity/identity_sync/Dockerfile|"
+    "press|$root|$root/deploy/images/press.Dockerfile|"
 )
 
 image_arguments=()
@@ -31,7 +31,7 @@ for entry in "${components[@]}"; do
     repository="$registry/atonota-$name"
     build_arguments=(--pull --platform "$platform" --file "$dockerfile" --tag "$repository:$tag"
         --label "org.opencontainers.image.revision=$commit"
-        --label "org.opencontainers.image.source=https://github.com/karacaismail/frappesetup")
+        --label "org.opencontainers.image.source=https://github.com/metafrappe/backend")
     if [[ -n "$target" ]]; then
         build_arguments+=(--target "$target")
     fi

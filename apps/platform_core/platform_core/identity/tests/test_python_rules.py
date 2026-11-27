@@ -1,4 +1,4 @@
-"""Regression tests for the Python rule self-audit (docs/standartlar/frappe-python-standartlari.md).
+"""Regression tests for the Python rule self-audit (docs/standards/frappe-python-standartlari.md).
 
 Each test names the rule it proves:
 - G-15: after deletion no Version or Comment keeps the raw `sub` or the old e-mail of the identity link,

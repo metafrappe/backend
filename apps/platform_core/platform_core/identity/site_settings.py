@@ -37,7 +37,7 @@ def issuer() -> str:
 
 
 def brand_name() -> str:
-	"""Visible product name. The deploy step writes it from backend/brand.env (AJA-1061).
+	"""Visible product name. The deploy step writes it from brand.env (AJA-1061).
 
 	Without the setting the technical name is shown, never an invented brand.
 	"""

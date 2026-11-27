@@ -1,4 +1,4 @@
-"""Apply an explicit naming map to tracked backend files."""
+"""Apply an explicit naming map to tracked repository files."""
 
 from __future__ import annotations
 
@@ -25,12 +25,12 @@ GIT_PATH = shutil.which("git")
 GIT = str(Path(GIT_PATH).absolute()) if GIT_PATH else None
 
 RULE_TYPES = {"path", "module", "identifier", "setting", "doctype", "reference"}
-EXCLUDED = ("backend/dev/naming", "backend/docs/standartlar")
-REDIRECTS = {"backend/PROJE-KAYDI.md", "backend/docs/sozlesmeler.md"}
+EXCLUDED = ("dev/naming", "docs/standards")
+REDIRECTS = {"PROJE-KAYDI.md", "docs/sozlesmeler.md"}
 GLOSSARY_APPS = {
-    "press_tr": "backend/apps/press_tr",
-    "hrms_tr": "backend/apps/hrms_tr",
-    "mobile_test_app": "backend/dev/mobile_test_app",
+    "press_tr": "apps/press_tr",
+    "hrms_tr": "apps/hrms_tr",
+    "mobile_test_app": "dev/mobile_test_app",
 }
 COPY_KEYS = r"label|description|summary|help_text|message|placeholder|title"
 TECHNICAL = re.compile(r"[\w./:%@{}$?&=\\+*-]+")
@@ -72,8 +72,7 @@ def under(path: str, parent: str) -> bool:
 
 def included(path: str) -> bool:
     return (
-        path.startswith("backend/")
-        and not any(under(path, parent) for parent in EXCLUDED)
+        not any(under(path, parent) for parent in EXCLUDED)
         and not fnmatchcase(PurePosixPath(path).name, "messages_*.properties")
         and PurePosixPath(path).name != "glossary.yaml"
     )
@@ -121,7 +120,7 @@ def load_rules(map_path: Path) -> tuple[Rule, ...]:
                 if not included(path) or any(
                     part.casefold() in {".", "..", "", ".git"} for part in path.split("/")
                 ):
-                    raise ValueError(f"Path rule leaves the tracked backend scope: {path!r}")
+                    raise ValueError(f"Path rule leaves the tracked repository scope: {path!r}")
             path_sources.add(old)
         rules.append(Rule(old, new, kind, tuple(paths)))
     return tuple(rules)
@@ -216,7 +215,7 @@ def rewrite_source(source: str, rules: tuple[Rule, ...], path: str) -> str:
             r"(?:\r?\n(?:[ \t]*(?=\r?$)|(?P=indent)[ \t]+[^\r\n]*))+"
         )
         spans.extend((*match.span(), "", True) for match in re.finditer(blocks, source))
-    elif suffix in {".sh", ".toml"} or path.startswith("backend/dev/bin/"):
+    elif suffix in {".sh", ".toml"} or path.startswith("dev/bin/"):
         for match in re.finditer(QUOTED + r"|(?<!\S)#[^\r\n]*", source):
             spans.append((*match.span(), literal_value(match[0]), match[0].startswith("#")))
 
@@ -372,7 +371,7 @@ def check_python_names(path: str, before: bytes, after: bytes, rules: tuple[Rule
 
 
 def tracked_paths(root: Path) -> list[tuple[str, bool]]:
-    records = git(root, "ls-files", "-z", "--stage", "--", "backend/").split(b"\0")
+    records = git(root, "ls-files", "-z", "--stage").split(b"\0")
     paths = []
     for record in filter(None, records):
         metadata, name = record.split(b"\t", 1)
@@ -418,7 +417,7 @@ def scopes_for(source: str, target: str, path_rules: tuple[Rule, ...]) -> set[st
 
 def select_rules(rules: tuple[Rule, ...], paths: set[str], source: str) -> tuple[Rule, ...]:
     selected = []
-    press_app = source.startswith("backend/apps/press_tr/")
+    press_app = source.startswith("apps/press_tr/")
     for rule in rules:
         if bare_module(rule):
             if rule.old.casefold() == "kimlik":
@@ -568,7 +567,7 @@ def check_modules(root: Path, rules: tuple[Rule, ...], allowlist: Path) -> int:
         if not regular or not absolute.is_file() or absolute.is_symlink():
             continue
         if PurePosixPath(path).suffix not in {".py", ".json", ".yaml", ".yml", ".js", ".ts", ".sh"} and (
-            PurePosixPath(path).name != "modules.txt" and not path.startswith("backend/dev/bin/")
+            PurePosixPath(path).name != "modules.txt" and not path.startswith("dev/bin/")
         ):
             continue
         for number, line in enumerate(absolute.read_text(encoding="utf-8").splitlines(), 1):
@@ -656,7 +655,7 @@ def stage_addition(root: Path, path: str, content: bytes) -> None:
 
 def report_untracked(root: Path, rules: tuple[Rule, ...]) -> None:
     paths = git(
-        root, "ls-files", "-z", "--others", "--directory", "--no-empty-directory", "--", "backend/"
+        root, "ls-files", "-z", "--others", "--directory", "--no-empty-directory"
     ).split(b"\0")
     old_paths = tuple(rule.old for rule in rules if rule.type == "path")
     for path in filter(None, paths):

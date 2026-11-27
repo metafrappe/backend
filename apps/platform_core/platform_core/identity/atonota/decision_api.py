@@ -11,7 +11,7 @@ The caller never supplies evidence. Request fields and token roles are not read.
 Membership is read from the server's `User.user_type` for now. Frappe derives that field from the
 user's desk roles on save, so a desk role on the server record gives membership evidence. This is a
 known debt until the organisation membership record exists (G-160, PROJECT-RECORD.md).
-Contract: `backend/contracts/platform_core-identity.openapi.yaml`, tag `atonota-login`.
+Contract: `contracts/platform_core-identity.openapi.yaml`, tag `atonota-login`.
 """
 
 from collections.abc import Callable

@@ -101,7 +101,7 @@ services:
   # Bu durumda sunucu toplamı 64 + 4 * 16 = 128 GB olur.
   # prod ortamına yalnız deneme verisi girer. Öneri gerçek müşteri yükünü kapsamaz.
   # Bu hesap kota uygulamaz. Bellek varsayımları ve sayılar yük altında ölçülmelidir.
-  # Ayrıntı ve kabul adımları `backend/docs/dagitim/ortamlar.md` belgesindedir.
+  # Ayrıntı ve kabul adımları `docs/dagitim/ortamlar.md` belgesindedir.
   tenant-web:
     <<: *tenant
     # --forwarded-allow-ips: nginx runs in the frontend container and sends X-Forwarded-Proto.

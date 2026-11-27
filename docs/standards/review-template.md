@@ -18,6 +18,12 @@ PR, bir dalı başka bir dala katma isteğidir. CI, GitHub'ın her PR için koş
 8. PR `main` dalına açıldı mı? CI geçti mi? Cevabı yoruma yazın.
 9. Birleştirme kararını gerekçesiyle yazın.
 10. Karar olumluysa PR'ı ProPR birleştirir. PR'ı GitHub düğmesiyle ya da `gh pr merge` ile birleştirmeyin.
+11. Committer her PR'da commit kimliğini denetler. Bu adım ProPR kuralının gereğidir. Kural `PROJECT-RECORD.md` dosyasındadır.
+    - Her commit'in yazarı `karacaismail` olmalı.
+    - Her commit'in committer'ı da `karacaismail` olmalı.
+    - Tek istisna GitHub'ın son birleşme commit'idir. Bu commit'in committer alanında GitHub yazar.
+    - Kimliği şu komutla görün: `git log --format='%h %an %cn' <ana dal>..<PR dalı>`.
+    - Başka bir kimlik varsa dal birleşmez. Committer işi gerekçesiyle geri verir.
 
 Commit, Git içindeki değişiklik kaydıdır. QA ve Committer aynı son commit'i inceler. Geliştirici yeni commit eklerse etkilenen kurallar yeniden incelenir.
 

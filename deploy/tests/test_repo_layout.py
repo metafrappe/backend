@@ -18,7 +18,7 @@ JENKINSFILES = ("backend.Jenkinsfile", "promote.Jenkinsfile", "web.Jenkinsfile")
 # A path that starts with backend/. Words such as atonota-backend/ or deploy/backend/ do not count.
 OLD_PREFIX = re.compile(r"(^|[^a-z_/.-])backend/")
 # The acceptance command of AJA-1587, without the paths it excludes itself.
-GREP_EXCLUDES = (":!*.md", ":!*.patch", ":!dev/naming", ":!brand-exclusions.txt")
+GREP_EXCLUDES = (":!*.md", ":!*.patch", ":!brand-exclusions.txt")
 # Lines that keep the old prefix on purpose: (path, text on the line or None for every line, reason).
 KEPT = (
     # Gitleaks fingerprints name a commit and the path inside that commit. The commits belong to

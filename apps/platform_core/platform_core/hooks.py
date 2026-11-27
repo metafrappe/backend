@@ -118,6 +118,7 @@ website_user_allowed_methods = [
 	"platform_core.api.auth.list_login_providers",
 	"platform_core.api.auth.list_linked_accounts",
 	"platform_core.api.shell.get_bootstrap",
+	"platform_core.subscription.feature_decision",
 	"platform_core.api.collection.group_summary",
 	"platform_core.api.meta.get_doctype",
 	# G-138: field help reuses the shell metadata check. The coverage report is for the System Manager.
@@ -183,7 +184,10 @@ ai_tools = [
 ]
 
 # Shell permission generations. Keep other modules' hook entries alongside these.
-clear_cache = ["platform_core.shell.cache.clear_cache"]
+clear_cache = [
+	"platform_core.shell.cache.clear_cache",
+	"platform_core.subscription.subscription_update_hook",
+]
 
 doc_events = {
 	"User": {
@@ -234,20 +238,39 @@ doc_events = {
 		],
 	},
 	"DocType": {
-		"on_update": ["platform_core.shell.cache.invalidate_permissions"],
+		"on_update": [
+			"platform_core.shell.cache.invalidate_permissions",
+			"platform_core.subscription.meta_changed",
+		],
 		"on_trash": [
 			"platform_core.shell.cache.invalidate_permissions",
 			"platform_core.access.rules.clear_cache",
+			"platform_core.subscription.meta_changed",
 		],
-		"after_rename": ["platform_core.access.rules.clear_cache"],
+		"after_rename": [
+			"platform_core.access.rules.clear_cache",
+			"platform_core.subscription.meta_changed",
+		],
 	},
 	"Custom Field": {
-		"on_update": ["platform_core.shell.cache.invalidate_permissions"],
-		"on_trash": ["platform_core.shell.cache.invalidate_permissions"],
+		"on_update": [
+			"platform_core.shell.cache.invalidate_permissions",
+			"platform_core.subscription.meta_changed",
+		],
+		"on_trash": [
+			"platform_core.shell.cache.invalidate_permissions",
+			"platform_core.subscription.meta_changed",
+		],
 	},
 	"Property Setter": {
-		"on_update": ["platform_core.shell.cache.invalidate_permissions"],
-		"on_trash": ["platform_core.shell.cache.invalidate_permissions"],
+		"on_update": [
+			"platform_core.shell.cache.invalidate_permissions",
+			"platform_core.subscription.meta_changed",
+		],
+		"on_trash": [
+			"platform_core.shell.cache.invalidate_permissions",
+			"platform_core.subscription.meta_changed",
+		],
 	},
 	# This DocType is installed with the access-rule module. Keep shell validators fresh after rule changes.
 	"PLT Access Rule": {

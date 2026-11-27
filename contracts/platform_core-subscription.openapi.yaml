@@ -1,0 +1,64 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Platform Core subscription API",
+    "version": "0.1.0"
+  },
+  "security": [{"session": []}],
+  "paths": {
+    "/api/method/platform_core.subscription.feature_decision": {
+      "get": {
+        "operationId": "featureDecision",
+        "summary": "Check access to an application feature on the current site",
+        "description": "Requires an authenticated user with read permission on the app's configured record type. The response uses the same subscription decision as the server guard.",
+        "parameters": [
+          {"name": "app", "in": "query", "required": true, "schema": {"type": "string"}},
+          {"name": "feature", "in": "query", "required": true, "schema": {"type": "string"}},
+          {
+            "name": "operation",
+            "in": "query",
+            "schema": {"type": "string", "enum": ["read", "write", "export"], "default": "write"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Application state and feature decision.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["message"],
+                  "properties": {
+                    "message": {
+                      "type": "object",
+                      "required": ["allowed", "plan", "state"],
+                      "properties": {
+                        "allowed": {"type": "boolean"},
+                        "plan": {"type": ["string", "null"]},
+                        "state": {
+                          "type": "object",
+                          "required": ["installed", "subscribed", "enabled", "suspended", "read_only"],
+                          "properties": {
+                            "installed": {"type": "boolean"},
+                            "subscribed": {"type": "boolean"},
+                            "enabled": {"type": "boolean"},
+                            "suspended": {"type": "boolean"},
+                            "read_only": {"type": "boolean"}
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {"description": "The user's session or access to this application is missing."}
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {"session": {"type": "apiKey", "in": "cookie", "name": "sid"}}
+  }
+}

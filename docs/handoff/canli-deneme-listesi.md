@@ -56,8 +56,9 @@ Belgedeki `stack exec -T tenant-web bench ...` komutları bu kısaltmayı kullan
 
 - `identity_keycloak_only` ayarı kodda vardır. Kod `platform_core/identity/site_settings.py` dosyasındadır.
 - Ayar `1` olunca parola girişi kapanır. Bunu `identity/tests/test_login_policy.py` testi gösterir.
-- rc ve prod dağıtımının bu ayarı denetlemesi AJA-422 işidir. Bu iş henüz kodlanmadı. Bugün dağıtım ayarı denetlemez.
-- Acil giriş belgesi AJA-423 işidir. Belge `pc/aja-419-acil-giris-belgesi` dalındadır. Dal henüz `backend` dalına birleşmedi.
+- rc ve prod dağıtımı bu ayarı denetler. Denetim AJA-422 işidir. Kod PR #49 ile gelir.
+- Değer `1` değilse rc ve prod dağıtımı durur. Denetimi `deploy/remote/settings.py` yapar.
+- Acil giriş belgesi AJA-423 işidir. Belge PR #49 ile gelir.
 
 ### Ön koşul
 
@@ -130,9 +131,9 @@ Belgedeki `stack exec -T tenant-web bench ...` komutları bu kısaltmayı kullan
 
 13. Ayar `0` iken rc dağıtımının durduğunu deneyin.
     - Ayar: rc kiracı sitesinde `identity_keycloak_only` değeri `0` olur.
-    - Komut: bilinmiyor. Denetim AJA-422 işiyle gelecek. Kod henüz yok.
-    - Kabul: AJA-422 kabul ölçütüne göre dağıtım durur. Hata iletisi ayarın adını ve beklenen `1` değerini yazar. İleti site değerini yazmaz.
-    - Bu satırı AJA-422 birleşmeden denemeyin.
+    - Komut: rc dağıtımını her zamanki yoldan başlatın. Site denetimini `remote/apply` yapar.
+    - Kabul: dağıtım durur. Çalışan sürüm değişmez. Hata iletisi `identity_keycloak_only (must be 1)` yazar. İleti site değerini yazmaz.
+    - Bu satırı PR #49 `backend` dalına birleşmeden denemeyin.
 
 ## 2. Liste: G-13 panel oturumu ve anlık olay
 

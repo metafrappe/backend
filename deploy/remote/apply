@@ -174,10 +174,10 @@ PY
     # running release is still untouched here. The image entrypoint is skipped: it prints to
     # stdout and relinks sites/assets on the volume that the running release uses.
     say "check the site settings of $id"
-    fixed="$(python3 -I "$here/settings.py" site-fixed "$incoming")"
+    fixed="$(python3 -I "$here/settings.py" site-fixed "$incoming" --env "$env")"
     stack "$folder" run --rm --no-deps -T --entrypoint /home/frappe/frappe-bench/env/bin/python tenant-web \
         -I - site-settings-probe "$fixed" "${sites[@]}" <"$here/site-probe.py" >"$folder/site-settings.json"
-    python3 -I "$here/settings.py" check-sites "$incoming" "$folder/site-settings.json" \
+    python3 -I "$here/settings.py" check-sites "$incoming" "$folder/site-settings.json" --env "$env" \
         --first-install "$([[ ! -L "$current" && "${ATONOTA_FIRST_INSTALL:-0}" == 1 ]] && printf 1 || printf 0)" \
         "${sites[@]}" || fail "site settings of $env are incomplete; the running release still runs; $settings_help"
 

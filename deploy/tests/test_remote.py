@@ -75,7 +75,8 @@ class RemoteScripts(unittest.TestCase):
             "ATONOTA_ETC": str(self.etc),
             # The tenant image reports every site with every required setting (site-probe.py).
             "FAKE_SITE_KEYS": json.dumps({
-                site: {"set": sorted(test_settings.required("tenant-site")), "differs": []}
+                site: {"set": sorted(test_settings.required("tenant-site") | {"identity_keycloak_only"}),
+                       "differs": []}
                 for settings in release.load_environments().values()
                 for site in settings["ATONOTA_TENANT_SITES"].split()
             }),

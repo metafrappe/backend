@@ -645,6 +645,13 @@ Bir yorum satırı listedeki anahtarın kuralını söyleyebilir:
 - `[sabit]` etiketli anahtarın değeri listedeki değerle aynı olur. Örneğin `ATONOTA_SSL_REQUIRED=all` böyledir.
 - Etiketsiz anahtar zorunludur.
 
+Bazı site ayarlarının kuralı ortama göre değişir. Bu kurallar `deploy/remote/settings.py` dosyasındaki `ENV_SITE_FIXED` tablosundadır.
+
+- `identity_keycloak_only` ayarı listede `[isteğe bağlı]` yazılıdır. alpha ve beta ortamında ayar kapalı kalabilir.
+- rc ve prod ortamında bu ayarın değeri `1` olmalıdır (G-163, AJA-422).
+- Değer `1` değilse ya da ayar yazılmamışsa rc ve prod dağıtımı durur. Çalışan sürüm değişmez.
+- Hata iletisi ayarın adını ve beklenen değeri yazar. İleti sitedeki değeri yazmaz.
+
 ### Sırlar nereye konur
 
 Sırlar yalnız sunucuda durur. Depoya, Jenkins'e ve sohbet kayıtlarına yazılmaz.
@@ -694,6 +701,18 @@ Site denetimi kapsayıcıdan yalnız anahtar adlarını alır. `[sabit]` değerl
 Press sitesinin ayarları bugün denetlenmez. Press imajı vardır, ama Press sitesi hiçbir ortamda açılmadı (E-2). Site açılınca `press-site` listesi denetime eklenir.
 
 Paket listeleri kendi commit'inden taşır. Böylece rc, alpha'da kullanılan listeyle denetlenir.
+
+### Acil yönetici girişi
+
+`identity_keycloak_only` ayarı kiracı sitesinde yerel girişi kapatır. Değer `1` ise yalnız Keycloak ile giriş açılır.
+
+rc ve prod ortamlarında değer `1` olmalıdır. Dağıtım betiği her kiracı sitesinde bu değeri denetler. Değer `1` değilse rc ya da prod dağıtımı durur. Eski sürüm çalışmaya devam eder. alpha ve beta ortamlarında bu denetim yoktur.
+
+Keycloak çalışmazsa DevOps sorumlusu değeri kısa süre `0` yapabilir. Böylece yerel yönetici girişi açılır. Bu iş acil yönetici girişidir.
+
+Acil iş bitince DevOps sorumlusu değeri yeniden `1` yapar. Değer `0` kalırsa sonraki rc ya da prod dağıtımı durur. Bu kural ayarın unutulmasını önler.
+
+Acil girişin adımları [kimlik belgesindeki "Geri açma yolu" bölümündedir](../../apps/platform_core/platform_core/identity/README.md#geri-açma-yolu).
 
 ### Listenin eksiksiz kalması
 

@@ -180,13 +180,13 @@ class BrandDeployment(unittest.TestCase):
         ]
         site = "demo.app.alpha.example.test"
         probe = {site: {"set": required, "differs": []}}
-        self.assertEqual(settings.check_sites(lists, probe, [site]), [])
+        self.assertEqual(settings.check_sites(lists, probe, [site], "alpha"), [])
         probe[site]["set"].append("identity_brand_name")
         probe[site]["differs"].append("identity_brand_name")
         self.assertTrue(
             any(
                 "identity_brand_name" in problem
-                for problem in settings.check_sites(lists, probe, [site])
+                for problem in settings.check_sites(lists, probe, [site], "alpha")
             )
         )
 

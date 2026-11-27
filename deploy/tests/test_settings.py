@@ -570,24 +570,24 @@ class SiteCheck(unittest.TestCase):
         return {"set": sorted(required("tenant-site")), "differs": list(differs)}
 
     def test_complete_site_passes(self):
-        self.assertEqual(settings.check_sites(SETTINGS, {self.SITE: self.complete()}, [self.SITE]), [])
+        self.assertEqual(settings.check_sites(SETTINGS, {self.SITE: self.complete()}, [self.SITE], "alpha"), [])
 
     def test_missing_site_key_is_named(self):
         report = self.complete()
         report["set"].remove("keycloak_client_secret")
-        problems = settings.check_sites(SETTINGS, {self.SITE: report}, [self.SITE])
+        problems = settings.check_sites(SETTINGS, {self.SITE: report}, [self.SITE], "alpha")
         self.assertEqual(len(problems), 1)
         self.assertIn(self.SITE, problems[0])
         self.assertIn("keycloak_client_secret", problems[0])
 
     def test_missing_site_is_refused_after_the_first_install(self):
-        problems = settings.check_sites(SETTINGS, {}, [self.SITE])
+        problems = settings.check_sites(SETTINGS, {}, [self.SITE], "alpha")
         self.assertTrue(any("does not exist" in line for line in problems), problems)
-        self.assertEqual(settings.check_sites(SETTINGS, {}, [self.SITE], first_install=True), [])
+        self.assertEqual(settings.check_sites(SETTINGS, {}, [self.SITE], "alpha", first_install=True), [])
 
     def test_fixed_site_values_are_the_safety_switches(self):
         # developer_mode=1 or mobile_allow_development_http=1 opens plain HTTP paths (review 1).
-        fixed = settings.site_fixed_values(SETTINGS)
+        fixed = settings.site_fixed_values(SETTINGS, "alpha")
         self.assertEqual(fixed.get("developer_mode"), "0")
         self.assertEqual(fixed.get("server_script_enabled"), "0")
         self.assertEqual(fixed.get("allow_tests"), "0")
@@ -595,20 +595,20 @@ class SiteCheck(unittest.TestCase):
 
     def test_site_value_that_differs_from_its_fixed_value_is_refused(self):
         report = self.complete(differs=["developer_mode"])
-        problems = settings.check_sites(SETTINGS, {self.SITE: report}, [self.SITE])
+        problems = settings.check_sites(SETTINGS, {self.SITE: report}, [self.SITE], "alpha")
         self.assertEqual(problems, [f"site {self.SITE}, site_config.json: developer_mode (must be 0)"])
 
     def test_bad_probe_answer_is_refused(self):
         with self.assertRaises(settings.SettingsError):
-            settings.check_sites(SETTINGS, {self.SITE: ["keycloak_public_url"]}, [self.SITE])
+            settings.check_sites(SETTINGS, {self.SITE: ["keycloak_public_url"]}, [self.SITE], "alpha")
 
-    def probe(self, site_config, common=None):
+    def probe(self, site_config, common=None, env="alpha"):
         with tempfile.TemporaryDirectory() as folder:
             sites = Path(folder)
             (sites / self.SITE).mkdir()
             (sites / "common_site_config.json").write_text(json.dumps(common or {}))
             (sites / self.SITE / "site_config.json").write_text(json.dumps(site_config))
-            result = run_python("-", "site-settings-probe", json.dumps(settings.site_fixed_values(SETTINGS)),
+            result = run_python("-", "site-settings-probe", json.dumps(settings.site_fixed_values(SETTINGS, env)),
                                 self.SITE, "absent.test",
                                 input_text=(DEPLOY / "remote" / "site-probe.py").read_text(),
                                 environment={**os.environ, "ATONOTA_SITES_PATH": folder})
@@ -638,7 +638,7 @@ class SiteCheck(unittest.TestCase):
                     report = self.probe(site_config, common)[self.SITE]
                     self.assertEqual(report["differs"], [key])
                     problems = settings.check_sites(
-                        SETTINGS, {self.SITE: self.complete(differs=report["differs"])}, [self.SITE]
+                        SETTINGS, {self.SITE: self.complete(differs=report["differs"])}, [self.SITE], "alpha"
                     )
                     self.assertEqual(problems, [f"site {self.SITE}, site_config.json: {key} (must be 0)"])
 
@@ -655,6 +655,81 @@ class SiteCheck(unittest.TestCase):
         for value in (0, False):
             with self.subTest(value=value):
                 self.assertEqual(self.probe({"allow_tests": value})[self.SITE]["differs"], [])
+
+    # G-163, AJA-422: rc and prod accept only Keycloak sign-in. alpha and beta may keep it off.
+    KEYCLOAK_ONLY = "identity_keycloak_only"
+
+    def keycloak_only_problems(self, env, report):
+        return settings.check_sites(SETTINGS, {self.SITE: report}, [self.SITE], env)
+
+    def test_keycloak_only_off_stops_rc_and_prod(self):
+        report = self.complete(differs=[self.KEYCLOAK_ONLY])
+        report["set"].append(self.KEYCLOAK_ONLY)
+        for env in ("rc", "prod"):
+            with self.subTest(env=env):
+                problems = self.keycloak_only_problems(env, report)
+                self.assertEqual(problems, [f"site {self.SITE}, site_config.json: {self.KEYCLOAK_ONLY} (must be 1)"])
+                self.assertNotIn("0", problems[0].replace(self.SITE, ""))
+
+    def test_keycloak_only_missing_stops_rc_and_prod(self):
+        for env in ("rc", "prod"):
+            with self.subTest(env=env):
+                problems = self.keycloak_only_problems(env, self.complete())
+                self.assertEqual(problems, [f"site {self.SITE}, site_config.json: "
+                                            f"{self.KEYCLOAK_ONLY} is missing (must be 1 in {env})"])
+
+    def test_keycloak_only_on_passes_rc_and_prod(self):
+        report = self.complete()
+        report["set"].append(self.KEYCLOAK_ONLY)
+        for env in ("rc", "prod"):
+            with self.subTest(env=env):
+                self.assertEqual(self.keycloak_only_problems(env, report), [])
+
+    def test_keycloak_only_may_stay_off_in_alpha_and_beta(self):
+        off = self.complete(differs=[self.KEYCLOAK_ONLY])
+        off["set"].append(self.KEYCLOAK_ONLY)
+        for env in ("alpha", "beta"):
+            for report in (off, self.complete()):
+                with self.subTest(env=env, report=report):
+                    self.assertEqual(self.keycloak_only_problems(env, report), [])
+
+    def test_environment_is_required_and_known(self):
+        with self.assertRaises(settings.SettingsError):
+            settings.check_sites(SETTINGS, {self.SITE: self.complete()}, [self.SITE], "staging")
+        with self.assertRaises(settings.SettingsError):
+            settings.site_fixed_values(SETTINGS, "staging")
+        for command in (("site-fixed", SETTINGS), ("check-sites", SETTINGS, "probe.json", self.SITE)):
+            with self.subTest(command=command[0]):
+                result = run_python(DEPLOY / "remote" / "settings.py", *command)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("--env", result.stderr)
+
+    def test_site_fixed_adds_keycloak_only_for_rc_and_prod(self):
+        listed = settings.site_fixed_values(SETTINGS, "alpha")
+        self.assertNotIn(self.KEYCLOAK_ONLY, listed)
+        for env, expected in (("alpha", None), ("beta", None), ("rc", "1"), ("prod", "1")):
+            with self.subTest(env=env):
+                result = run_python(DEPLOY / "remote" / "settings.py", "site-fixed", SETTINGS, "--env", env)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                fixed = json.loads(result.stdout)
+                self.assertEqual(fixed.get(self.KEYCLOAK_ONLY), expected)
+                self.assertEqual({key: value for key, value in fixed.items() if key != self.KEYCLOAK_ONLY}, listed)
+
+    def test_real_probe_stops_prod_when_keycloak_only_is_off(self):
+        site_config = {key: SITE_VALUE for key in required("tenant-site")}
+        for value, env, expected in ((0, "prod", 1), ("0", "rc", 1), (False, "prod", 1), (1, "prod", 0),
+                                     (True, "rc", 0), ("1", "prod", 0), (0, "alpha", 0)):
+            with self.subTest(value=value, env=env):
+                report = self.probe({**site_config, self.KEYCLOAK_ONLY: value}, env=env)
+                with tempfile.TemporaryDirectory() as folder:
+                    probe = Path(folder) / "site-settings.json"
+                    probe.write_text(json.dumps(report))
+                    result = run_python(DEPLOY / "remote" / "settings.py", "check-sites", SETTINGS, probe,
+                                        "--env", env, self.SITE)
+                self.assertEqual(result.returncode, expected, result.stderr)
+                self.assertNotIn(SITE_VALUE, result.stderr)
+                if expected:
+                    self.assertIn(f"{self.KEYCLOAK_ONLY} (must be 1)", result.stderr)
 
     def test_press_site_list_is_not_checked_until_the_press_image_exists(self):
         # E-2: no Press image, so no Press site to probe. The list waits; this test says so.

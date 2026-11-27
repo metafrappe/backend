@@ -158,8 +158,27 @@ Yollardan `backend/` öneki kalktı. Karar numarası O-64 oldu.
 | 4 | `uvx ruff@0.14.10 format --check --config dev/ruff.toml e2e/mcp_oauth` | `pass` |
 | 5 | Bandit 1.9.4 ile iki dosya ve istisna eşleşmesi | `pass`: 4 bulgu, 4 eşleşme |
 
-Ruff kod denetimi iki içe aktarma sırası uyarısı verdi. Eski dalda da aynı uyarılar vardı.
-Taşıma kodu değiştirmedi. Bu yüzden uyarılar ayrı bir işte düzeltilebilir.
+Ruff kod denetimi ilk koşuda üç uyarı verdi. Bu belge önce yanlışlıkla iki uyarı yazmıştı.
+Uyarılardan ikisi `I001` uyarısıydı. `I001`, içe aktarma sırası uyarısıdır.
+Üçüncü uyarı `B023` uyarısıydı. Test döngüsünün değişkeni işleve bağlı değildi.
+
+## Ruff düzeltmesi
+
+Uyarılar 27 Kasım 2026 Cuma günü AJA-1650 işinde düzeltildi.
+İçe aktarma satırları Ruff kuralına göre sıralandı.
+Döngü değişkeni işleve `location=location` biçiminde bağlandı.
+Hiçbir uyarı `# noqa` ile susturulmadı.
+
+| Sıra | Komut | Sonuç |
+| --- | --- | --- |
+| 1 | `uvx ruff@0.14.10 check --config dev/ruff.toml e2e/mcp_oauth` | `pass`: 0 uyarı |
+| 2 | `uvx ruff@0.14.10 format --check --config dev/ruff.toml e2e/mcp_oauth` | `pass` |
+| 3 | Test ortamının Python komutuyla `-B -m unittest discover -s e2e/mcp_oauth/tests` | `pass`: 10 test |
+| 4 | Bandit istisnalarının imza denetimi | `pass`: 4 istisna, 4 eşleşme |
+
+Bandit istisnası olan satırların içeriği değişmedi.
+İmzalar tarayıcının imza işleviyle yeniden hesaplandı. Dört imza da eşleşti.
+Bu yüzden istisna dosyası değişmedi.
 `dev/bin/security-audit` bu ana dalda koşulmadı. Betik hâlâ `backend/` önekli yolları arıyor.
 Bandit istisna eşleşmesi bu yüzden tarayıcının imza işleviyle ayrıca denendi.
 Canlı yerel giriş bu taşımada yeniden koşulmadı. GitHub CI iş akışı bu depoda yoktur.

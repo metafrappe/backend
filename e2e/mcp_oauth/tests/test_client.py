@@ -1,12 +1,12 @@
 """Local runner boundaries; no live services are used by these tests."""
 
 import importlib.util
-from pathlib import Path
 import unittest
-from unittest.mock import patch
-import httpx
+from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
+import httpx
 
 SCRIPT = Path(__file__).resolve().parents[1] / "client.py"
 SPEC = importlib.util.spec_from_file_location("mcp_oauth_client", SCRIPT)
@@ -142,7 +142,7 @@ class FixtureBrowserTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(location=location):
                 async with httpx.AsyncClient(
                     transport=httpx.MockTransport(
-                        lambda request: httpx.Response(302, headers={"Location": location})
+                        lambda request, location=location: httpx.Response(302, headers={"Location": location})
                     )
                 ) as http:
                     with self.assertRaises(ValueError):

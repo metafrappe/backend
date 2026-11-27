@@ -7,16 +7,16 @@ The HTTP form driver represents only a synthetic fixture user, not a browser tes
 import argparse
 import asyncio
 import base64
-from datetime import timedelta
 import hashlib
-from html.parser import HTMLParser
-from importlib.metadata import version
 import ipaddress
 import json
 import logging
 import os
 import socket
 import ssl
+from datetime import timedelta
+from html.parser import HTMLParser
+from importlib.metadata import version
 from urllib.parse import parse_qs, urljoin, urlsplit
 
 import httpx
@@ -25,7 +25,6 @@ from mcp.client.auth import OAuthClientProvider
 from mcp.client.auth.utils import extract_resource_metadata_from_www_auth
 from mcp.client.streamable_http import streamable_http_client
 from mcp.shared.auth import OAuthClientInformationFull, OAuthClientMetadata, OAuthToken
-
 
 TOOL = "plt_search_doctypes"
 ARGUMENTS = {"limit": 1}

@@ -91,6 +91,10 @@
   code: plt_mcp_call_budget
   doctype: PLT MCP Call Budget
   definition_tr: Bu kayıt bir MCP belirteciyle yapılan araç çağrılarını sayar.
+- term_tr: İş anahtarı
+  code: plt_idempotency_key
+  doctype: PLT Idempotency Key
+  definition_tr: Bu kayıt bir isteğin iş anahtarını ve sonucunu saklar.
 - term_tr: Yapay zekâ yöneticisi
   code: PLT AI Manager
   scope: platform_core role

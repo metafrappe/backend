@@ -1,0 +1,125 @@
+{
+ "actions": [],
+ "creation": "2026-11-27 18:00:00.000000",
+ "description": "Internal record of an idempotency key. The row name is a digest of the organization, account, endpoint and key.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "organization",
+  "account",
+  "endpoint",
+  "idempotency_key",
+  "request_digest",
+  "attempt_id",
+  "status",
+  "lock_expires_at",
+  "response_status",
+  "result_doctype",
+  "result_name",
+  "finished_at"
+ ],
+ "fields": [
+  {
+   "description": "Organization of the request. On a tenant site this is the site.",
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "User who sent the request.",
+   "fieldname": "account",
+   "fieldtype": "Data",
+   "label": "Account",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Full name of the called method.",
+   "fieldname": "endpoint",
+   "fieldtype": "Data",
+   "label": "Endpoint",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Key from the Idempotency-Key header.",
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "SHA-256 digest of the request body.",
+   "fieldname": "request_digest",
+   "fieldtype": "Data",
+   "label": "Request Digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Random token of the request that holds the row. A request that lost the row does not finish it.",
+   "fieldname": "attempt_id",
+   "fieldtype": "Data",
+   "label": "Attempt ID",
+   "read_only": 1
+  },
+  {
+   "description": "processing while the first request runs, done after it finished.",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "processing\ndone",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "A processing row whose lock ended may be taken over.",
+   "fieldname": "lock_expires_at",
+   "fieldtype": "Datetime",
+   "label": "Lock Expires At",
+   "read_only": 1
+  },
+  {
+   "description": "HTTP status code of the first response.",
+   "fieldname": "response_status",
+   "fieldtype": "Int",
+   "label": "Response Status",
+   "read_only": 1
+  },
+  {
+   "description": "Document type of the result record. Plain text, so the key row never blocks deleting the record.",
+   "fieldname": "result_doctype",
+   "fieldtype": "Data",
+   "label": "Result Document Type",
+   "read_only": 1
+  },
+  {
+   "description": "Name of the result record. Plain text, so the key row never blocks deleting the record.",
+   "fieldname": "result_name",
+   "fieldtype": "Data",
+   "label": "Result Name",
+   "read_only": 1
+  },
+  {
+   "description": "Time the first request finished. The key is kept for 24 hours from this time.",
+   "fieldname": "finished_at",
+   "fieldtype": "Datetime",
+   "label": "Finished At",
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-27 18:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Idempotency",
+ "name": "PLT Idempotency Key",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,7 @@
+{
+  "$comment": "The only list of open languages (AJA-1776). Other files read this file. They do not copy the list. The product owner announces a new language. Decision 44 keeps en-GB as the default locale.",
+  "open_languages": ["en", "tr"],
+  "default_locale": "en-GB",
+  "open_markets": ["TR"],
+  "notification_locale_order": ["recipient", "tenant", "default"]
+}

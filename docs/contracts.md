@@ -34,7 +34,7 @@ Ayrıntılı istek ve yanıt biçimi `contracts/` klasöründeki OpenAPI dosyala
 - Sunucu Keycloak'a başka adresten ulaşacaksa `keycloak_internal_url` ayarını kullanın. Bu ayar boşsa genel adres kullanılır.
 - Realm'in görünen adı `PRODUCT_NAME` ayarından gelir. Realm adı, istemci kimlikleri ve tema adı değişmez. Giriş ve e-posta teması `atonota` adını taşır.
 - Tema Keycloak'ın kendi tema yapısıyla kurulur (Proje kaydı O-4).
-- Varsayılan dil Türkçedir. İkinci dil İngilizcedir.
+- Varsayılan dil `en-GB` olur (Karar 44). Açık diller `contracts/locales.json` dosyasındadır. Kurallar 12. bölümdedir.
 
 ### İstemciler
 
@@ -708,3 +708,14 @@ Parça metni yalnız iş sürerken tutulur. Bekleyen metin için iki süre sın�
 | `platform_core.api.model.file_job_status` | POST | İşin sahibi ya da yönetici | Parça planını, tahmini maliyeti ve parça durumlarını gösterir. Parça metnini dönmez. |
 | `platform_core.api.model.start_file_job` | POST | İşin sahibi ya da yönetici | Planlanmış işin parçalarını kuyruğa koyar. Her parça ücretli olabilir. |
 | `platform_core.api.model.retry_file_chunk` | POST | İşin sahibi ya da yönetici | Başarısız tek parçayı yeniden kuyruğa koyar. |
+
+## 12. Dil ve bildirim
+
+Ayrıntılı kurallar [dil ve bildirim sözleşmesindedir](../contracts/locale-and-notifications.md). Dosyanın yolu `contracts/locale-and-notifications.md` şeklindedir. Kaynak iş AJA-1776'dır.
+
+- Açık diller yalnız `contracts/locales.json` dosyasında durur. Şimdilik `en` ve `tr` açıktır. Başka dosyalar listeyi kopyalamaz.
+- Kritik iletiler `contracts/critical_messages.json` dosyasındadır. Backend, Keycloak ve arayüz aynı listeyi okur.
+- Bildirim dili şu sırayla seçilir: alıcının dili, kiracının dili, `en-GB`.
+- Koşul kabulü yeni bir kayıttır. Kayıt koşulun sürümünü ve gösterilen dili taşır.
+- Adres şemasını fatura ülkesi belirler. Vergi numarası sonucu `valid`, `invalid` ya da `unavailable` olur.
+- Sözleşme testi: `python3 -I -m unittest discover -s contracts/tests -v`.

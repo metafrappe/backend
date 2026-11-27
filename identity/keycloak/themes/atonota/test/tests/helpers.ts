@@ -484,3 +484,102 @@ export async function endSessions(email: string, realm = REALM): Promise<void> {
   const res = await admin(`/users/${user.id}/logout`, { method: 'POST' }, realm);
   if (!res.ok) throw new Error(`Could not end the sessions: ${res.status}`);
 }
+
+/**
+ * Realm for the account console screens that the test realm keeps off: linked accounts, groups,
+ * organizations and a multi-value select field. Those features add menu items to every console page,
+ * so they live in their own realm. The test realm and its reference images stay as they are.
+ */
+export const FEATURES_REALM = 'theme-test-features';
+
+type FeaturesFile = {
+  realm: Record<string, unknown>;
+  organizations: { alias: string }[];
+  userProfileAttributes: { name: string }[];
+};
+
+const readJson = <T>(path: string): T => JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8')) as T;
+
+/** Finds an organization of the features realm by its alias. The search parameter of the API matches names, not aliases. */
+async function findOrganization(alias: string): Promise<{ id: string } | undefined> {
+  const all = (await (await admin('/organizations?first=0&max=100&briefRepresentation=true', {}, FEATURES_REALM)).json()) as { id: string; alias: string }[];
+  return all.find((item) => item.alias === alias);
+}
+
+/** Creates the features realm from the test realm file and realm/theme-features.json when it does not exist yet. */
+export async function ensureFeaturesRealm(): Promise<void> {
+  const features = readJson<FeaturesFile>('../realm/theme-features.json');
+  if (!(await admin('', {}, FEATURES_REALM)).ok) {
+    const base = readJson<Record<string, unknown>>('../realm/theme-test-realm.json');
+    const created = await fetch(`${KC}/admin/realms`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${await adminToken()}`, 'content-type': 'application/json' },
+      // Keycloak replaces ${...} placeholders only when it imports a realm file at start. This realm is created
+      // through the API, so the brand name is filled in here.
+      body: JSON.stringify({ ...base, ...features.realm, realm: FEATURES_REALM, displayName: BRAND }),
+    });
+    // Another worker may have created the realm a moment ago. That answers 409.
+    if (!created.ok && created.status !== 409) throw new Error(`Could not create ${FEATURES_REALM}: ${created.status} ${await created.text()}`);
+  }
+  for (const organization of features.organizations) {
+    if (await findOrganization(organization.alias)) continue;
+    const res = await admin('/organizations', { method: 'POST', body: organization }, FEATURES_REALM);
+    if (!res.ok && res.status !== 409) throw new Error(`Could not create the organization: ${res.status} ${await res.text()}`);
+  }
+  const profile = (await (await admin('/users/profile', {}, FEATURES_REALM)).json()) as { attributes: { name: string }[] };
+  const missing = features.userProfileAttributes.filter((attribute) => !profile.attributes.some((item) => item.name === attribute.name));
+  if (missing.length > 0) {
+    const res = await admin('/users/profile', { method: 'PUT', body: { ...profile, attributes: [...profile.attributes, ...missing] } }, FEATURES_REALM);
+    if (!res.ok) throw new Error(`Could not update the user profile: ${res.status} ${await res.text()}`);
+  }
+}
+
+/**
+ * Creates a sample user in the features realm. The user is a member of the sample group and the sample
+ * organization and may see the groups page. The user has no linked account.
+ */
+export async function createFeaturesUser(): Promise<string> {
+  const email = await createUser({ realm: FEATURES_REALM });
+  const [user] = (await (await admin(`/users?exact=true&email=${encodeURIComponent(email)}`, {}, FEATURES_REALM)).json()) as { id: string }[];
+  const [group] = (await (await admin('/groups?search=Örnek%20alt%20ekip&exact=true&briefRepresentation=true', {}, FEATURES_REALM)).json()) as {
+    id: string;
+    subGroups?: { id: string; name: string }[];
+  }[];
+  const sub = group?.subGroups?.find((item) => item.name === 'Örnek alt ekip');
+  if (!sub) throw new Error('The sample subgroup is missing');
+  const joined = await admin(`/users/${user.id}/groups/${sub.id}`, { method: 'PUT' }, FEATURES_REALM);
+  if (!joined.ok) throw new Error(`Could not join the group: ${joined.status}`);
+  // The groups page needs the "view-groups" role of the "account" client.
+  const [account] = (await (await admin('/clients?clientId=account', {}, FEATURES_REALM)).json()) as { id: string }[];
+  const role = await (await admin(`/clients/${account.id}/roles/view-groups`, {}, FEATURES_REALM)).json();
+  const granted = await admin(`/users/${user.id}/role-mappings/clients/${account.id}`, { method: 'POST', body: [role] }, FEATURES_REALM);
+  if (!granted.ok) throw new Error(`Could not grant view-groups: ${granted.status}`);
+  const organization = await findOrganization('sample-org');
+  if (!organization) throw new Error('The sample organization is missing');
+  const member = await admin(`/organizations/${organization.id}/members`, { method: 'POST', body: user.id }, FEATURES_REALM);
+  if (!member.ok) throw new Error(`Could not join the organization: ${member.status} ${await member.text()}`);
+  return email;
+}
+
+/**
+ * Signs in on the features realm. With organizations on, Keycloak asks for the email first and for the
+ * password on a second screen. The values are never printed.
+ */
+export async function submitFeaturesSignIn(page: Page, email: string, password = PASSWORD): Promise<void> {
+  const username = page.locator('#username');
+  await expect(username).toBeVisible({ timeout: 20_000 });
+  await page.waitForLoadState('load');
+  await expect(async () => {
+    await username.fill(email);
+    expect((await username.inputValue()) === email, 'the email field holds the email').toBe(true);
+  }).toPass({ timeout: 20_000 });
+  await page.locator('#kc-login').click();
+  const secret = page.locator('#password');
+  await expect(secret).toBeVisible({ timeout: 20_000 });
+  await page.waitForLoadState('load');
+  await expect(async () => {
+    await secret.fill(password);
+    expect((await secret.inputValue()) === password, 'the password field holds the password').toBe(true);
+  }).toPass({ timeout: 20_000 });
+  await page.locator('#kc-login').click();
+}

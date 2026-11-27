@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { focusDiff, strayFocusDiff } from './focus-diff';
-import { createUser, KC, REALM, submitPassword } from './helpers';
+import { createFeaturesUser, createUser, ensureFeaturesRealm, FEATURES_REALM, KC, REALM, submitFeaturesSignIn, submitPassword } from './helpers';
 
 // Tests of the Atonota account console theme.
 // The console is the stock Keycloak React application. The theme only adds styles, a focus script and messages.
@@ -12,22 +12,34 @@ const accountCssPath = fileURLToPath(new URL('../../account/resources/css/atonot
 const loginCssPath = fileURLToPath(new URL('../../login/resources/css/atonota.css', import.meta.url));
 const EASE = 'cubic-bezier(0.65, 0, 0.35, 1)';
 
-type AccountPage = { name: string; path: string; ready: string };
+/** `features: true` opens the page in the features realm, where groups, organizations and linked accounts are on. */
+type AccountPage = { name: string; path: string; ready: string; features?: true };
 
 const pages: AccountPage[] = [
   { name: 'personal-info', path: '', ready: '#save-btn' },
   { name: 'signing-in', path: 'account-security/signing-in', ready: '.pf-v5-c-data-list' },
   { name: 'device-activity', path: 'account-security/device-activity', ready: '#refresh-page' },
   { name: 'applications', path: 'applications', ready: '.pf-v5-c-data-list' },
+  { name: 'linked-accounts', path: 'account-security/linked-accounts', ready: '.pf-v5-c-data-list:has-text("Örnek giriş hizmeti")', features: true },
+  { name: 'groups', path: 'groups', ready: '[data-testid="group[0].name"]', features: true },
+  { name: 'organizations', path: 'organizations', ready: 'main :text-is("Örnek kuruluş")', features: true },
+  // A select field with ten or more options becomes a typeahead select: the user types to filter the options.
+  { name: 'personal-info-select', path: '', ready: '#city input[role="combobox"]', features: true },
 ];
+
+// The features realm is created once per worker. A second call finds it and does nothing.
+test.beforeAll(async () => {
+  await ensureFeaturesRealm();
+});
 
 const byName = (name: string) => pages.find((item) => item.name === name)!;
 
 /** Signs in a fresh sample user and opens one account console page. */
 async function openAccount(page: Page, target: AccountPage): Promise<string> {
-  const email = await createUser();
-  await page.goto(`${KC}/realms/${REALM}/account/${target.path}`);
-  await submitPassword(page, email);
+  const email = target.features ? await createFeaturesUser() : await createUser();
+  await page.goto(`${KC}/realms/${target.features ? FEATURES_REALM : REALM}/account/${target.path}`);
+  if (target.features) await submitFeaturesSignIn(page, email);
+  else await submitPassword(page, email);
   // The console loads its page chunk after sign-in. Under a full parallel run this can take longer than the default.
   await expect(page.locator(target.ready).first()).toBeVisible({ timeout: 20_000 });
   await page.evaluate(() => document.fonts.ready);
@@ -36,6 +48,39 @@ async function openAccount(page: Page, target: AccountPage): Promise<string> {
 
 // WebKit leaves links out of the Tab order. Option+Tab is the Safari equivalent.
 const tabKey = (browserName: string) => (browserName === 'webkit' ? 'Alt+Tab' : 'Tab');
+
+/**
+ * The box that the focus line belongs to. A checkbox gets the line under its label. A field inside a wrapper,
+ * such as a type-ahead select or a search field, gets the line under the whole wrapper.
+ */
+async function indicatorBox(page: Page, focused: Locator): Promise<Locator> {
+  const kind = await focused.evaluate((element) => {
+    if (element.matches('input[type=checkbox], input[type=radio]')) return element.closest('label') ? 'wrapping-label' : 'label';
+    if (element.closest('.pf-v5-c-menu-toggle.pf-m-typeahead')) return 'typeahead';
+    if (element.closest('.pf-v5-c-text-input-group')) return 'input-group';
+    return 'self';
+  });
+  if (kind === 'wrapping-label') return focused.locator('xpath=ancestor::label[1]');
+  if (kind === 'label') return page.locator(`label[for="${await focused.getAttribute('id')}"]`);
+  if (kind === 'typeahead') return page.locator('.pf-v5-c-menu-toggle.pf-m-typeahead:has(input:focus)');
+  if (kind === 'input-group') return page.locator('.pf-v5-c-text-input-group:has(input:focus)').last();
+  return focused;
+}
+
+/**
+ * Lists what is wrong with a measured focus indicator. An empty list means one straight line in the lower half
+ * of the box, with enough contrast. A ring around the box fails because it draws on the top and the sides.
+ */
+function indicatorProblems(diff: Awaited<ReturnType<typeof focusDiff>>['diff'], rect: Awaited<ReturnType<typeof focusDiff>>['rect']): string[] {
+  const problems: string[] = [];
+  if (diff.count < 24) problems.push(`no visible indicator (${diff.count} pixels)`);
+  if (diff.contrast < 3) problems.push(`contrast ${diff.contrast.toFixed(2)} below 3`);
+  if (diff.minY < rect.top + rect.height / 2) problems.push('line on the top edge');
+  if (diff.minX < Math.floor(rect.left)) problems.push('line on the left edge');
+  if (diff.maxX > Math.ceil(rect.left + rect.width)) problems.push('line on the right edge');
+  if (diff.maxY - diff.minY > 6) problems.push('more than one straight line');
+  return problems;
+}
 
 const settle = (page: Page) =>
   page.evaluate(() => Promise.all(document.getAnimations().map((animation) => animation.finished.catch(() => undefined))));
@@ -233,6 +278,14 @@ const focusCases = [
   { name: 'signing-in', scheme: 'light', required: ['.pf-v5-c-data-list button.pf-m-secondary'] },
   { name: 'device-activity', scheme: 'dark', required: ['#refresh-page'] },
   { name: 'applications', scheme: 'light', required: ['[id^="toggle-"]'] },
+  { name: 'linked-accounts', scheme: 'light', required: ['.pf-v5-c-data-list button'] },
+  { name: 'linked-accounts', scheme: 'dark', required: ['.pf-v5-c-data-list button'] },
+  { name: 'groups', scheme: 'light', required: ['#directMembership-checkbox'] },
+  { name: 'groups', scheme: 'dark', required: ['#directMembership-checkbox'] },
+  { name: 'organizations', scheme: 'light', required: ['[data-testid="refresh"]'] },
+  { name: 'organizations', scheme: 'dark', required: ['[data-testid="refresh"]'] },
+  { name: 'personal-info-select', scheme: 'light', required: ['#city input[role="combobox"]'] },
+  { name: 'personal-info-select', scheme: 'dark', required: ['#city input[role="combobox"]'] },
 ] as const;
 
 for (const { name, scheme, required } of focusCases) {
@@ -274,7 +327,7 @@ for (const { name, scheme, required } of focusCases) {
       });
       expect(outlined, `${current}: no outline on the element or its ancestors`).toEqual([]);
 
-      const { diff, rect } = await focusDiff(page, focused);
+      const { diff, rect } = await focusDiff(page, await indicatorBox(page, focused));
       expect(diff.count, `${current}: visible focus indicator`).toBeGreaterThanOrEqual(24);
       expect(diff.contrast, `${current}: indicator contrast`).toBeGreaterThanOrEqual(3);
       // The indicator sits in the lower half of the element or below it. It never wraps the top or the sides.
@@ -291,6 +344,170 @@ for (const { name, scheme, required } of focusCases) {
     expect([...reached].sort(), `required elements reached, measured: ${checked.join(', ')}`).toEqual([...required].sort());
   });
 }
+
+/** Moves keyboard focus with Tab until the selector matches the focused element. */
+async function tabTo(page: Page, browserName: string, selector: string): Promise<Locator> {
+  await page.locator('body').click({ position: { x: 1, y: 1 } });
+  for (let step = 0; step < 60; step += 1) {
+    await page.keyboard.press(tabKey(browserName));
+    if (await page.evaluate((value) => document.activeElement?.matches(value) ?? false, selector)) return page.locator(':focus');
+  }
+  throw new Error(`Tab did not reach ${selector}`);
+}
+
+const typeahead = '#city input[role="combobox"]';
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`account typeahead select (${scheme}): one straight focus line under the field, no ring`, async ({ page, browserName }) => {
+    await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
+    await openAccount(page, byName('personal-info-select'));
+    await page.addStyleTag({ content: '* { caret-color: transparent !important; }' });
+    const focused = await tabTo(page, browserName, typeahead);
+    await focused.evaluate((element) => element.scrollIntoView({ block: 'center' }));
+    await settle(page);
+    const outlined = await focused.evaluate((element) => {
+      const found: string[] = [];
+      for (let node: Element | null = element; node; node = node.parentElement) {
+        const style = getComputedStyle(node);
+        if (style.outlineStyle !== 'none' && style.outlineWidth !== '0px') found.push(node.tagName);
+      }
+      return found;
+    });
+    expect(outlined, 'no outline on the field or its ancestors').toEqual([]);
+    const { diff, rect } = await focusDiff(page, await indicatorBox(page, focused));
+    expect(indicatorProblems(diff, rect)).toEqual([]);
+    const stray = await strayFocusDiff(page, focused, tabKey(browserName), browserName === 'webkit' ? 'Alt+Shift+Tab' : 'Shift+Tab');
+    if (stray !== null) expect(stray, 'focus changes nothing while the keyboard mode is off').toBe(0);
+  });
+}
+
+test('account typeahead select: the focus measurement fails when a ring surrounds the field', async ({ page, browserName }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openAccount(page, byName('personal-info-select'));
+  // A deliberately wrong style: a ring around the field in keyboard mode. The measurement must reject it.
+  await page.addStyleTag({
+    content:
+      '* { caret-color: transparent !important; } html[data-at-focus="keyboard"] .pf-v5-c-menu-toggle.pf-m-typeahead:has(input:focus-visible) { box-shadow: 0 0 0 3px #c00 !important; }',
+  });
+  const focused = await tabTo(page, browserName, typeahead);
+  await focused.evaluate((element) => element.scrollIntoView({ block: 'center' }));
+  await settle(page);
+  const { diff, rect } = await focusDiff(page, await indicatorBox(page, focused));
+  const problems = indicatorProblems(diff, rect);
+  expect(problems).toContain('line on the top edge');
+  expect(problems).toContain('more than one straight line');
+});
+
+test('account typeahead select: typing filters the options and the keyboard picks one', async ({ page, browserName }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openAccount(page, byName('personal-info-select'));
+  await tabTo(page, browserName, typeahead);
+  await page.keyboard.type('Esk');
+  const options = page.locator('[role="listbox"] [role="option"]:visible');
+  await expect(options).toHaveText(['Eskişehir']);
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await expect(page.locator(typeahead)).toHaveValue('Eskişehir');
+  await expect(options).toHaveCount(0);
+  // The console drops focus to the page body after the pick. The theme script gives it back to the field.
+  await expect(page.locator(typeahead)).toBeFocused();
+  expect(await page.evaluate(() => document.documentElement.dataset.atFocus)).toBe('keyboard');
+});
+
+test('account groups: the row checkboxes have a name and stay out of the Tab order', async ({ page }) => {
+  await openAccount(page, byName('groups'));
+  const boxes = page.locator('#groups-list .pf-v5-c-check.pf-m-standalone > input[type="checkbox"]');
+  await expect(boxes).toHaveCount(2);
+  await expect(boxes.nth(0)).toHaveAccessibleName('Örnek alt ekip: Doğrudan üyelik');
+  await expect(boxes.nth(1)).toHaveAccessibleName('Örnek ekip: Doğrudan üyelik');
+  // The stock console draws them disabled. A disabled checkbox never takes focus, so it needs no focus line.
+  for (const box of await boxes.all()) await expect(box).toBeDisabled();
+});
+
+for (const name of ['linked-accounts', 'organizations']) {
+  test(`account ${name}: each pagination landmark has its own name`, async ({ page }) => {
+    await openAccount(page, byName(name));
+    const names = await page.locator('nav.pf-v5-c-pagination__nav').evaluateAll((navs) => navs.map((nav) => nav.getAttribute('aria-label')));
+    expect(names.length).toBeGreaterThanOrEqual(2);
+    expect(new Set(names).size, `names: ${names.join(', ')}`).toBe(names.length);
+    for (const label of names) expect(label).toMatch(/(^|: )Sayfalar(, liste sonu)?$/);
+  });
+}
+
+/** Resolves a theme colour token to the computed colour that the browser paints. */
+const tokenColor = (page: Page, token: string) =>
+  page.evaluate((name) => {
+    const probe = document.createElement('div');
+    probe.style.backgroundColor = `var(${name})`;
+    document.querySelector('main')!.append(probe);
+    const value = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return value;
+  }, token);
+
+/** The colour that shows behind an element: its own background or the first painted ancestor background. */
+const paintedBackground = (target: Locator) =>
+  target.evaluate((element) => {
+    for (let node: Element | null = element; node; node = node.parentElement) {
+      const color = getComputedStyle(node).backgroundColor;
+      if (color !== 'rgba(0, 0, 0, 0)' && color !== 'transparent') return color;
+    }
+    return '';
+  });
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`account linked-accounts (${scheme}): icon, name and status label do not overlap or get cut`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await openAccount(page, byName('linked-accounts'));
+    const row = page.locator('.pf-v5-c-data-list__item[id$="-idp"]').filter({ hasText: 'Örnek giriş hizmeti' }).first();
+    const icon = row.locator('.pf-v5-l-split__item:not(.pf-m-fill)').first();
+    const name = row.locator('[id$="-idp-name"]');
+    const iconBox = (await icon.boundingBox())!;
+    const nameBox = (await name.boundingBox())!;
+    // The name starts after the icon and its margin. The icon item is not squeezed below the icon itself.
+    expect(nameBox.x, 'gap between icon and name').toBeGreaterThan(iconBox.x + iconBox.width);
+    const squeezed = await icon.evaluate((element) => element.scrollWidth > element.clientWidth);
+    expect(squeezed, 'icon fits in its item').toBe(false);
+    const label = row.locator('[id$="-idp-label"] .pf-v5-c-label__text');
+    await expect(label).toHaveText('Sistem tanımlı');
+    const cut = await label.evaluate((element) => element.scrollWidth > element.clientWidth);
+    expect(cut, 'status label is not cut').toBe(false);
+  });
+}
+
+test('account linked-accounts (dark): the search field uses the field tokens', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await openAccount(page, byName('linked-accounts'));
+  await expect(page.locator('html')).toHaveClass(/pf-v5-theme-dark/);
+  const group = page.locator('.pf-v5-c-input-group .pf-v5-c-text-input-group').first();
+  const style = await group.evaluate((element) => {
+    const computed = getComputedStyle(element);
+    return { background: computed.backgroundColor, width: computed.borderTopWidth, color: computed.borderTopColor, style: computed.borderTopStyle };
+  });
+  expect(style.background).toBe(await tokenColor(page, '--at-color-bg-input'));
+  expect(style.style).toBe('solid');
+  expect(style.width).toBe('1px');
+  expect(style.color).toBe(await tokenColor(page, '--at-color-field-border'));
+});
+
+test('account organizations (dark): the table sits on the theme surface without a thick band', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await openAccount(page, byName('organizations'));
+  await expect(page.locator('html')).toHaveClass(/pf-v5-theme-dark/);
+  const surface = await tokenColor(page, '--at-color-bg-panel');
+  const table = page.locator('main table.pf-v5-c-table').first();
+  expect(await paintedBackground(table)).toBe(surface);
+  const cell = table.locator('tbody td').filter({ hasText: 'Örnek kuruluş' }).first();
+  expect(await paintedBackground(cell)).toBe(surface);
+  // On a narrow screen the stacked table must not draw a band thicker than a normal line.
+  const bands = await table.evaluate((element) =>
+    [...element.querySelectorAll('tbody, tbody > tr')].map((node) => {
+      const computed = getComputedStyle(node);
+      return Math.max(Number.parseFloat(computed.borderTopWidth), Number.parseFloat(computed.borderBottomWidth));
+    }),
+  );
+  for (const width of bands) expect(width, 'table line width').toBeLessThanOrEqual(1);
+});
 
 test('account: user menu opens with the keyboard and its items show focus', async ({ page, browserName }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });

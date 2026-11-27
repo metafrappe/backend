@@ -75,6 +75,29 @@ class TestIdentity(AiTestCase):
 
 		self.assertEqual(response.status_code, 401)
 
+	def test_token_for_another_service_is_rejected(self):
+		from platform_core.ai import agent_token
+
+		client = self.login(USER_A)
+		token = self.issue_token(client)
+		key = agent_token._key(token)
+		record = frappe.cache.get_value(key, use_local_cache=False)
+		record["audience"] = "other-service"
+		frappe.cache.set_value(key, record, expires_in_sec=300)
+		response = self.rpc(self.anonymous(), "tools/list", token=token)
+		self.assertEqual(response.status_code, 401)
+		log = self.last_log(deny_reason="wrong_audience")
+		self.assertEqual((log.user, log.principal), (USER_A, "agent_token"))
+
+	def test_explicitly_revoked_token_is_rejected(self):
+		from platform_core.ai import agent_token
+
+		client = self.login(USER_A)
+		token = self.issue_token(client)
+		frappe.cache.delete_value(agent_token._key(token))
+		response = self.rpc(self.anonymous(), "tools/list", token=token)
+		self.assertEqual(response.status_code, 401)
+
 	def test_cookie_together_with_token_is_rejected(self):
 		client = self.login(USER_A)
 		token = self.issue_token(client)
@@ -161,7 +184,11 @@ class TestIdentity(AiTestCase):
 			"io.modelcontextprotocol/clientCapabilities": {},
 			"io.modelcontextprotocol/clientInfo": {"name": "sahte-istemci", "version": "1.0"},
 		}
-		headers = {"MCP-Protocol-Version": LATEST, "Mcp-Method": "tools/call", "Mcp-Name": "plt_search_doctypes"}
+		headers = {
+			"MCP-Protocol-Version": LATEST,
+			"Mcp-Method": "tools/call",
+			"Mcp-Name": "plt_search_doctypes",
+		}
 
 		ok = self.rpc(
 			client,

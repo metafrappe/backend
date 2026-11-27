@@ -435,6 +435,22 @@ Proje sahibi 22 Kasım 2026 Pazar günü şöyle yazdı: “Herşeyi onaylıyoru
   - Eklerin listesi ve test adımları [devir notundadır](docs/handoff/press-tr-extension-test.md).
   - Bu karar önce O-54 numarasını taşıyordu. O-54 ile O-61 arasındaki numaralar başka kararlara verildi. Karar 25 Kasım 2026 Çarşamba günü O-62 oldu.
 
+- **O-63. Yapay zekâ aracı kimlik kullanımını açıkça ayırır.**
+  AJA-82 görevi, yerel araçla servis kullanımını ayrı tutar.
+  Mimarın AJA-170 incelemesi bu sınırı önerdi.
+  `own_user`, kullanıcının mevcut yerel aracıdır.
+  `service_account`, ayrı Press hesabıyla yalnız operasyon araçlarını kullanır.
+  `delegated`, kısa süreli Press kullanıcı iznini yalnız bellekte tutar.
+  Keycloak girişi, Press erişim izninin yerine geçmez.
+  Aracı izni tek hedef taşır. Her kullanımda hedef yeniden denetlenir.
+  Mevcut `fsat_` izni, rastgele üretilen ve sunucuda kaydı tutulan bir değerdir.
+  Bu düzeltme, `fsat_` iznini imzalı JWT olarak sunmaz.
+  İmzalı izin kanıtı, ortak doğrulama kitaplığının ayrı testlerinden gelir.
+  Destek onayı AJA-101 görevindedir. Bu dal destek kodunu değiştirmez.
+  Gerçek hesap, bağlantı sınırı ve OAuth kurulumu sunucu devrinde doğrulanır.
+  Yerel testler gerçek Press denemesi yerine geçmez.
+  - Bu karar önce O-57 numarasını taşıyordu. O-57 ile O-62 arasındaki numaralar başka kararlara verildi. Karar 27 Kasım 2026 Cuma günü O-63 oldu.
+
 ## Karar sitesine işlenecek farklar
 
 Backend kararları karar sitesinin bazı maddelerini değiştirdi. Site ayrı bir işte, kendi denetimleriyle güncellenir. Farklar şunlardır:

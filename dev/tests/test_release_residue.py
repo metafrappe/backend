@@ -11,7 +11,7 @@ Content comes from Git objects, never from the working folder. The default
 snapshot is HEAD. Set RELEASE_REV to another commit, or to ":" to scan the
 staged content before a commit:
 
-    RELEASE_REV=: python3 -B -m unittest backend/dev/tests/test_release_residue.py
+    RELEASE_REV=: python3 -B -m unittest dev/tests/test_release_residue.py
 
 Real names are never written in this file. Only SHA-256 digests of the
 normalised two-word name are stored, the same way the naming gate stores the
@@ -30,7 +30,8 @@ from pathlib import Path
 
 STAGED = ":"
 
-REPO = Path(__file__).resolve().parents[3]
+# The repository root is two levels above this folder: dev/tests/ (AJA-1617).
+REPO = Path(__file__).resolve().parents[2]
 
 # SHA-256 of "<first> <last>" after normalise(): lower case, no diacritics.
 NAME_DIGESTS = {
@@ -77,7 +78,7 @@ PUBLIC_EXAMPLES = {"1.1.1.1", "8.8.8.8", "9.9.9.9", "2606:4700:4700::1111", "200
 # A version string such as "WhatsApp/2.23.20.0" is not an address.
 VERSION_PREFIX = re.compile(r"[A-Za-z]/$")
 # Third-party data that is not ours: the common password list for Keycloak.
-PUBLIC_IP_EXEMPT = {"backend/identity/keycloak/realm/password-blacklists/common-passwords.txt"}
+PUBLIC_IP_EXEMPT = {"identity/keycloak/realm/password-blacklists/common-passwords.txt"}
 ENV_FILE = re.compile(r"(?:^|/)(?:\.env(?:\.[^/]+)?|[^/]+\.env(?:\.[^/]+)?)$")
 ENV_SECRET = re.compile(
     r"^\s*(?:export\s+)?([A-Za-z0-9_]*(?:PASSWORD|PASSWD|SECRET|TOKEN|API_KEY|PRIVATE_KEY)[A-Za-z0-9_]*)"
@@ -456,6 +457,21 @@ class FileListTest(unittest.TestCase):
         (inner / "README.md").write_text("plain\n", encoding="utf-8")
         with self.assertRaisesRegex(RuntimeError, "Git root"):
             list(tracked_files(inner))
+
+
+class RepositoryRootTest(unittest.TestCase):
+    """AJA-1617: the code lives at the root of metafrappe/backend, not under backend/."""
+
+    def test_repo_is_the_git_top_level(self):
+        top = subprocess.run(
+            ["git", "-C", str(Path(__file__).resolve().parent), "rev-parse", "--show-toplevel"],
+            check=True, capture_output=True,
+        ).stdout.decode().strip()
+        self.assertEqual(REPO, Path(top).resolve())
+
+    def test_exempt_list_uses_paths_from_the_repository_root(self):
+        self.assertIn("identity/keycloak/realm/password-blacklists/common-passwords.txt", PUBLIC_IP_EXEMPT)
+        self.assertFalse(any(name.startswith("backend/") for name in PUBLIC_IP_EXEMPT))
 
 
 class ReleaseResidueTest(unittest.TestCase):

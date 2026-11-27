@@ -193,6 +193,8 @@ doc_events = {
 		"on_trash": [
 			"platform_core.shell.cache.invalidate_permissions",
 			"platform_core.mobile.store.delete_user_state",
+			# G-139: tour progress is personal data of the user.
+			"platform_core.shell.tour.delete_user_progress",
 		],
 	},
 	"Role": {

@@ -1,0 +1,96 @@
+{
+ "actions": [],
+ "autoname": "Prompt",
+ "creation": "2026-11-28 12:00:00.000000",
+ "description": "Progress of one user in one interface tour or task list. The tour engine reads it to resume the tour and to show only new steps after a tour version change. Users change it only through the tour API.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "user",
+  "tour_id",
+  "tour_version",
+  "status",
+  "current_step",
+  "seen_steps"
+ ],
+ "fields": [
+  {
+   "description": "User who owns this progress. The record is deleted with the user.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Stable identifier of the tour, defined by the user interface. Example: leave-application.",
+   "fieldname": "tour_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Tour ID",
+   "length": 80,
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Version of the tour content the user last saw. A newer version shows only the steps the user has not seen.",
+   "fieldname": "tour_version",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Tour Version",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Active: the tour is open or opens again. Snoozed: it opens again on the next visit. Skipped: closed for this version. Completed: finished for this version.",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "active\nsnoozed\nskipped\ncompleted",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Step identifier to resume the tour from. Empty when there is none.",
+   "fieldname": "current_step",
+   "fieldtype": "Data",
+   "label": "Current Step",
+   "length": 80,
+   "read_only": 1
+  },
+  {
+   "description": "JSON list of step identifiers the user has seen, in first-seen order.",
+   "fieldname": "seen_steps",
+   "fieldtype": "JSON",
+   "label": "Seen Steps",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "links": [],
+ "modified": "2026-11-28 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Shell",
+ "name": "PLT Tour Progress",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

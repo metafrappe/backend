@@ -1012,3 +1012,16 @@ Support URL,Destek bağlantısı,PLT Help Topic
 Optional HTTPS URL or same-site relative path. Leave blank when unavailable.,HTTPS adresini veya site içindeki yolu yazın. Bağlantı yoksa alanı boş bırakın.,PLT Help Topic
 Help links must use HTTPS or a same-site relative path.,Yardım bağlantılarında HTTPS adresi veya site içindeki yol kullanılmalıdır.,
 A valid component identifier is required.,Geçerli bir bileşen kimliği yazın.,
+PLT Tour Progress,Tur İlerlemesi,PLT Tour Progress
+"Progress of one user in one interface tour or task list. The tour engine reads it to resume the tour and to show only new steps after a tour version change. Users change it only through the tour API.","Bir kullanıcının bir arayüz turundaki ya da görev listesindeki ilerlemesi. Tur motoru bu kaydı okur. Turu kaldığı yerden sürdürür. Tur sürümü değişince yalnız yeni adımları gösterir. Kullanıcılar bu kaydı yalnız tur uçlarıyla değiştirir.",PLT Tour Progress
+Tour ID,Tur Kimliği,PLT Tour Progress
+Tour Version,Tur Sürümü,PLT Tour Progress
+Current Step,Geçerli Adım,PLT Tour Progress
+Seen Steps,Görülen Adımlar,PLT Tour Progress
+"User who owns this progress. The record is deleted with the user.","Bu ilerlemenin sahibi olan kullanıcı. Kullanıcı silinince kayıt da silinir.",PLT Tour Progress
+"Stable identifier of the tour, defined by the user interface. Example: leave-application.","Turun değişmeyen kimliği. Kimliği arayüz verir. Örnek: leave-application.",PLT Tour Progress
+"Version of the tour content the user last saw. A newer version shows only the steps the user has not seen.","Kullanıcının en son gördüğü tur içeriğinin sürümü. Yeni sürüm yalnız görülmemiş adımları gösterir.",PLT Tour Progress
+"Active: the tour is open or opens again. Snoozed: it opens again on the next visit. Skipped: closed for this version. Completed: finished for this version.","Etkin: tur açıktır ya da yeniden açılır. Ertelendi: tur sonraki ziyarette yeniden açılır. Atlandı: tur bu sürüm için kapalıdır. Bitti: tur bu sürüm için tamamlandı.",PLT Tour Progress
+"Step identifier to resume the tour from. Empty when there is none.","Turun sürdüreceği adımın kimliği. Böyle bir adım yoksa alan boş kalır.",PLT Tour Progress
+"JSON list of step identifiers the user has seen, in first-seen order.","Kullanıcının gördüğü adımların kimlik listesi. Liste JSON biçimindedir. Sıra ilk görülme sırasıdır.",PLT Tour Progress
+The tour progress is not valid.,Tur ilerlemesi geçerli değil.,shell.tour

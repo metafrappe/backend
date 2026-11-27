@@ -27,6 +27,12 @@ KEPT = (
     ("dev/security/.gitleaksignore", None, "old commit fingerprints"),
     # This test names the prefix it looks for.
     ("deploy/tests/test_repo_layout.py", None, "the test itself"),
+    # This test checks that the Semgrep review lists no file under the old prefix (AJA-1673).
+    (
+        "deploy/tests/test_moved_config_secrets.py",
+        'name.startswith("backend/")',
+        "checks the review has no old paths",
+    ),
 )
 # The docs/standartlar paths change in a later task (AJA-1587, "Sınır").
 KEPT_TEXT = ("backend/docs/standartlar",)

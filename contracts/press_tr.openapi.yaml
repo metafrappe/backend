@@ -8,6 +8,7 @@ paths:
       operationId: getLoginUrl
       summary: Get a single-use Keycloak login URL.
       description: Starts a rate-limited browser login. A separate random value in an HttpOnly SameSite=Lax cookie binds the state record to the initiating browser for 600 seconds. HTTPS uses a Secure cookie with the __Host- prefix.
+      security: []
       responses:
         "200":
           description: The URL contains state, nonce and a PKCE S256 challenge.
@@ -46,6 +47,7 @@ paths:
             type: string
             minLength: 1
             maxLength: 2048
+      security: []
       responses:
         "302":
           description: Redirected to the Press dashboard after sign-in or to account deletion after reauthentication.
@@ -79,6 +81,7 @@ paths:
                   type: string
                   minLength: 1
                   maxLength: 8192
+      security: []
       responses:
         "200":
           description: Logout processed, including a repeated logout.
@@ -315,6 +318,7 @@ paths:
       operationId: requestAccountRecovery
       summary: Ask for account recovery after losing a strong key.
       description: Opens a recovery review record when the address belongs to a linked account. Email access alone never recovers an account. The request does not change credentials, send a sign-in link or open a session. A reviewer who is not the account owner approves or rejects the record. The answer is the same for every address. A background job looks up the account after the answer, so the answer time does not show whether an account exists.
+      security: []
       requestBody:
         required: true
         content:

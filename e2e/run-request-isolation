@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# != 1 ]]; then
+    printf 'Usage: %s LOCAL_TENANT_IMAGE\n' "$0" >&2
+    exit 2
+fi
+
+repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+tar --exclude='__pycache__' --exclude='*.pyc' -cf - -C "$repo" \
+    apps/platform_core/platform_core \
+    e2e/tests/test_request_isolation.py |
+    docker --context colima-factory run --rm -i --network none --pull never \
+        --entrypoint bash "$1" -c '
+            set -euo pipefail
+            snapshot=/tmp/request-isolation
+            mkdir -p "$snapshot"
+            tar -xf - -C "$snapshot"
+            cd /home/frappe/frappe-bench
+            export PYTHONPATH="$snapshot/apps/platform_core"
+            env/bin/python -B -c "import sys, frappe; print(sys.version); print(\"Frappe\", frappe.__version__)"
+            exec env/bin/python -B "$snapshot/e2e/tests/test_request_isolation.py" -v
+        '

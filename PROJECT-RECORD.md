@@ -435,6 +435,29 @@ Proje sahibi 22 Kasım 2026 Pazar günü şöyle yazdı: “Herşeyi onaylıyoru
   - Eklerin listesi ve test adımları [devir notundadır](docs/handoff/press-tr-extension-test.md).
   - Bu karar önce O-54 numarasını taşıyordu. O-54 ile O-61 arasındaki numaralar başka kararlara verildi. Karar 25 Kasım 2026 Çarşamba günü O-62 oldu.
 
+- **O-63. Özel çağrı testleri mevcut sözleşme kaydını kullanır.**
+  - G-126 için ikinci bir çağrı kataloğu oluşturulmaz.
+  - Çağrı yolları, yetkileri ve hata yanıtları OpenAPI dosyalarında kalır.
+  - Sahip ve durum tablosu `docs/contracts.md` dosyasında tutulur.
+  - AJA-73 testleri mevcut `ai-readiness` kapısının çıkış kodunu denetler.
+  - Kayıtsız Frappe çağrısı bu kapıdan geçmemelidir.
+  - Servislerin özel HTTP uçları için aynı kapsama henüz kanıt yoktur.
+  - Bu eksik kapanmadan G-126 tamamen kapanmış sayılmaz.
+  - Yerel oturum testi gerçek Frappe istek yolunu kullanır.
+  - Test oturum saklamayı ve dış bağımlılıkları taklit eder.
+  - Bu test tam oturum açma akışının kanıtı değildir.
+  - Gerçek alan adı ve tarayıcı kanıtı sunucu devrinde tamamlanır.
+  - Devir kaydı `docs/handoff/session-call-boundaries.md` dosyasındadır.
+  - Mimar AJA-117 görevinde yedi koşul koydu.
+  - Beş koşulu `dev/ai_readiness/test_call_registry.py` denetler.
+  - Bu koşullar misafir çağrısı, hata yanıtı, sahip tablosu, ad alanı ve sürümdür.
+  - MCP çağrısı misafir kuralının tek istisnasıdır. Çağrı OAuth jetonunu kendi denetler.
+  - Çağrı düzeyinde durum işareti henüz yoktur.
+  - Yama ile bağlanan iki Press çağrısının eşlemesi kayıtta henüz yoktur.
+  - Kapı henüz zorunlu CI denetiminde koşmaz.
+  - Bu üç eksik kapanana kadar G-126 durumu "in-progress" kalır.
+  - Bu karar önce O-57 numarasını taşıyordu. O-57 başka bir karara verildi. Karar 28 Kasım 2026 Cumartesi günü O-63 oldu.
+
 ## Karar sitesine işlenecek farklar
 
 Backend kararları karar sitesinin bazı maddelerini değiştirdi. Site ayrı bir işte, kendi denetimleriyle güncellenir. Farklar şunlardır:

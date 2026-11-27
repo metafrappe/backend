@@ -29,9 +29,10 @@ Bir dal şu sırayla ana dala girer:
 1. Geliştirici dalı GitHub'a gönderir.
 2. Geliştirici `main` dalına PR açar.
 3. GitHub CI kendiliğinden koşar.
-4. QA ve Committer PR'ı inceler.
-5. Committer onay verince göreve “birleştirmeye hazır” yazar.
-6. ProPR, PR'ı birleştirir.
+4. ProPR PR'ı inceler. Geliştirici ProPR bulgularını düzeltir. Ayrıntı aşağıdaki bölümdedir.
+5. QA ve Committer PR'ı inceler.
+6. Committer onay verince göreve “birleştirmeye hazır” yazar.
+7. ProPR, PR'ı birleştirir.
 
 İki yasak vardır:
 
@@ -39,6 +40,21 @@ Bir dal şu sırayla ana dala girer:
 - Hiçbir ajan PR'ı GitHub düğmesiyle ya da `gh pr merge` ile birleştirmez.
 
 Kaynak: müşteri kararı, 27 Kasım 2026 Cuma (AJA-1548).
+
+## QA'dan önce ProPR incelemesi
+
+Her PR, QA'dan önce ProPR yapay zekâ incelemesinden geçer. Sıra şöyledir:
+
+1. PR açılınca Committer ya da geliştirici PR'a `/review` yorumu yazar.
+2. ProPR incelemesi biter. İnceleme sonucu PR'da görünür.
+3. Geliştirici bulguları düzeltir. Düzeltmeyi aynı dala gönderir.
+4. QA bundan sonra başlar.
+
+QA, ProPR incelemesi bitmeden denemeye başlamaz. PR'da `/review` yorumu yoksa QA işi geliştiriciye geri verir.
+
+Geliştirici bir bulguyu düzeltmezse nedenini PR'a yazar. Örnek: "Bulgu yanlış, çünkü bu dosya test verisidir."
+
+Kaynak: müşteri kararı, 28 Kasım 2026 Cumartesi (AJA-2151).
 
 ## Kabul edilen kanıt
 

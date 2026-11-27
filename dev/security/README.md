@@ -120,3 +120,38 @@ Uç listesi `backend/apps/<uygulama>/<paket>/` altındaki Python kaynaklarını 
 Çalışırken eklenen uçlar için Frappe yapılandırmasını ayrıca inceleyin.
 Sınıf yöntemini listede sınıf ve yöntem adıyla bulabilirsiniz.
 Uygulama klasörü yoksa kapı hata verir.
+
+## Kiracı uç envanteri (G-143)
+
+Kiracı sitesi, müşterinin kendi Frappe sitesidir.
+Envanter, kiracı sitesinin bütün `/api/method/*` uçlarını listeler.
+Envanter `tenant-endpoints.json` dosyasındadır.
+Dosyada `platform_core` ve `hrms_tr` uygulamalarının uçları vardır.
+`press_tr` Press tarafında çalışır. Bu yüzden listede yoktur.
+
+Her satırda ucu çağıran istemci yazar.
+Bu bilgi `source` alanındadır.
+Kanıt `evidence` alanına yazılır.
+Kaynak türleri dosyanın `sources` bölümünde açıklanır.
+Örneğin `spa` panel arayüzüdür, `mcp` yapay zekâ istemcisidir.
+Çağıranı bulunmayan uç `none` olur.
+
+Desk uçları `desk` bölümündedir.
+Desk, Frappe'nin kendi yönetim ekranıdır.
+Her Desk ucunun bir gerekçesi vardır.
+Örneğin `search_link` panelin bağlantı alanında kullanılır.
+
+`test_tenant_endpoints.py` testi envanteri kodla karşılaştırır.
+Yeni ya da silinmiş bir uç testi kırmızı yapar.
+Yöntem veya misafir erişimi değişirse de test kırmızı olur.
+
+Yeni bir uç eklediyseniz bu komutu çalıştırın:
+
+```bash
+python3.14 -B dev/security/tenant_endpoints.py --write .
+```
+
+Komut yeni satırı `unclassified` olarak ekler.
+Sonra satırın `source` ve `evidence` alanlarını doldurun.
+Kenar sunucudaki varsayılan ret bu işin parçası değildir.
+O adım canlı sunucu ister.

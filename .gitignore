@@ -1,0 +1,15 @@
+# Environment variables and generated credentials
+.env
+.env.production
+# Staging files for generated e2e credentials (e2e/stack)
+/e2e/.fs-stack-env.[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f].tmp
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Local Pane state and temporary test data
+/.pane/

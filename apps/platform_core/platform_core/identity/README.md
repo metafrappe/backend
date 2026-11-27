@@ -152,7 +152,7 @@ Bu kural bilerek konmuştur. Acil giriş açık kalırsa sonraki dağıtım bunu
 
 Dağıtım bu yüzden durduysa önce acil işi bitirin. Sonra ayarı `1` yapın. Sonra dağıtımı yeniden başlatın.
 
-alpha ve beta ortamlarında bu denetim yoktur. Ortamların kuralları [ortamlar belgesindedir](../../../../../docs/dagitim/ortamlar.md#acil-yönetici-girişi).
+alpha ve beta ortamlarında bu denetim yoktur. Ortamların kuralları [ortamlar belgesindedir](../../../../docs/dagitim/ortamlar.md#acil-yönetici-girişi).
 
 ## Hesap silme sırasında bozuk geçmiş kaydını onarma
 

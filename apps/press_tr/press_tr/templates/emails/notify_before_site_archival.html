@@ -1,0 +1,7 @@
+{% extends "templates/emails/ptr_base.html" %}
+{% block title %}{{ _("Your site will be archived", context="press_tr.email") }}{% endblock %}
+{% block content %}
+<p style="margin:0 0 12px;">{{ _("Site", context="press_tr.email") }}: <strong>{{ site_name|e }}</strong></p>
+<p style="margin:0 0 12px;">{{ _("Days left before archiving", context="press_tr.email") }}: <strong>{{ site_archive_notification_days|e }}</strong></p>
+<p style="margin:0;">{{ _("Start the site again before this date to keep it.", context="press_tr.email") }}</p>
+{% endblock %}

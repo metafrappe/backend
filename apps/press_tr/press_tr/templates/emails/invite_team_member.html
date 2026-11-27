@@ -1,0 +1,6 @@
+{% extends "templates/emails/ptr_base.html" %}
+{% block title %}{{ _("You have been invited to a team", context="press_tr.email") }}{% endblock %}
+{% block content %}
+<p style="margin:0 0 12px;">{{ _("Invited by", context="press_tr.email") }}: <strong>{{ invited_by|e }}</strong></p>
+<p style="margin:24px 0 0;"><a href="{{ link|e }}" style="display:inline-block;padding:12px 20px;background:#1d5f4f;color:#ffffff;text-decoration:none;font-weight:600;">{{ _("Accept the invitation", context="press_tr.email") }}</a></p>
+{% endblock %}

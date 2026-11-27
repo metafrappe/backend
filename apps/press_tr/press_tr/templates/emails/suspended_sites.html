@@ -1,0 +1,7 @@
+{% extends "templates/emails/ptr_base.html" %}
+{% block title %}{{ _("Your sites have been stopped", context="press_tr.email") }}{% endblock %}
+{% block content %}
+<p style="margin:0 0 8px;">{{ _("We stopped these sites because a payment is overdue:", context="press_tr.email") }}</p>
+<ul style="margin:0 0 12px;padding-left:20px;">{% for site in sites %}<li>{{ site|e }}</li>{% endfor %}</ul>
+<p style="margin:0;">{{ _("Pay the open invoice to start the sites again.", context="press_tr.email") }}</p>
+{% endblock %}

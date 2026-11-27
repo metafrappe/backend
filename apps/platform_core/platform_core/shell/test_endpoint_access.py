@@ -90,7 +90,9 @@ class TestShellEndpointAccess(ShellHTTPFixture):
 			workspace.set("roles", [{"role": "System Manager"}])
 			workspace.save()
 			frappe.db.commit()
-			status, _unused_headers, body = self.request(BOOTSTRAP, self.privileged_sid, headers={"If-None-Match": etag})
+			status, _unused_headers, body = self.request(
+				BOOTSTRAP, self.privileged_sid, headers={"If-None-Match": etag}
+			)
 			self.assertEqual(status, 200)
 			changed = json.loads(body)["message"]
 			self.assertNotEqual(changed["perm_version"], privileged["perm_version"])

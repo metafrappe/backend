@@ -53,6 +53,93 @@ tags:
     description: Maintenance commands started by hand
 
 paths:
+  /platform_core.api.press_status.receive:
+    post:
+      tags: [admin]
+      operationId: receivePressStatusEvent
+      summary: Store one authenticated Press status event.
+      description: |
+        O-57 defines a dedicated HTTPS channel from press_tr. This route grants no
+        user session, MCP access or Press Webhook configuration permission.
+        Sign the exact bytes timestamp + '.' + event_id + '.' + raw request body
+        using HMAC-SHA256 and a dedicated key of at least 32 bytes.
+        X-Press-Signature is v1= followed by 64 lowercase hexadecimal characters.
+        The receiver accepts a maximum absolute clock difference of 300 seconds.
+        Key IDs support overlapping keys during rotation. Unknown keys fail closed.
+        Send UTF-8 JSON as application/octet-stream. Frappe parses application/json
+        before authentication hooks, so that media type is outside this wire contract.
+        The canonical POST path accepts no query parameters or legacy cmd alias.
+        Authentication precedes JSON parsing and persistence. Rejection logs contain
+        only an error code, never the body, key or signature. The header and body
+        event IDs must match. The inbox has a unique event ID across key rotation.
+        A retry returns 200 without inserting another row. The delivery boundary is
+        inbox persistence only. Agent execution is outside this endpoint's scope.
+        Bodies are limited to 16384 bytes. Additional fields, including data, output
+        and traceback, are rejected. The sender retains failed deliveries and retries
+        on the next existing Press trigger. No new scheduled task is introduced.
+      security: []
+      parameters:
+        - name: X-Press-Event-Id
+          in: header
+          required: true
+          description: Unique event identifier, also signed and present in the body.
+          schema: {type: string, pattern: '^[A-Za-z0-9_-]{1,128}$'}
+        - name: X-Press-Timestamp
+          in: header
+          required: true
+          description: Unix timestamp in whole seconds, without leading zeroes.
+          schema: {type: string, pattern: '^(0|[1-9][0-9]{0,9})$'}
+        - name: X-Press-Key-Id
+          in: header
+          required: true
+          description: Identifier of the dedicated signing key in the receiver keyring.
+          schema: {type: string, minLength: 1, maxLength: 128}
+        - name: X-Press-Signature
+          in: header
+          required: true
+          description: HMAC-SHA256 digest of the exact timestamp, event ID and body bytes.
+          schema: {type: string, pattern: '^v1=[0-9a-f]{64}$'}
+      requestBody:
+        required: true
+        description: Status metadata only. Secrets and execution output are forbidden.
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              contentMediaType: application/json
+              contentSchema: {$ref: '#/components/schemas/PressStatusEvent'}
+      responses:
+        '200':
+          description: Event persisted, or the same event was already persisted.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Frappe method response wrapping the durable delivery acknowledgement.
+                required: [message]
+                properties:
+                  message:
+                    type: object
+                    description: Acceptance of the exact event ID, including an already accepted retry.
+                    additionalProperties: false
+                    required: [accepted, event_id]
+                    properties:
+                      accepted:
+                        type: boolean
+                        const: true
+                        description: The inbox now contains the event.
+                      event_id:
+                        type: string
+                        pattern: '^[A-Za-z0-9_-]{1,128}$'
+                        description: The same stable ID supplied in the signed request.
+        '400':
+          description: Authenticated event violates the payload schema or event ID binding.
+        '401':
+          description: Missing, malformed, stale, altered or unknown-key signature. No inbox write.
+        '413':
+          description: Body exceeds the byte limit. No inbox write.
+        '429':
+          description: Request limit exceeded. Sender keeps the event for a later trigger.
   /platform_core.api.ai.mcp:
     post:
       tags: [mcp]
@@ -523,6 +610,105 @@ components:
       description: A Keycloak access token obtained by Authorization Code with PKCE S256. See x-mcp-oauth.
 
   schemas:
+    PressStatusEvent:
+      type: object
+      description: Allowlisted status transition metadata from the single Press sender.
+      additionalProperties: false
+      required: [event_id, event_type, occurred_at, record_type, record_name, old_status, new_status, team, site, capture]
+      properties:
+        capture:
+          type: string
+          enum: [hook, reconcile]
+          description: |
+            hook preserves the saved transition in the source transaction.
+            reconcile reports the latest observed status after direct database writes.
+            Intermediate states may be absent in a reconcile event. Never infer them.
+        event_id:
+          type: string
+          description: Stable unique event ID retained across delivery retries.
+          pattern: '^[A-Za-z0-9_-]{1,128}$'
+        event_type:
+          type: string
+          description: Versioned status transition event type.
+          enum: [press.job_status.changed.v1, press.deploy_candidate_build.status, press.new_bench_queue.status, press.bench.status]
+        occurred_at:
+          type: string
+          format: date-time
+          description: UTC time at which the sender observed this transition.
+        record_type:
+          type: string
+          description: Press record type whose status changed.
+          enum: [Agent Job, Site, Site Update, Deploy Candidate Build, New Bench Queue, Bench]
+        record_name:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: Name of the Press record. This field does not grant access to it.
+        old_status:
+          type: [string, 'null']
+          maxLength: 140
+          description: Previously observed status, or null for the first observation.
+        new_status:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: Current status read from the authoritative Press record.
+        team:
+          type: [string, 'null']
+          maxLength: 140
+          description: Owning Press team when available on the record or linked site.
+        site:
+          type: [string, 'null']
+          maxLength: 140
+          description: Related site when available. This field is not an authorization claim.
+        group:
+          type: [string, 'null']
+          maxLength: 140
+          description: Release Group for build, queue and bench events only.
+        candidate:
+          type: [string, 'null']
+          maxLength: 140
+          description: Deploy Candidate for build, queue and bench events only.
+        deploy:
+          type: [string, 'null']
+          maxLength: 140
+          description: Related Deploy when known. Deploy itself emits no status event.
+      allOf:
+        - if:
+            properties:
+              record_type: {enum: [Deploy Candidate Build, New Bench Queue, Bench]}
+          then:
+            required: [group, candidate, deploy]
+          else:
+            not:
+              anyOf:
+                - required: [group]
+                - required: [candidate]
+                - required: [deploy]
+        - if:
+            properties:
+              record_type: {const: Deploy Candidate Build}
+          then:
+            properties:
+              event_type: {const: press.deploy_candidate_build.status}
+        - if:
+            properties:
+              record_type: {const: New Bench Queue}
+          then:
+            properties:
+              event_type: {const: press.new_bench_queue.status}
+        - if:
+            properties:
+              record_type: {const: Bench}
+          then:
+            properties:
+              event_type: {const: press.bench.status}
+        - if:
+            properties:
+              record_type: {enum: [Agent Job, Site, Site Update]}
+          then:
+            properties:
+              event_type: {const: press.job_status.changed.v1}
     McpResourceMetadata:
       type: object
       required: [resource, authorization_servers, scopes_supported, bearer_methods_supported]

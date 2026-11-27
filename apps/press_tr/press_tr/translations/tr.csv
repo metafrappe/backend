@@ -141,3 +141,20 @@ Email address of the account to recover.,Kurtarılacak hesabın e-posta adresi.,
 The request was received. The answer does not show whether an account exists.,İstek alındı. Yanıt hesabın var olup olmadığını göstermez.,press_tr.openapi
 The request had extra fields.,İstekte fazladan alan vardı.,press_tr.openapi
 Recovery request limit reached.,Kurtarma isteği sınırına ulaşıldı.,press_tr.openapi
+Active,Etkin,press_tr
+"Allowlisted JSON event metadata. Never execution data, output, traceback or environment payload.",Yalnız izin verilen olay alanları. İş çıktısı ve gizli değerler burada tutulmaz.,press_tr
+Delivered,İletildi,press_tr
+Event Id,Olay kimliği,press_tr
+Name of the Press record to reconcile.,Durumu kontrol edilecek Press kaydının adı.,press_tr
+Observed Status,Gözlenen durum,press_tr
+Payload,Olay içeriği,press_tr
+Press record type to reconcile.,Durumu kontrol edilecek Press kayıt türü.,press_tr
+Record Name,Kayıt adı,press_tr
+Record Type,Kayıt türü,press_tr
+SHA-256 of the record type and record name.,Kayıt türü ve adı için hesaplanan SHA-256 özeti.,press_tr
+Set only after the receiver confirms durable inbox acceptance.,Alıcı olayı kalıcı olarak kaydedince işaretlenir.,press_tr
+Stable unique event ID used by every delivery retry.,Yeniden gönderimde değişmeyen tekil olay kimliği.,press_tr
+State Key,Durum anahtarı,press_tr
+Status represented by the latest durable outbox event.,Giden kutusuna yazılan son olayın durumu.,press_tr
+Webhook endpoint must use HTTPS.,Bildirim adresi HTTPS kullanmalıdır.,press_tr
+Whether the next existing Press trigger must inspect this record.,Sonraki Press tetiğinin kaydı kontrol edip etmeyeceği.,press_tr

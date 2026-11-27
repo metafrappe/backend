@@ -1,0 +1,56 @@
+{
+ "doctype": "DocType",
+ "name": "PTR Job Status Outbox",
+ "module": "Job Status",
+ "description": "Durable signed-channel deliveries. Failed attempts keep the same event ID and body.",
+ "engine": "InnoDB",
+ "autoname": "field:event_id",
+ "naming_rule": "By fieldname",
+ "field_order": [
+  "event_id",
+  "payload",
+  "delivered"
+ ],
+ "fields": [
+  {
+   "fieldname": "event_id",
+   "fieldtype": "Data",
+   "label": "Event Id",
+   "description": "Stable unique event ID used by every delivery retry.",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "payload",
+   "fieldtype": "Code",
+   "label": "Payload",
+   "description": "Allowlisted JSON event metadata. Never execution data, output, traceback or environment payload.",
+   "read_only": 1,
+   "options": "JSON",
+   "reqd": 1
+  },
+  {
+   "fieldname": "delivered",
+   "fieldtype": "Check",
+   "label": "Delivered",
+   "description": "Set only after the receiver confirms durable inbox acceptance.",
+   "read_only": 1,
+   "default": "0",
+   "search_index": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "ASC",
+ "track_changes": 0,
+ "allow_rename": 0,
+ "actions": [],
+ "links": [],
+ "states": []
+}

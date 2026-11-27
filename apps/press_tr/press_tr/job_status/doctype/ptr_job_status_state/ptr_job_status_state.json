@@ -1,0 +1,72 @@
+{
+ "doctype": "DocType",
+ "name": "PTR Job Status State",
+ "module": "Job Status",
+ "description": "Last observed status and active tracking flag for one Press record.",
+ "engine": "InnoDB",
+ "autoname": "field:state_key",
+ "naming_rule": "By fieldname",
+ "field_order": [
+  "state_key",
+  "record_type",
+  "record_name",
+  "observed_status",
+  "active"
+ ],
+ "fields": [
+  {
+   "fieldname": "state_key",
+   "fieldtype": "Data",
+   "label": "State Key",
+   "description": "SHA-256 of the record type and record name.",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "record_type",
+   "fieldtype": "Data",
+   "label": "Record Type",
+   "description": "Press record type to reconcile.",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "record_name",
+   "fieldtype": "Data",
+   "label": "Record Name",
+   "description": "Name of the Press record to reconcile.",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "observed_status",
+   "fieldtype": "Data",
+   "label": "Observed Status",
+   "description": "Status represented by the latest durable outbox event.",
+   "read_only": 1
+  },
+  {
+   "fieldname": "active",
+   "fieldtype": "Check",
+   "label": "Active",
+   "description": "Whether the next existing Press trigger must inspect this record.",
+   "read_only": 1,
+   "default": "1",
+   "search_index": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "ASC",
+ "track_changes": 0,
+ "allow_rename": 0,
+ "actions": [],
+ "links": [],
+ "states": []
+}

@@ -77,6 +77,8 @@ EXPECTED = {
     "platform_core.api.atonota_login.evaluate": PANEL,
     "platform_core.api.atonota_login.open_paid_plan": PANEL,
     "platform_core.api.atonota_login.verification_notice": GUEST,
+    # Press sends signed job status events (G-15). The HMAC signature authorizes the body.
+    "platform_core.api.press_status.receive": GUEST,
     # identity-sync writes the tenant identity records with its service token.
     "platform_core.api.identity.list_identities": SERVICE,
     "platform_core.api.identity.provision": SERVICE,

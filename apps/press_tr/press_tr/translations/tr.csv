@@ -141,3 +141,21 @@ Email address of the account to recover.,Kurtarılacak hesabın e-posta adresi.,
 The request was received. The answer does not show whether an account exists.,İstek alındı. Yanıt hesabın var olup olmadığını göstermez.,press_tr.openapi
 The request had extra fields.,İstekte fazladan alan vardı.,press_tr.openapi
 Recovery request limit reached.,Kurtarma isteği sınırına ulaşıldı.,press_tr.openapi
+Use a permanent email address. Temporary email addresses are not accepted.,Kalıcı bir e-posta adresi yazın. Geçici e-posta adresleri kabul edilmez.,press_tr
+Only the team owner or an admin can do this.,Bu işi yalnız takımın sahibi ya da bir yönetici yapabilir.,press_tr
+This trial product is not available.,Bu deneme ürünü kullanılamıyor.,press_tr
+The name is too long.,Ad çok uzun.,press_tr
+Enter a valid email address.,Geçerli bir e-posta adresi yazın.,press_tr
+Configure the invitation service.,Davet servisini yapılandırın.,press_tr
+Start a trial site request for your own team.,Kendi takımınız için deneme sitesi isteği başlatın.,press_tr.openapi
+Self sign-up opens only through this trial flow. Keycloak registration is closed (G-79). The team owner or a team admin calls it from a signed-in Press session. A disposable email address is rejected. A second call returns the same open request.,Kendi kendine kayıt yalnız bu deneme akışıyla açılır. Keycloak kayıt sayfası kapalıdır (G-79). Takımın sahibi ya da bir takım yöneticisi bu ucu açık Press oturumundan çağırır. Geçici e-posta adresi reddedilir. İkinci çağrı aynı açık isteği döndürür.,press_tr.openapi
+The name of a published Product Trial.,Yayımlanmış bir Product Trial kaydının adı.,press_tr.openapi
+The trial site request of the team.,Takımın deneme sitesi isteği.,press_tr.openapi
+A human Press session of the team owner or a team admin is required.,Takım sahibinin ya da bir takım yöneticisinin kişisel Press oturumu gerekir.,press_tr.openapi
+The trial product does not exist or is not published.,Deneme ürünü yok ya da yayımlanmamış.,press_tr.openapi
+The email address of the session is a disposable address.,Oturumdaki e-posta adresi geçici bir adres.,press_tr.openapi
+Preview an invitation to your own team.,Kendi takımınıza yapılacak davetin önizlemesini alın.,press_tr.openapi
+"Press asks Identity Sync for an invitation preview of the organization of the team (G-16, G-79). Press never executes the invitation. Only the approval layer executes it with the preview digest. A disposable email address is rejected before Identity Sync is called.","Press, takımın kuruluşu için Identity Sync servisinden davet önizlemesi ister (G-16, G-79). Press daveti hiçbir zaman yürütmez. Daveti yalnız onay katmanı önizleme özetiyle yürütür. Geçici e-posta adresi Identity Sync çağrılmadan önce reddedilir.",press_tr.openapi
+The invitation preview from Identity Sync.,Identity Sync servisinden gelen davet önizlemesi.,press_tr.openapi
+The email address is invalid or disposable.,E-posta adresi geçersiz ya da geçici.,press_tr.openapi
+The invitation service or the Keycloak organization of the team is not configured.,Davet servisi ya da takımın Keycloak kuruluşu yapılandırılmamış.,press_tr.openapi

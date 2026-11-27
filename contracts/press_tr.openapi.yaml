@@ -408,6 +408,120 @@ paths:
           description: Keycloak or Identity Sync did not accept the service request.
         "503":
           description: The account deletion service or Keycloak verification keys are unavailable.
+  /api/method/press_tr.api.trial.start:
+    post:
+      operationId: startTrial
+      summary: Start a trial site request for your own team.
+      description: Self sign-up opens only through this trial flow. Keycloak registration is closed (G-79). The team owner or a team admin calls it from a signed-in Press session. A disposable email address is rejected. A second call returns the same open request.
+      security:
+        - pressSession: []
+      parameters:
+        - in: header
+          name: X-Frappe-CSRF-Token
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [product]
+              properties:
+                product:
+                  type: string
+                  minLength: 1
+                  maxLength: 140
+                  description: The name of a published Product Trial.
+      responses:
+        "200":
+          description: The trial site request of the team.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: object
+                    required: [name, site, status, product_trial]
+                    properties:
+                      name:
+                        type: string
+                      site:
+                        type: [string, "null"]
+                      status:
+                        type: string
+                      product_trial:
+                        type: string
+        "403":
+          description: A human Press session of the team owner or a team admin is required.
+        "404":
+          description: The trial product does not exist or is not published.
+        "417":
+          description: The email address of the session is a disposable address.
+  /api/method/press_tr.api.team.invite:
+    post:
+      operationId: inviteTeamMember
+      summary: Preview an invitation to your own team.
+      description: Press asks Identity Sync for an invitation preview of the organization of the team (G-16, G-79). Press never executes the invitation. Only the approval layer executes it with the preview digest. A disposable email address is rejected before Identity Sync is called.
+      security:
+        - pressSession: []
+      parameters:
+        - in: header
+          name: X-Frappe-CSRF-Token
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  maxLength: 254
+                first_name:
+                  type: string
+                  maxLength: 150
+                last_name:
+                  type: string
+                  maxLength: 150
+      responses:
+        "200":
+          description: The invitation preview from Identity Sync.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: object
+                    required: [subject, previews, preview_digest]
+                    properties:
+                      subject:
+                        type: [string, "null"]
+                      previews:
+                        type: array
+                        items:
+                          type: object
+                      preview_digest:
+                        type: string
+        "403":
+          description: A human Press session of the team owner or a team admin is required.
+        "417":
+          description: The email address is invalid or disposable.
+        "502":
+          description: Keycloak or Identity Sync did not accept the service request.
+        "503":
+          description: The invitation service or the Keycloak organization of the team is not configured.
   /api/method/press_tr.api.maintenance.cleanup_expired_sessions:
     post:
       operationId: cleanupExpiredPressSessions

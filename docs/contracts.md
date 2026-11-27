@@ -299,7 +299,19 @@ Bu üç durum ayrı ayrı denenir:
 
 Eski alanlar kalır. `user.language` alanı yanıtın dilini taşımaya devam eder. `formatting.time_zone` alanı sitenin saat dilimini taşımaya devam eder. Eski istemci `locale` alanını okumaz ve bozulmaz.
 
-`locale` alanı şimdilik isteğe bağlıdır. Sunucu henüz bu alanı üretmez. B Takımının sunucu işi bitince alan zorunlu olur. Bu iş [AJA-1734](/AJA/issues/AJA-1734) ile başlar. Kısa açılış yanıtında da `locale` alanı kalır.
+`locale` alanı sözleşmede şimdilik isteğe bağlıdır. Sunucu bu alanı artık her yanıtta üretir. Alanı `platform_core/shell/session_locale.py` dosyası doldurur. Kısa açılış yanıtında da `locale` alanı kalır.
+
+Sunucu ayarları Frappe varsayılanlarından okur:
+
+1. Dil önce kullanıcının `User.language` alanından okunur. Bu alan boşsa `System Settings.language` okunur. İkisi de boşsa `en-GB` kullanılır.
+2. Saat dilimi önce `User.time_zone` alanından okunur. Değer geçersizse sitenin saat dilimi kullanılır.
+3. Kullanıcı ayarları `market` ve `measurement_system` anahtarlarıdır. Bu anahtarların sahibi kullanıcıdır.
+4. Kiracı ayarları `market`, `transaction_currency` ve `billing_country` anahtarlarıdır. Bu anahtarlar genel varsayılandır.
+5. Kullanıcı ölçü sistemi seçmediyse bölge karar verir. Bölge `GB` ya da `US` ise değer `imperial` olur. Öteki bölgelerde değer `metric` olur.
+
+Kullanıcının ölçü seçimini `set_measurement_system` işlevi yazar. Bu işlev yalnız `metric` ve `imperial` değerini kabul eder.
+
+Açılış yanıtının önbellek anahtarı bütün `locale` alanını içerir. Böylece iki pazar ya da iki para birimi aynı yanıtı paylaşmaz.
 
 Takvim günü ile an iki ayrı türdür:
 

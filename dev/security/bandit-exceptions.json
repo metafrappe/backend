@@ -748,6 +748,15 @@
   },
   {
     "rule": "B404",
+    "file": "dev/naming/tests/test_scan_root.py",
+    "code": "import subprocess",
+    "statementSha256": "51fb82e631da1ad4601b6eb0680fdf522b8d498c85382f7601aa0d97124d6193",
+    "reason": "The import alone starts no process; Bandit checks the call sites separately.",
+    "owner": "naming-history-fix",
+    "ignoreUntil": "2027-02-22"
+  },
+  {
+    "rule": "B404",
     "file": "dev/tests/test_dev_resources.py",
     "code": "import subprocess",
     "statementSha256": "51fb82e631da1ad4601b6eb0680fdf522b8d498c85382f7601aa0d97124d6193",
@@ -992,8 +1001,8 @@
   {
     "rule": "B603",
     "file": "dev/naming/tests/test_check_names.py",
-    "code": "subprocess.run([\"git\", \"-C\", str(self.root), \"add\", \"backend\"], check=True)",
-    "statementSha256": "302d5287a7950a55cc3e7067cbd6bc91f253aa841b079b359cda78af21c889c3",
+    "code": "subprocess.run([\"git\", \"-C\", str(self.root), \"add\", \".\"], check=True)",
+    "statementSha256": "a0c6456155a79f75403ebdac355343ac38d171c22ec48acb4a8ed5b00967d9df",
     "reason": "The test passes fixture Git arguments or repository script arguments as a list without invoking a shell.",
     "owner": "naming-history-fix",
     "ignoreUntil": "2027-02-22"
@@ -1001,8 +1010,8 @@
   {
     "rule": "B603",
     "file": "dev/naming/tests/test_check_names.py",
-    "code": "subprocess.run([\"git\", \"-C\", str(self.root), \"add\", \"backend\"], check=True)",
-    "statementSha256": "dd9e66de090554c5289fb44db2da1e3a5ab0c82a392d812c641e32e570145cd8",
+    "code": "subprocess.run([\"git\", \"-C\", str(self.root), \"add\", \".\"], check=True)",
+    "statementSha256": "f3043847db77d8439d8ad44a81950429a27429b7ca60719842309a7fe9bb4f66",
     "reason": "The test passes fixture Git arguments or repository script arguments as a list without invoking a shell.",
     "owner": "naming-history-fix",
     "ignoreUntil": "2027-02-22"
@@ -1028,8 +1037,8 @@
   {
     "rule": "B603",
     "file": "dev/naming/tests/test_mobile_contract_names.py",
-    "code": "subprocess.run([\"git\", \"-C\", str(root), \"add\", \"backend\"], check=True)",
-    "statementSha256": "5153026315bf137e8cb4932ecf414231130be93936980eea684d57d801a0c453",
+    "code": "subprocess.run([\"git\", \"-C\", str(root), \"add\", \".\"], check=True)",
+    "statementSha256": "ffa14b652d33e32c9268574557cb12a8ea182a8c126867ed53a6e0f6bb6301b6",
     "reason": "The test passes fixture Git arguments or repository script arguments as a list without invoking a shell.",
     "owner": "naming-history-fix",
     "ignoreUntil": "2027-02-22"
@@ -1056,7 +1065,7 @@
     "rule": "B603",
     "file": "dev/naming/tests/test_run_cp2.py",
     "code": "return subprocess.run(",
-    "statementSha256": "350211f08c7e63540f20ee832601a926f2debfbf623569ed8655e556667d499c",
+    "statementSha256": "93a6a2b9ff9291262c4ad89a28b93aefb4b27f7d809fcb7814a907dcd020f6fd",
     "reason": "The test passes fixture Git arguments or repository script arguments as a list without invoking a shell.",
     "owner": "naming-history-fix",
     "ignoreUntil": "2027-02-22"
@@ -1082,8 +1091,8 @@
   {
     "rule": "B603",
     "file": "dev/naming/tests/test_strict_naming_data.py",
-    "code": "subprocess.run([\"git\", \"-C\", str(self.root), \"add\", \"backend\"], check=True)",
-    "statementSha256": "5af2a3c2fa87fffb9badfca6e4d9a9363ee483e868f23714a51b9b898763b275",
+    "code": "subprocess.run([\"git\", \"-C\", str(self.root), \"add\", \".\"], check=True)",
+    "statementSha256": "68e7345d443c6c7b43a34cb8be475924ef866dddc4bf082dd3cbc1db504a9e90",
     "reason": "The test passes fixture Git arguments or repository script arguments as a list without invoking a shell.",
     "owner": "naming-history-fix",
     "ignoreUntil": "2027-02-22"
@@ -1093,6 +1102,33 @@
     "file": "dev/naming/tests/test_strict_naming_data.py",
     "code": "subprocess.run([\"git\", \"init\", \"-q\", \"-b\", \"main\", str(self.root)], check=True)",
     "statementSha256": "156e06c35da15676c7608829bb132c4ff8836d3223a925d4072c23bfad73a9d5",
+    "reason": "The test passes fixture Git arguments or repository script arguments as a list without invoking a shell.",
+    "owner": "naming-history-fix",
+    "ignoreUntil": "2027-02-22"
+  },
+  {
+    "rule": "B603",
+    "file": "dev/naming/tests/test_scan_root.py",
+    "code": "return subprocess.run(",
+    "statementSha256": "0aed2f2303bf953d7ba152db21639becda4544aaa327aaa621f41e14dd68d707",
+    "reason": "The test passes fixture Git arguments or repository script arguments as a list without invoking a shell.",
+    "owner": "naming-history-fix",
+    "ignoreUntil": "2027-02-22"
+  },
+  {
+    "rule": "B603",
+    "file": "dev/naming/tests/test_scan_root.py",
+    "code": "subprocess.run([\"git\", \"init\", \"-q\", \"-b\", \"main\", str(self.root)], check=True)",
+    "statementSha256": "27f9340d13b79988ac1d48afa3a38b289fff18d68d4e0be1e1017ab105c8efde",
+    "reason": "The test passes fixture Git arguments or repository script arguments as a list without invoking a shell.",
+    "owner": "naming-history-fix",
+    "ignoreUntil": "2027-02-22"
+  },
+  {
+    "rule": "B603",
+    "file": "dev/naming/tests/test_scan_root.py",
+    "code": "subprocess.run([\"git\", \"-C\", str(self.root), \"add\", relative], check=True)",
+    "statementSha256": "cc66c722942d8b040545cf726f9456d2ec69f6c8ae4fd5e4b84788fc533879b8",
     "reason": "The test passes fixture Git arguments or repository script arguments as a list without invoking a shell.",
     "owner": "naming-history-fix",
     "ignoreUntil": "2027-02-22"
@@ -1190,8 +1226,8 @@
   {
     "rule": "B607",
     "file": "dev/naming/tests/test_check_names.py",
-    "code": "subprocess.run([\"git\", \"-C\", str(self.root), \"add\", \"backend\"], check=True)",
-    "statementSha256": "302d5287a7950a55cc3e7067cbd6bc91f253aa841b079b359cda78af21c889c3",
+    "code": "subprocess.run([\"git\", \"-C\", str(self.root), \"add\", \".\"], check=True)",
+    "statementSha256": "a0c6456155a79f75403ebdac355343ac38d171c22ec48acb4a8ed5b00967d9df",
     "reason": "The test starts Git through the runner PATH to prepare or inspect its fixture repository.",
     "owner": "naming-history-fix",
     "ignoreUntil": "2027-02-22"
@@ -1199,8 +1235,8 @@
   {
     "rule": "B607",
     "file": "dev/naming/tests/test_check_names.py",
-    "code": "subprocess.run([\"git\", \"-C\", str(self.root), \"add\", \"backend\"], check=True)",
-    "statementSha256": "dd9e66de090554c5289fb44db2da1e3a5ab0c82a392d812c641e32e570145cd8",
+    "code": "subprocess.run([\"git\", \"-C\", str(self.root), \"add\", \".\"], check=True)",
+    "statementSha256": "f3043847db77d8439d8ad44a81950429a27429b7ca60719842309a7fe9bb4f66",
     "reason": "The test starts Git through the runner PATH to prepare or inspect its fixture repository.",
     "owner": "naming-history-fix",
     "ignoreUntil": "2027-02-22"
@@ -1217,8 +1253,8 @@
   {
     "rule": "B607",
     "file": "dev/naming/tests/test_mobile_contract_names.py",
-    "code": "subprocess.run([\"git\", \"-C\", str(root), \"add\", \"backend\"], check=True)",
-    "statementSha256": "5153026315bf137e8cb4932ecf414231130be93936980eea684d57d801a0c453",
+    "code": "subprocess.run([\"git\", \"-C\", str(root), \"add\", \".\"], check=True)",
+    "statementSha256": "ffa14b652d33e32c9268574557cb12a8ea182a8c126867ed53a6e0f6bb6301b6",
     "reason": "The test starts Git through the runner PATH to prepare or inspect its fixture repository.",
     "owner": "naming-history-fix",
     "ignoreUntil": "2027-02-22"
@@ -1253,8 +1289,8 @@
   {
     "rule": "B607",
     "file": "dev/naming/tests/test_strict_naming_data.py",
-    "code": "subprocess.run([\"git\", \"-C\", str(self.root), \"add\", \"backend\"], check=True)",
-    "statementSha256": "5af2a3c2fa87fffb9badfca6e4d9a9363ee483e868f23714a51b9b898763b275",
+    "code": "subprocess.run([\"git\", \"-C\", str(self.root), \"add\", \".\"], check=True)",
+    "statementSha256": "68e7345d443c6c7b43a34cb8be475924ef866dddc4bf082dd3cbc1db504a9e90",
     "reason": "The test starts Git through the runner PATH to prepare or inspect its fixture repository.",
     "owner": "naming-history-fix",
     "ignoreUntil": "2027-02-22"
@@ -1264,6 +1300,24 @@
     "file": "dev/naming/tests/test_strict_naming_data.py",
     "code": "subprocess.run([\"git\", \"init\", \"-q\", \"-b\", \"main\", str(self.root)], check=True)",
     "statementSha256": "156e06c35da15676c7608829bb132c4ff8836d3223a925d4072c23bfad73a9d5",
+    "reason": "The test starts Git through the runner PATH to prepare or inspect its fixture repository.",
+    "owner": "naming-history-fix",
+    "ignoreUntil": "2027-02-22"
+  },
+  {
+    "rule": "B607",
+    "file": "dev/naming/tests/test_scan_root.py",
+    "code": "subprocess.run([\"git\", \"init\", \"-q\", \"-b\", \"main\", str(self.root)], check=True)",
+    "statementSha256": "27f9340d13b79988ac1d48afa3a38b289fff18d68d4e0be1e1017ab105c8efde",
+    "reason": "The test starts Git through the runner PATH to prepare or inspect its fixture repository.",
+    "owner": "naming-history-fix",
+    "ignoreUntil": "2027-02-22"
+  },
+  {
+    "rule": "B607",
+    "file": "dev/naming/tests/test_scan_root.py",
+    "code": "subprocess.run([\"git\", \"-C\", str(self.root), \"add\", relative], check=True)",
+    "statementSha256": "cc66c722942d8b040545cf726f9456d2ec69f6c8ae4fd5e4b84788fc533879b8",
     "reason": "The test starts Git through the runner PATH to prepare or inspect its fixture repository.",
     "owner": "naming-history-fix",
     "ignoreUntil": "2027-02-22"
@@ -2627,7 +2681,7 @@
     "rule": "B603",
     "file": "dev/ai_readiness/gate.py",
     "code": "result = subprocess.run(",
-    "statementSha256": "dc75a83d4cc6e753ba853e8f9a97bae285504e9b3cdc82a10aae454fff4a8218",
+    "statementSha256": "4201a2c29ff9dbbfd30e4c054520a7ffd8f6f8b0b93e4ec81e9675f97b419f1d",
     "owner": "ai-readiness-gate",
     "reason": "The gate runs its in-tree naming checker in isolated Python with a bounded timeout and separate arguments.",
     "ignoreUntil": "2027-02-22"
@@ -2635,8 +2689,8 @@
   {
     "rule": "B603",
     "file": "dev/ai_readiness/test_gate.py",
-    "code": "subprocess.run([\"git\", \"-C\", str(self.repository), \"add\", \"backend\"], check=True)",
-    "statementSha256": "c8afb6dd3c35f0486b3464bfffb9cb6e683fc8b230705aa243b35075ecbb0589",
+    "code": "subprocess.run([\"git\", \"-C\", str(self.repository), \"add\", \".\"], check=True)",
+    "statementSha256": "9120967294673af1c68a8ed9ec98109f1cc78d8a04f22b8a9cbf17f90ed5589e",
     "owner": "ai-readiness-gate",
     "reason": "The naming regression test stages its own fixture repository with a fixed Git command.",
     "ignoreUntil": "2027-02-22"
@@ -2725,8 +2779,8 @@
   {
     "rule": "B607",
     "file": "dev/ai_readiness/test_gate.py",
-    "code": "subprocess.run([\"git\", \"-C\", str(self.repository), \"add\", \"backend\"], check=True)",
-    "statementSha256": "c8afb6dd3c35f0486b3464bfffb9cb6e683fc8b230705aa243b35075ecbb0589",
+    "code": "subprocess.run([\"git\", \"-C\", str(self.repository), \"add\", \".\"], check=True)",
+    "statementSha256": "9120967294673af1c68a8ed9ec98109f1cc78d8a04f22b8a9cbf17f90ed5589e",
     "owner": "ai-readiness-gate",
     "reason": "The test runner resolves Git for a fixed add command in its own fixture repository.",
     "ignoreUntil": "2027-02-22"

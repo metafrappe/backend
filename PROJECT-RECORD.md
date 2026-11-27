@@ -446,7 +446,7 @@ Proje sahibi 22 Kasım 2026 Pazar günü şöyle yazdı: “Herşeyi onaylıyoru
   - Bu karar önce O-58 numarasını taşıyordu. Karar 27 Kasım 2026 Cuma günü yeni depoda O-64 oldu.
   - Her kiracı ayrı bir Frappe sitesidir. Redis anahtarlarının başında site adı vardır. Bu yüzden bir sitenin kaydı öteki siteye açılmaz.
   - Çıkışta iki kayıt daha silinir. Birincisi oturumun etkinlik anahtarıdır: `kimlik_activity:sid:<sid>`.
-  - İkincisi kullanıcının başlangıç verisi önbelleğidir. Bu anahtar `platform_core:shell:bootstrap:v1:` ile başlar.
+  - İkincisi kullanıcının başlangıç verisi önbelleğidir. Bu anahtar `platform_core:shell:bootstrap:v2:` ile başlar. Anahtarın tek kaynağı `shell/cache.py` dosyasındaki `BOOTSTRAP_KEY_PREFIX` sabitidir.
   - Kullanıcının etkinlik anahtarı silinmez: `kimlik_activity:user:<kullanıcı>`. Kullanıcının başka cihazdaki oturumu bu anahtarı okur.
   - Silme işini tek bir işlev yapar: `session_policy.forget_session`. İşlevi üç yol çağırır.
   - Birinci yol kullanıcının kendi çıkışıdır: `sign_out.logout_current_session`.

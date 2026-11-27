@@ -6,7 +6,7 @@ from uuid import uuid4
 import frappe
 
 VERSION_KEY = "platform_core:shell:permission_version"
-BOOTSTRAP_KEY_PREFIX = "platform_core:shell:bootstrap:v1:"
+BOOTSTRAP_KEY_PREFIX = "platform_core:shell:bootstrap:v2:"
 # Redis KEYS patterns treat these characters as wildcards. A user name may contain them.
 GLOB_CHARACTERS = re.compile(r"([\\*?\[\]])")
 

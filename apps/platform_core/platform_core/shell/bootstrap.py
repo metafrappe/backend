@@ -122,7 +122,7 @@ def _bootstrap_cache_key(version: str, language: str, roles: list[str], locale: 
 			frappe.conf.get("shell_navigation_hosts"),
 		]
 	)
-	return f"platform_core:shell:bootstrap:v2:{version}:{scope}"
+	return f"{BOOTSTRAP_KEY_PREFIX}{version}:{scope}"
 
 
 def _build_bootstrap(user: str, version: str, language: str, roles: list[str], locale: dict) -> dict:

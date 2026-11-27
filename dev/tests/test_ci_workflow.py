@@ -147,7 +147,9 @@ class WorkflowTests(unittest.TestCase):
             for lock in (words[i + 1] for i, word in enumerate(words) if word in ("-r", "--requirement")):
                 with self.subTest(lock=lock):
                     text = (ROOT / lock).read_text(encoding="utf-8")
-                    self.assertIn("Regenerate", text.split("\n", 3)[0] + text.split("\n", 3)[1])
+                    # The header names the command that regenerates the lock.
+                    header = [line for line in text.splitlines()[:3] if line.startswith("#")]
+                    self.assertTrue(any("uv pip compile" in line and f"-o {lock}" in line for line in header))
                     self.assertEqual(lock_problems(text), [])
 
     def test_the_pip_install_check_rejects_hashless_lines(self):

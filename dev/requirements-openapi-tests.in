@@ -1,0 +1,3 @@
+# Direct dependencies of the contract job. dev/requirements-openapi-tests.txt is the hashed lock.
+-r requirements-contract-tests.in
+openapi-spec-validator==0.7.2

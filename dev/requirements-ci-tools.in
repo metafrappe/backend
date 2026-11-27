@@ -1,0 +1,2 @@
+# CI tools installed with pip. dev/requirements-ci-tools.txt is the hashed lock of this file.
+uv==0.13.9

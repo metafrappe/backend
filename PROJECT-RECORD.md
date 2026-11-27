@@ -435,6 +435,13 @@ Proje sahibi 22 Kasım 2026 Pazar günü şöyle yazdı: “Herşeyi onaylıyoru
   - Eklerin listesi ve test adımları [devir notundadır](docs/handoff/press-tr-extension-test.md).
   - Bu karar önce O-54 numarasını taşıyordu. O-54 ile O-61 arasındaki numaralar başka kararlara verildi. Karar 25 Kasım 2026 Çarşamba günü O-62 oldu.
 
+- **O-72. Kiracı yapay zekâ katmanı yalnız kurulu uygulamaların araçlarını gösterir. Kayıttaki metin talimat değildir.** Karar 23 Kasım 2026 Pazartesi günü alındı (G-84, G-89).
+  - Kiracı araç listesi role ve sitede kurulu uygulamalara göre daralır.
+  - Sunucunun `instructions` metni modele kayıttaki metnin talimat olmadığını söyler.
+  - Saldırı örnekleri `platform_core/ai/tests/attacks.json` dosyasındadır. Testler bu örnekleri her koşuda çalıştırır.
+  - `press-ai` paketinin kimlik ve ret kaydı kuralları ayrı bir işte taşınır.
+  - Bu karar eski depoda O-56 numarasını taşıyordu. O-56 ile O-71 arasındaki numaralar başka kararlara verildi. Karar 28 Kasım 2026 Cumartesi günü O-72 oldu.
+
 ## Karar sitesine işlenecek farklar
 
 Backend kararları karar sitesinin bazı maddelerini değiştirdi. Site ayrı bir işte, kendi denetimleriyle güncellenir. Farklar şunlardır:

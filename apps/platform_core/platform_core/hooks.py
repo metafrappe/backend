@@ -186,6 +186,8 @@ ai_tools = [
 clear_cache = ["platform_core.shell.cache.clear_cache"]
 
 doc_events = {
+	# G-145: rich text and email bodies are cleaned before save (AJA-2282).
+	"*": {"validate": ["platform_core.html_sanitize.sanitize_rich_text"]},
 	"User": {
 		# G-62: only a System Manager gives or takes the two protected roles.
 		"validate": ["platform_core.access.tenant_admin.guard_user"],

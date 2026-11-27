@@ -6,8 +6,9 @@ Contract: `backend/contracts/platform_core-access.openapi.yaml`.
 import frappe
 from frappe import _
 from frappe.permissions import is_system_user
+from frappe.rate_limiter import rate_limit
 
-from platform_core.access import explain, field_level, permission_log, tenant_admin
+from platform_core.access import explain, field_level, permission_log, record_links, tenant_admin
 
 
 @frappe.whitelist(methods=["GET"])
@@ -84,3 +85,28 @@ def list_permission_logs(
 	if unknown:
 		frappe.throw(_("Unknown field: {0}").format(", ".join(unknown)), permission_log.InvalidInput)
 	return permission_log.list_permission_logs(for_doctype, for_document, start, page_length)
+
+
+# The access service checks the session user against the target record.
+@frappe.whitelist(methods=["POST"])  # nosemgrep: frappe-missing-permission
+def create_record_link(doctype: str, name: str) -> dict:
+	return record_links.create(doctype, name)
+
+
+# The access service checks the session user against the target record.
+@frappe.whitelist(methods=["POST"])  # nosemgrep: frappe-missing-permission
+def open_record_link(token: str) -> dict:
+	return record_links.open_link(token)
+
+
+# The access service checks the session user against the target record.
+@frappe.whitelist(methods=["POST"])  # nosemgrep: frappe-missing-permission
+def revoke_record_link(link_id: str) -> dict:
+	return record_links.revoke(link_id)
+
+
+# The service stores a private request. It returns no record data and grants no permission.
+@frappe.whitelist(methods=["POST"])  # nosemgrep: frappe-missing-permission
+@rate_limit(limit=10, seconds=60, user_based=True, ip_based=False, methods=["POST"])
+def request_record_access(token: str | None = None, doctype: str = "", name: str = "") -> dict:
+	return record_links.request_access(token, doctype, name)

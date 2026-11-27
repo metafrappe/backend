@@ -109,6 +109,9 @@ ai_write_closed_doctypes = [
 	# G-169: only the Platform Operator changes reseller links, never a generic AI write.
 	"Reseller Customer Link",
 	"Reseller Customer Request",
+	# G-131: record links and access requests change only through the access service.
+	"PLT Record Link",
+	"PLT Record Access Request",
 ]
 # Website User method allow list (docs/sozlesmeler.md). Identity adds only the method a portal user calls.
 website_user_allowed_methods = [
@@ -118,6 +121,12 @@ website_user_allowed_methods = [
 	"platform_core.api.auth.list_login_providers",
 	"platform_core.api.auth.list_linked_accounts",
 	"platform_core.api.shell.get_bootstrap",
+	# G-130 and G-131: the services check the session user against the target record.
+	"platform_core.api.shell.record_preview_image",
+	"platform_core.api.access.create_record_link",
+	"platform_core.api.access.open_record_link",
+	"platform_core.api.access.revoke_record_link",
+	"platform_core.api.access.request_record_access",
 	"platform_core.api.collection.group_summary",
 	"platform_core.api.meta.get_doctype",
 	# G-138: field help reuses the shell metadata check. The coverage report is for the System Manager.

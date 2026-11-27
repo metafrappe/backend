@@ -30,6 +30,8 @@ MEMBER = "atonota.member@example.test"
 VISITOR = "atonota.visitor@example.test"
 MANAGER = "atonota.manager@example.test"
 USERS = (MEMBER, VISITOR, MANAGER)
+MEMBERSHIP = "PLT Organization Membership"
+ORGANIZATION = "test-org-atonota-endpoints"
 FAR_FUTURE = {"status": "valid", "expiresAt": "2099-01-01T00:00:00+00:00"}
 # Plan and billing records of ERPNext. None of them may appear when the gate refuses (G-166).
 PLAN_AND_BILLING_DOCTYPES = (
@@ -69,12 +71,17 @@ class TestAtonotaLoginEndpoints(IntegrationTestCase):
 	def setUp(self):
 		super().setUp()
 		frappe.set_user("Administrator")
-		frappe.db.set_value("User", MEMBER, "user_type", "System User")
+		# Membership evidence comes from an active organisation membership record (G-160, AJA-363).
+		frappe.db.delete(MEMBERSHIP, {"organization": ORGANIZATION})
+		frappe.get_doc(
+			{"doctype": MEMBERSHIP, "organization": ORGANIZATION, "user": MEMBER, "status": "active"}
+		).insert()
 		frappe.db.delete("ToDo", {"description": ("like", f"%{decision_api.TASK_MARK}%")})
 		frappe.db.commit()  # nosemgrep: frappe-manual-commit
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
+		frappe.db.delete(MEMBERSHIP, {"organization": ORGANIZATION})
 		frappe.db.delete("ToDo", {"description": ("like", f"%{decision_api.TASK_MARK}%")})
 		frappe.db.commit()  # nosemgrep: frappe-manual-commit
 		super().tearDown()
@@ -125,7 +132,7 @@ class TestAtonotaLoginEndpoints(IntegrationTestCase):
 
 	def test_member_evidence_is_read_from_frappe_records(self):
 		self.assertEqual(self.decision(MEMBER, {"action": "place-order"})["status"], "ready")
-		frappe.db.set_value("User", MEMBER, "user_type", "Website User")
+		frappe.db.set_value(MEMBERSHIP, {"organization": ORGANIZATION, "user": MEMBER}, "status", "ended")
 		result = self.decision(MEMBER, {"action": "place-order"})
 		self.assertEqual(result["status"], "denied")
 		self.assertEqual(result["reasons"], ["membership"])

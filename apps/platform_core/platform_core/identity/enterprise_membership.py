@@ -15,7 +15,16 @@ The record is immutable (design AJA-238, section 4):
    that no other approved grant or revocation supersedes. A revocation means there is no exception.
 
 The requester is the session user. The approver is another user in a human session; an agent
-never approves. Keycloak is written only by the `atonota-login apply` command (enterprise_sync).
+never approves. `approve` checks the session itself. Keycloak is written only by the
+`atonota-login apply` command (enterprise_sync).
+
+The module also holds the organisation membership (design AJA-361):
+
+- `PLT Organization Membership` holds one user's membership of one organisation. A user has at most
+  one active record in one organisation. The system writes `added_by`.
+- `PLT Organization Sign-in Policy` holds one record per organisation. It may require corporate sign-in.
+- `required_realm_roles(user)` names the Keycloak realm roles the membership needs. The sync step
+  writes them to a file and `atonota-login apply` gives and takes them.
 """
 
 from __future__ import annotations
@@ -24,6 +33,7 @@ import secrets
 from zoneinfo import ZoneInfo
 
 import frappe
+from atonota_login import platforms
 from frappe import _
 from frappe.utils import get_datetime, get_system_timezone, now_datetime
 
@@ -45,6 +55,10 @@ DATA_FIELDS = (
 	"requested_by",
 )
 DOMAIN_FIELDS = ("domain", "verification_method", "verified_on", "verification_record")
+MEMBERSHIP_DOCTYPE = "PLT Organization Membership"
+POLICY_DOCTYPE = "PLT Organization Sign-in Policy"
+ACTIVE = "active"
+ENTERPRISE_SSO_ROLE = platforms.ENTERPRISE_SSO_ROLE
 
 
 def _aware(value) -> str | None:
@@ -221,8 +235,9 @@ def on_trash(doc) -> None:
 	)
 
 
-def approve(name: str, *, principal: str):
-	"""Approve a waiting grant. Writes only the approval fields. The caller checks the session."""
+def approve(name: str):
+	"""Approve a waiting grant. Writes only the approval fields. Needs a human session (G-160)."""
+	principal = _require_human()
 	frappe.only_for(APPROVER_ROLE)
 	doc = frappe.get_doc(DOCTYPE, name)
 	if doc.kind != "grant" or doc.approved_by:
@@ -237,8 +252,8 @@ def approve(name: str, *, principal: str):
 	_check_chain(doc)
 	doc.flags.enterprise_approval = True
 	# No role has write permission on this DocType; the record is immutable (design AJA-238).
-	# This line is the only writer of the approval fields. Before it runs, the approver holds
-	# `APPROVER_ROLE`, the endpoint has checked read permission and a human session, and the rules
+	# This line is the only writer of the approval fields. Before it runs, this function has checked
+	# a human session and `APPROVER_ROLE`, the endpoint has checked read permission, and the rules
 	# above have passed. `validate` still refuses any change other than the approval fields.
 	doc.save(ignore_permissions=True)  # nosemgrep: frappe-ignore-permissions
 	return doc
@@ -264,12 +279,15 @@ HUMAN_SESSION = enterprise_rules.APPROVAL_PRINCIPAL
 
 
 def request_principal() -> str:
-	"""`human_session` only for a cookie session with a checked CSRF token.
+	"""`human_session` only for an HTTP cookie session with a checked CSRF token.
 
 	A request with an `Authorization` header is not a human session. Agent tokens and MCP OAuth
 	tokens come in that header. The CSRF comparison is always done here, also when Frappe would skip
 	it (no token in the session, `ignore_csrf`, an allowed referrer).
 	"""
+	# A call outside an HTTP request (bench execute, a job, a console) is never a human session.
+	if getattr(frappe.local, "request", None) is None:
+		return "other"
 	if frappe.session.user in ("", "Guest") or frappe.get_request_header("Authorization"):
 		return "other"
 	expected = frappe.session.data.get("csrf_token")
@@ -297,7 +315,7 @@ def approve_exception(name: str) -> str:
 			_("You cannot open this exception record.", context="platform_core.identity"),
 			frappe.PermissionError,
 		)
-	return approve(name, principal=_require_human()).name
+	return approve(name).name
 
 
 @frappe.whitelist(methods=["POST"])
@@ -311,3 +329,63 @@ def revoke_exception(name: str, reason: str) -> str:
 		)
 	_require_human()
 	return revoke(name, reason).name
+
+
+def active_organizations(user: str) -> list[str]:
+	"""The organisations in which `user` has an active membership record."""
+	if not user or user == "Guest":
+		return []
+	return frappe.get_all(
+		MEMBERSHIP_DOCTYPE,
+		filters={"user": user, "status": ACTIVE},
+		pluck="organization",
+		order_by="organization asc",
+	)
+
+
+def required_realm_roles(user: str) -> list[str]:
+	"""Keycloak realm roles that the memberships of `user` need (design AJA-361, decision 3).
+
+	An active membership of an organisation that requires corporate sign-in needs
+	`enterprise-sso-required`. Desk roles and ended memberships give no role.
+	"""
+	organizations = active_organizations(user)
+	if organizations and frappe.db.exists(
+		POLICY_DOCTYPE, {"organization": ("in", organizations), "enterprise_sso_required": 1}
+	):
+		return [ENTERPRISE_SSO_ROLE]
+	return []
+
+
+def membership_before_insert(doc) -> None:
+	# The adder is never picked by hand.
+	doc.added_by = frappe.session.user
+
+
+def membership_validate(doc) -> None:
+	if not doc.is_new():
+		before = doc.get_doc_before_save()
+		if before is not None and (before.added_by or "") != (doc.added_by or ""):
+			frappe.throw(
+				_("Only the system writes the Added By field.", context="platform_core.identity"),
+				frappe.ValidationError,
+			)
+	if doc.status != ACTIVE:
+		return
+	other = frappe.db.exists(
+		MEMBERSHIP_DOCTYPE,
+		{
+			"organization": doc.organization,
+			"user": doc.user,
+			"status": ACTIVE,
+			"name": ("!=", doc.name or ""),
+		},
+	)
+	if other:
+		frappe.throw(
+			_(
+				"The user already has an active membership in this organisation: {0}.",
+				context="platform_core.identity",
+			).format(other),
+			frappe.ValidationError,
+		)

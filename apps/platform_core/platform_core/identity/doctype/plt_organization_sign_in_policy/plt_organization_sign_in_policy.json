@@ -1,0 +1,56 @@
+{
+ "actions": [],
+ "autoname": "field:organization",
+ "creation": "2026-11-24 18:00:00.000000",
+ "description": "Sign-in rule of one organisation (G-160). When corporate sign-in is required, every active member gets the enterprise-sso-required role and cannot sign in with a social platform. One record per organisation.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "organization",
+  "enterprise_sso_required"
+ ],
+ "fields": [
+  {
+   "description": "Keycloak organisation id of the organisation (the id in the platform realm, not its alias or name). It is the same value as the Keycloak Organization ID of the Press team (Team.custom_ptr_keycloak_org_id). The same value as in PLT Organization Membership. One record per organisation.",
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Organization",
+   "length": 140,
+   "reqd": 1,
+   "set_only_once": 1,
+   "unique": 1
+  },
+  {
+   "default": "0",
+   "description": "On: members must sign in with the organisation's corporate provider. The atonota-login apply step gives them the enterprise-sso-required role.",
+   "fieldname": "enterprise_sso_required",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enterprise SSO Required"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-24 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Identity",
+ "name": "PLT Organization Sign-in Policy",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "organization",
+ "track_changes": 1
+}

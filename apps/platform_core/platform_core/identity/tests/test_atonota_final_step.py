@@ -8,9 +8,8 @@ Expected rules, from G-161 and the architecture note of AJA-213:
 - the final step refuses to start while the transaction holds earlier writes, so its commit of the
   owner task never makes a caller's pending write permanent (AJA-264).
 
-Membership is the Frappe user type for now. Frappe derives "System User" from desk roles when a
-user is saved, so a desk role on the server record does make membership evidence. This is a known
-debt until the organisation membership record exists (G-160, PROJECT-RECORD.md).
+- membership evidence comes from an active `PLT Organization Membership` record (G-160, AJA-363);
+  a desk role on the server record alone gives no membership evidence.
 
 The test policy below holds no price. It has one action that needs membership only.
 """
@@ -26,6 +25,8 @@ from platform_core.identity.tests import helpers as h
 
 MEMBER = "atonota.final.member@example.test"
 DESK_ROLE = "atonota.final.role@example.test"
+MEMBERSHIP = "PLT Organization Membership"
+ORGANIZATION = "test-org-final-step"
 WRITE_MARK = "[AtonotA final step pending write]"
 ACTION = "example-final-step"
 
@@ -57,14 +58,17 @@ class TestAtonotaFinalStep(IntegrationTestCase):
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
-		h.ensure_user(MEMBER, user_type="System User")
+		h.ensure_user(MEMBER)
 		h.ensure_user(DESK_ROLE, user_type="Website User")
 		frappe.db.commit()  # nosemgrep: frappe-manual-commit
 
 	def setUp(self):
 		super().setUp()
-		# Frappe derives the user type from desk roles when a user is saved. The test sets the record directly.
-		frappe.db.set_value("User", MEMBER, "user_type", "System User")
+		frappe.set_user("Administrator")
+		# Earlier runs may have left a desk user type. Membership must not depend on it.
+		frappe.db.set_value("User", MEMBER, "user_type", "Website User")
+		frappe.db.delete(MEMBERSHIP, {"organization": ORGANIZATION})
+		self.membership(MEMBER)
 		# The final step refuses pending writes. The fixture write above is committed first.
 		frappe.db.commit()  # nosemgrep: frappe-manual-commit
 		self.calls = []
@@ -74,7 +78,14 @@ class TestAtonotaFinalStep(IntegrationTestCase):
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
+		frappe.db.delete(MEMBERSHIP, {"organization": ORGANIZATION})
+		frappe.db.commit()  # nosemgrep: frappe-manual-commit
 		super().tearDown()
+
+	def membership(self, user, status="active"):
+		return frappe.get_doc(
+			{"doctype": MEMBERSHIP, "organization": ORGANIZATION, "user": user, "status": status}
+		).insert()
 
 	def work(self):
 		self.calls.append(frappe.session.user)
@@ -118,19 +129,29 @@ class TestAtonotaFinalStep(IntegrationTestCase):
 			decision_api.run_final_step(ACTION, self.work)
 		self.assertEqual(self.calls, [])
 
-	def test_desk_role_on_the_server_record_makes_membership_evidence(self):
-		# Known debt (G-160): membership is read from `user_type`, and Frappe derives it from desk roles.
-		user = frappe.get_doc("User", DESK_ROLE)
-		user.remove_roles("System Manager")
-		self.assertEqual(frappe.db.get_value("User", DESK_ROLE, "user_type"), "Website User")
-		self.assertNotIn("membership", decision_api.collect_evidence(DESK_ROLE, decision_api.now_utc()))
+	def test_desk_role_alone_gives_no_membership_evidence(self):
+		# G-160: a desk role on the server record is not organisation membership.
 		frappe.get_doc("User", DESK_ROLE).add_roles("System Manager")
+		self.addCleanup(lambda: frappe.get_doc("User", DESK_ROLE).remove_roles("System Manager"))
 		self.assertEqual(frappe.db.get_value("User", DESK_ROLE, "user_type"), "System User")
-		self.assertIn("membership", decision_api.collect_evidence(DESK_ROLE, decision_api.now_utc()))
+		self.assertNotIn("membership", decision_api.collect_evidence(DESK_ROLE, decision_api.now_utc()))
 		frappe.db.commit()  # nosemgrep: frappe-manual-commit
 		frappe.set_user(DESK_ROLE)
+		with self.assertRaises(decision_api.ActionRefused):
+			decision_api.run_final_step(ACTION, self.work)
+		self.assertEqual(self.calls, [])
+
+	def test_active_membership_gives_membership_evidence(self):
+		self.assertEqual(frappe.db.get_value("User", MEMBER, "user_type"), "Website User")
+		self.assertIn("membership", decision_api.collect_evidence(MEMBER, decision_api.now_utc()))
+		frappe.set_user(MEMBER)
 		self.assertEqual(decision_api.run_final_step(ACTION, self.work), {"done": True})
-		self.assertEqual(self.calls, [DESK_ROLE])
+		self.assertEqual(self.calls, [MEMBER])
+
+	def test_ended_membership_gives_no_membership_evidence(self):
+		frappe.db.delete(MEMBERSHIP, {"organization": ORGANIZATION})
+		self.membership(MEMBER, status="ended")
+		self.assertNotIn("membership", decision_api.collect_evidence(MEMBER, decision_api.now_utc()))
 
 	def test_token_roles_are_not_read(self):
 		# Only the server record counts. A role claim in the session data changes nothing.

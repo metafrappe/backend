@@ -5,6 +5,7 @@ supersedes the old one. A revocation record ends the exception. The sync step ex
 current grants; the `apply` command reads that file.
 """
 
+import contextlib
 import json
 import os
 import tempfile
@@ -23,6 +24,31 @@ OWNER = "kurulus.sahibi@example.test"
 SECURITY = "guvenlik.sorumlusu@example.test"
 ISSUER = "https://login.microsoftonline.com/0b5e3b55-1f4c-4d2e-9a77-1c2d3e4f5a6b/v2.0"
 ALIAS = "test-acme-entra"
+
+
+CSRF = "csrf-test-token"
+
+
+@contextlib.contextmanager
+def request_headers(headers):
+	"""An HTTP request with these headers. Outside a request there is never a human session."""
+	with (
+		mock.patch.object(frappe.local, "request", object(), create=True),
+		mock.patch.object(frappe, "get_request_header", side_effect=lambda key, default=None: headers.get(key)),
+	):
+		yield
+
+
+@contextlib.contextmanager
+def human_session(human=True):
+	"""A cookie session with the right CSRF header, as the approval endpoint receives it."""
+	headers = {"X-Frappe-CSRF-Token": CSRF} if human else {"Authorization": "Bearer agent-token"}
+	with request_headers(headers), mock.patch.dict(frappe.session.data, {"csrf_token": CSRF}):
+		yield
+
+
+def agent_token():
+	return human_session(human=False)
 
 
 class TestEnterpriseException(IntegrationTestCase):
@@ -67,10 +93,11 @@ class TestEnterpriseException(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		return doc
 
-	def approve(self, doc, approver=SECURITY, principal="human_session"):
+	def approve(self, doc, approver=SECURITY, human=True):
 		frappe.set_user(approver)
 		try:
-			return enterprise_membership.approve(doc.name, principal=principal)
+			with human_session(human):
+				return enterprise_membership.approve(doc.name)
 		finally:
 			frappe.set_user("Administrator")
 
@@ -102,8 +129,28 @@ class TestEnterpriseException(IntegrationTestCase):
 		doc = self.request()
 		with self.assertRaises(frappe.ValidationError):
 			self.approve(doc, approver=OWNER)
-		with self.assertRaises(frappe.ValidationError):
-			self.approve(doc, principal="agent_token")
+		with self.assertRaises(frappe.PermissionError):
+			self.approve(doc, human=False)
+		self.assertFalse(frappe.db.get_value(DOCTYPE, doc.name, "approved_by"))
+
+	def test_approve_without_human_session_is_refused(self):
+		# G-160 (AJA-363): `approve` checks the session itself. A direct call without a cookie session
+		# and a checked CSRF token is refused, also when the caller holds the approver role.
+		doc = self.request()
+		frappe.set_user(SECURITY)
+		self.addCleanup(frappe.set_user, "Administrator")
+		with self.assertRaises(frappe.PermissionError):
+			enterprise_membership.approve(doc.name)
+		with self.assertRaises(frappe.PermissionError), agent_token():
+			enterprise_membership.approve(doc.name)
+		self.assertFalse(frappe.db.get_value(DOCTYPE, doc.name, "approved_by"))
+
+	def test_approve_takes_no_principal_from_the_caller(self):
+		doc = self.request()
+		frappe.set_user(SECURITY)
+		self.addCleanup(frappe.set_user, "Administrator")
+		with self.assertRaises(TypeError):
+			enterprise_membership.approve(doc.name, principal="human_session")
 		self.assertFalse(frappe.db.get_value(DOCTYPE, doc.name, "approved_by"))
 
 	def test_unapproved_record_takes_only_approval_fields(self):
@@ -187,13 +234,15 @@ class TestApprovalPrincipal(IntegrationTestCase):
 	"""Only a cookie session with a checked CSRF token approves. An agent token never does."""
 
 	def principal(self, headers, session_csrf="csrf-1"):
-		with (
-			mock.patch.object(
-				frappe, "get_request_header", side_effect=lambda key, default=None: headers.get(key)
-			),
-			mock.patch.dict(frappe.session.data, {"csrf_token": session_csrf}),
-		):
+		with request_headers(headers), mock.patch.dict(frappe.session.data, {"csrf_token": session_csrf}):
 			return enterprise_membership.request_principal()
+
+	def test_call_outside_a_request_is_not_human(self):
+		# bench execute, a background job or a console has no HTTP request (AJA-363).
+		frappe.set_user(SECURITY)
+		self.addCleanup(frappe.set_user, "Administrator")
+		with mock.patch.dict(frappe.session.data, {"csrf_token": CSRF}):
+			self.assertEqual(enterprise_membership.request_principal(), "other")
 
 	def test_cookie_session_with_csrf_is_human(self):
 		frappe.set_user(SECURITY)

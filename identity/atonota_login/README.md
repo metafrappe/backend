@@ -78,6 +78,23 @@ Parolası olmayan kullanıcı bu yolla bağ kuramaz. Örneğin yalnız sihirli b
 
 Kuruluş kurumsal girişi zorunlu kılabilir. Bu durumda üyelik katmanı kullanıcıya `enterprise-sso-required` rolünü verir. Rolü olan kullanıcı sosyal platformla giremez.
 
+Üyelik katmanı Frappe'dedir. Kuruluş üyeliği `PLT Organization Membership` kaydında durur. Kuruluşun giriş kuralı `PLT Organization Sign-in Policy` kaydında durur. Frappe Keycloak'a yazmaz. Rolü DevOps sorumlusu şu iki adımla taşır:
+
+1. `bench --site <site> execute platform_core.identity.enterprise_sync.export_realm_roles --kwargs '{"path": "<dosya>"}'` komutu rol dosyasını yazar.
+2. `bin/atonota-login apply --from-env --realm-roles <dosya> --organization <kimlik>` komutu rolü dosyadaki kullanıcılara verir.
+
+Keycloak'ta tek bir `platform` realm'i vardır. Bütün kiracı siteleri bu realm'i paylaşır. Bu yüzden dosya sitenin kuruluşlarını da listeler (AJA-391). Liste `organizations` alanındadır. Listede Keycloak kuruluş kimliği yazar. Kuruluşun adı ya da kısa adı yazmaz.
+
+Komut rolü yalnız bu kuruluşların üyelerinden geri alır. Komut üyeleri Keycloak'taki kuruluş üyeleri listesinden okur. Örneğin A kiracısının dosyası B kiracısının üyesine dokunmaz. Üye başka bir kuruluşta da varsa rolü korunur. O kuruluş da kurumsal girişi zorunlu kılmış olabilir.
+
+Kuruluş listesi yoksa ya da boşsa komut durur. Komut o zaman hiçbir rolü geri almaz. Eski liste biçimindeki dosya da bu yüzden reddedilir.
+
+Kiracı kendi kuruluş kayıtlarını yazar. Bu yüzden komut dosyadaki listeye tek başına güvenmez. DevOps sorumlusu beklenen kuruluşu `--organization` seçeneğiyle verir. Değeri Press'teki takımın `Team.keycloak_org_id` alanından alır. Birden çok kuruluş varsa seçeneği her biri için yazar. Dosya başka bir kuruluşu adlandırırsa komut durur. Hata kodu `organization_not_allowed` olur.
+
+Dosyadaki her kullanıcı da bu kuruluşlardan birinin Keycloak üyesi olmalıdır. Değilse komut hiçbir şey yazmadan durur. Hata kodu `subject_not_member` olur. Böylece bir kiracı başka kiracının kullanıcısına rol veremez.
+
+Komut rolü dosyada olmayan kuruluş üyesinden geri alır. Örneğin üyeliği biten kullanıcı rolü kaybeder. Dosya kullanıcıyı yalnız Keycloak kullanıcı numarasıyla anar. Dosyada e-posta yoktur. Bu yüzden aynı e-postalı ikinci hesap rol almaz. Dosya başka bir rol taşıyamaz. Dosya sır taşımaz ve Git'e girmez.
+
 Kurumsal sağlayıcılar kayıtta yoktur. `apply` komutu onları değiştirmez. Komut her kurumsal sağlayıcıyı şu sırayla denetler (G-160):
 
 1. `trustEmail` açıksa komut hata verir.

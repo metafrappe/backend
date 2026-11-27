@@ -8,9 +8,7 @@ code. This module is the thin Frappe layer around it:
 3. It runs the write of a final step only after `Policy.confirm` says "ready" again.
 
 The caller never supplies evidence. Request fields and token roles are not read.
-Membership is read from the server's `User.user_type` for now. Frappe derives that field from the
-user's desk roles on save, so a desk role on the server record gives membership evidence. This is a
-known debt until the organisation membership record exists (G-160, PROJECT-RECORD.md).
+Membership comes from an active `PLT Organization Membership` record (G-160). A desk role gives none.
 Contract: `backend/contracts/platform_core-identity.openapi.yaml`, tag `atonota-login`.
 """
 
@@ -21,6 +19,7 @@ import frappe
 from atonota_login import decision
 from frappe import _
 
+from platform_core.identity import enterprise_membership
 from platform_core.identity.exceptions import InvalidInput
 
 MAX_ACTION_LENGTH = 140
@@ -59,18 +58,16 @@ def _proof(now: datetime) -> dict:
 def collect_evidence(user: str, now: datetime) -> dict:
 	"""Evidence for `user` from Frappe records. Token and request roles are not read.
 
-	Membership comes from `user_type`, which Frappe derives from the server record's desk roles
-	(known debt, G-160).
+	Membership needs at least one active organisation membership record (G-160).
 	"""
 	if not user or user == "Guest":
 		return {}
-	row = frappe.db.get_value("User", user, ["enabled", "user_type"], as_dict=True)
-	if not row or not row.enabled:
+	if not frappe.db.get_value("User", user, "enabled"):
 		return {}
 	evidence = {}
 	if frappe.db.exists("PLT Identity Link", {"user": user}):
 		evidence["identity"] = _proof(now)
-	if row.user_type == "System User":
+	if enterprise_membership.active_organizations(user):
 		evidence["membership"] = _proof(now)
 	return evidence
 

@@ -66,7 +66,7 @@
    "search_index": 1,
    "length": 140,
    "set_only_once": 1,
-   "description": "The one organisation of this exception. The organisation record does not exist yet, so the field keeps its identifier."
+   "description": "Keycloak organisation id of the organisation (the id in the platform realm, not its alias or name). It is the same value as the Keycloak Organization ID of the Press team (Team.custom_ptr_keycloak_org_id). The one organisation of this exception. The organisation record does not exist yet, so the field keeps this id."
   },
   {
    "fieldname": "supersedes",
@@ -157,7 +157,7 @@
  "in_create": 0,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-24 12:00:00.000000",
+ "modified": "2026-11-24 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Identity",
  "name": "PLT Enterprise IdP Exception",

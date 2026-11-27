@@ -881,6 +881,11 @@ The sign-in service is not available. Try again later.,Giriş hizmeti şu anda �
 This sign-in information cannot be read on this site.,Bu giriş bilgisi bu sitede okunamaz.,platform_core.identity
 This endpoint takes no parameters.,Bu işlem ek bilgi almaz.,platform_core.identity
 This session is not linked to a {0} account.,Bu oturum bir {0} hesabına bağlı değil.,platform_core.identity
+This endpoint does not take this parameter.,Bu işlem bu bilgiyi almaz.,platform_core.identity
+This sign-in platform is not valid.,Bu giriş platformu geçerli değil.,platform_core.identity
+This sign-in platform is not open on this site.,Bu giriş platformu bu sitede açık değil.,platform_core.identity
+This is your last way to sign in. Add another way before you remove it.,Bu sizin son giriş yolunuz. Kaldırmadan önce başka bir giriş yolu ekleyin.,platform_core.identity
+This account link was finished by a different person.,Bu hesap bağlama işini başka bir kişi bitirdi.,platform_core.identity
 PLT AI File Job,Yapay Zekâ Dosya İşi,
 PLT AI File Chunk,Yapay Zekâ Dosya Parçası,
 Route,Yol,PLT AI File Job

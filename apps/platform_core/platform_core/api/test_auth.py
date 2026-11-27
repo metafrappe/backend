@@ -173,6 +173,53 @@ class TestAuthEndpointAccess(FrappeAPITestCase):
 				self.assertEqual(response.json["exc_type"], "InvalidInput")
 		self.assertEqual(calls, [])
 
+	# --- start_link and unlink_account: the account page links and unlinks platforms (AJA-473) ---
+
+	def test_start_link_guest_denied(self):
+		calls = self._refusing_identity_sync()
+		response = h.request(h.new_client().get, PREFIX + "start_link", query_string={"provider": "google"})
+		self.assertEqual(response.status_code, 403)
+		self.assertNotIn("Location", response.headers)
+		self.assertEqual(calls, [])
+
+	def test_start_link_foreign_data_denied(self):
+		"""Ayşe cannot start a link for Mehmet's account by naming him."""
+		calls = self._refusing_identity_sync()
+		self.login(h.MEHMET, "fixture-second")
+		caller = self.login(h.AYSE, "fixture-first")
+		for name, value in (("subject", "fixture-second"), ("user", h.MEHMET)):
+			with self.subTest(name=name):
+				response = h.request(
+					caller.get, PREFIX + "start_link", query_string={"provider": "google", name: value}
+				)
+				self.assertEqual(response.status_code, 400)
+				self.assertNotIn("Location", response.headers)
+		self.assertEqual(calls, [])
+
+	def test_unlink_account_guest_denied(self):
+		calls = self._refusing_identity_sync()
+		response = h.request(h.new_client().post, PREFIX + "unlink_account", json={"provider": "google"})
+		self.assertEqual(response.status_code, 403)
+		self.assertEqual(response.json["exc_type"], "PermissionError")
+		self.assertEqual(calls, [])
+
+	def test_unlink_account_foreign_data_denied(self):
+		"""Ayşe cannot remove Mehmet's link by naming him."""
+		calls = self._refusing_identity_sync()
+		self.login(h.MEHMET, "fixture-second")
+		caller = self.login(h.AYSE, "fixture-first")
+		for name, value in (("subject", "fixture-second"), ("user", h.MEHMET)):
+			with self.subTest(name=name):
+				response = h.request(
+					caller.post,
+					PREFIX + "unlink_account",
+					json={"provider": "google", name: value},
+					headers=h.csrf_headers(caller),
+				)
+				self.assertEqual(response.status_code, 400)
+				self.assertEqual(response.json["exc_type"], "InvalidInput")
+		self.assertEqual(calls, [])
+
 	# --- get_csrf_token: the separate frontend reads the token from this endpoint, not from the page ---
 
 	def test_get_csrf_token_guest_denied(self):

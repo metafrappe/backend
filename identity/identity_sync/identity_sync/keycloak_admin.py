@@ -317,6 +317,13 @@ class KeycloakAdmin:
         """The stored credentials of the user. The rows carry `credentialData`."""
         return self._list(f"/users/{_quote(subject)}/credentials")
 
+    def delete_federated_identity(self, subject: str, alias: str) -> None:
+        """Remove the user's link to one sign-in platform (AJA-473). Needs the `manage-users` role.
+
+        The caller lists the links first. A 404 is not taken as done, because a wrong address answers 404 too.
+        """
+        _expect(self._call("DELETE", f"/users/{_quote(subject)}/federated-identity/{_quote(alias)}"), 200, 204)
+
     def delete_session(self, session_id: str) -> None:
         """End one Keycloak session. Its refresh token stops working too.
 

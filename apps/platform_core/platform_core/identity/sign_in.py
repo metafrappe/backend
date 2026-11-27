@@ -64,10 +64,19 @@ def guard_guest_request(max_bytes: int = helpers.MAX_GUEST_BODY_BYTES) -> None:
 		frappe.throw(_("Request body is too large.", context="platform_core.identity"), PayloadTooLarge)
 
 
-def build_login_url(redirect_to: str | None = None, force_login: bool = False) -> dict:
+def build_login_url(
+	redirect_to: str | None = None,
+	force_login: bool = False,
+	provider: str | None = None,
+	link_subject: str | None = None,
+) -> dict:
 	"""Builds the Keycloak authorize address and binds the attempt to this browser.
 
 	`force_login` adds `prompt=login`: Keycloak asks for the credentials even with an open session (O-25).
+	`provider` is an alias the caller has checked against the open platforms (AJA-473).
+	Without `link_subject` it adds `kc_idp_hint`: the browser goes straight to the platform.
+	With `link_subject` it adds `kc_action=idp_link:<provider>`: Keycloak links the platform to the
+	signed-in person. The callback accepts only an ID token of that same subject.
 	"""
 	guard_guest_request()
 	if redirect_to and not helpers.is_safe_redirect(redirect_to):
@@ -95,9 +104,15 @@ def build_login_url(redirect_to: str | None = None, force_login: bool = False) -
 			"nonce": nonce,
 			"redirect_to": redirect_to or "",
 			"force_login": bool(force_login),
+			"link_subject": link_subject or "",
 			"started_at": int(time.time()),
 		},
 	)
+	extra = {}
+	if provider and link_subject:
+		extra["kc_action"] = f"idp_link:{provider}"
+	elif provider:
+		extra["kc_idp_hint"] = provider
 	frappe.local.cookie_manager.set_cookie(
 		_cookie_name(), browser_token, max_age=STATE_TTL, httponly=True, samesite="Lax"
 	)
@@ -111,6 +126,7 @@ def build_login_url(redirect_to: str | None = None, force_login: bool = False) -
 			nonce,
 			helpers.code_challenge(code_verifier),
 			prompt="login" if force_login else None,
+			extra=extra,
 		),
 		"brand_name": settings.brand_name,
 		"label": _("Sign in with {0}", context="platform_core.identity").format(settings.brand_name),
@@ -200,7 +216,20 @@ def complete_callback(code: str | None, state: str | None, error: str | None = N
 			503, _("The identity provider keys are not available.", context="platform_core.identity")
 		) from error
 
+	if record.get("link_subject") and not hmac.compare_digest(
+		str(claims.get("sub", "")), record["link_subject"]
+	):
+		# AJA-473: a link attempt is finished by the person who started it, or by no one.
+		raise SignInRefusedError(
+			403,
+			_("This account link was finished by a different person.", context="platform_core.identity"),
+		)
 	user = resolve_user(settings.issuer, claims)
+	if record.get("link_subject") and frappe.session.user == user:
+		# AJA-473: the link is done and the panel session of the same person stays open. No new session.
+		frappe.db.commit()
+		frappe.local.cookie_manager.delete_cookie(_cookie_name())
+		return record.get("redirect_to") or settings.panel_url
 	decision = session_policy.check_fresh_authentication(user, claims, record)
 	if decision == "refuse":
 		# O-25: the forced attempt must bring an authentication made during that attempt.

@@ -358,7 +358,7 @@ The `aud` value of the token must be only `identity-sync`.
 The `azp` value of the token must be in one of five lists.
 The `IDENTITY_SYNC_PREVIEW_AZP` list gives permission to preview invitations.
 The `IDENTITY_SYNC_EXECUTE_AZP` list gives permission to execute within the caller tenant organization.
-The `IDENTITY_SYNC_SESSION_AZP` list opens only `/v1/sessions/revoke`, `/v1/login-providers` and `/v1/linked-accounts`.
+The `IDENTITY_SYNC_SESSION_AZP` list opens only `/v1/sessions/revoke`, `/v1/login-providers`, `/v1/linked-accounts` and `/v1/linked-accounts/unlink`.
 The OPERATOR list alone opens platform reconciliation, replay and queue lists.
 The DELETION list opens only global account deletion for Press.
 EXECUTE and SESSION contain the same tenant clients. All other lists are disjoint.
@@ -377,7 +377,7 @@ Belirtecin `aud` değeri yalnız `identity-sync` olmalıdır.
 Belirtecin `azp` değeri beş listeden birinde olmalıdır.
 `IDENTITY_SYNC_PREVIEW_AZP` listesi davet önizleme izni verir.
 `IDENTITY_SYNC_EXECUTE_AZP` listesi yalnız çağıran kiracının kuruluşunda yürütme izni verir.
-`IDENTITY_SYNC_SESSION_AZP` listesi yalnız `/v1/sessions/revoke`, `/v1/login-providers` ve `/v1/linked-accounts` uçlarını açar.
+`IDENTITY_SYNC_SESSION_AZP` listesi yalnız `/v1/sessions/revoke`, `/v1/login-providers`, `/v1/linked-accounts` ve `/v1/linked-accounts/unlink` uçlarını açar.
 OPERATOR listesi platform mutabakatını, yeniden işletmeyi ve kuyruk listelerini açar.
 DELETION listesi Press için genel hesap silmeyi açar.
 EXECUTE ve SESSION aynı kiracı istemcilerini taşır. Diğer listeler birbirinden ayrıdır.
@@ -1384,9 +1384,70 @@ The error code is `forbidden`.
 Kullanıcı bilinmiyorsa ya da çağıran kiracının kuruluşunun üyesi değilse yanıt aynıdır.
 Hata kodu `forbidden` olur.
 ",identity_sync.openapi.yaml: paths./v1/linked-accounts.post.responses.403.description
+Removes one platform link of a member and returns the new list.,Bir üyenin tek bir platform bağını kaldırır ve yeni listeyi döner.,identity_sync.openapi.yaml: paths./v1/linked-accounts/unlink.post.summary
+"The source is the panel contract, G-160, and the security review of the sign-in product (AJA-458). The work item is AJA-473.
+The account page of a `platform_core` site lets the signed-in user remove a linked platform.
+The site takes the id of the user from its own session and identity link. The body carries this id and the platform alias.
+
+The service finds the tenant from the `azp` value of the token. The body cannot choose the tenant.
+The user must be a member of the Organization of the calling tenant. If not, the service returns 403.
+An unknown user gets the same 403. So the reply does not tell whether a person exists.
+The platform must be in the list of `GET /v1/login-providers` for this tenant.
+A platform of another tenant and an unknown platform get the same 400.
+
+The service never removes the last way to sign in. The answer is then 409 with the code `last_sign_in_method`.
+A local credential counts as a way in. Examples are a password and a passkey.
+A link counts only when its platform is in the tenant list. A second factor does not count.
+A platform that is not linked changes nothing. The reply is then 200 with the current list.
+
+The reply has the shape of `POST /v1/linked-accounts`. It is built from an allow list.
+The log names the endpoint, the caller and the result. It never names the person or the platform.
+
+Only a client in the `IDENTITY_SYNC_SESSION_AZP` list can call the endpoint.
+This endpoint needs no human approval. The reason is that the user's own action starts the work.
+This endpoint is destructive. The user links the platform again to undo it.
+Remaining risk: two removals at the same moment can each see one other way in. The user may then have to use account recovery.
+","Kaynak panel sözleşmesinin G-160 bölümüdür. Giriş ürününün güvenlik incelemesi (AJA-458) de kaynaktır. İş kaydı AJA-473'tür.
+Bir `platform_core` sitesinin hesap sayfasında oturum açmış kullanıcı bağlı bir platformu kaldırabilir.
+Site kullanıcının kimliğini kendi oturumundan ve kimlik bağından alır. Gövde bu kimliği ve platformun adını taşır.
+
+Servis kiracıyı belirtecin `azp` değerinden bulur. Gövde kiracıyı seçemez.
+Kullanıcı çağıran kiracının kuruluşunun üyesi olmalıdır. Üye değilse servis 403 döner.
+Bilinmeyen kullanıcı da aynı 403 yanıtını alır. Böylece yanıt bir kişinin var olup olmadığını söylemez.
+Platform bu kiracının `GET /v1/login-providers` listesinde olmalıdır.
+Başka kiracının platformu ve bilinmeyen platform aynı 400 yanıtını alır.
+
+Servis son giriş yolunu hiçbir zaman kaldırmaz. Bu durumda yanıt 409 olur. Hata kodu `last_sign_in_method` olur.
+Yerel giriş bilgisi bir giriş yolu sayılır. Örnek olarak parola ve geçiş anahtarı sayılır.
+Bir bağ yalnız platformu kiracının listesindeyse sayılır. İkinci doğrulama adımı sayılmaz.
+Bağlı olmayan bir platform hiçbir şeyi değiştirmez. Yanıt o zaman 200 olur ve güncel listeyi taşır.
+
+Yanıt `POST /v1/linked-accounts` yanıtıyla aynı biçimdedir. Yanıt izin listesinden kurulur.
+Kayıt satırı ucu, çağıranı ve sonucu yazar. Kişiyi ve platformu hiçbir zaman yazmaz.
+
+Bu ucu yalnız `IDENTITY_SYNC_SESSION_AZP` listesindeki istemci çağırabilir.
+Bu uç insan onayı istemez. Çünkü işi kullanıcının kendi eylemi başlatır.
+Bu uç yıkıcıdır. Kullanıcı platformu yeniden bağlayarak işi geri alır.
+Kalan risk şudur: aynı anda yapılan iki kaldırma, her biri diğer giriş yolunu görebilir. Kullanıcı o zaman hesap kurtarmayı kullanmak zorunda kalabilir.
+",identity_sync.openapi.yaml: paths./v1/linked-accounts/unlink.post.description
+"The link is gone, or it did not exist. The reply is the new list.",Bağ kaldırıldı ya da hiç yoktu. Yanıt yeni listedir.,identity_sync.openapi.yaml: paths./v1/linked-accounts/unlink.post.responses.200.description
+"The body is invalid, or the platform is not in the tenant list.
+For example, `provider` is missing, has another form, or the body has another field. The error code is `bad_request`.
+","Gövde geçersizdir ya da platform kiracının listesinde yoktur.
+Örneğin `provider` eksiktir, başka biçimdedir ya da gövdede başka bir alan vardır. Hata kodu `bad_request` olur.
+",identity_sync.openapi.yaml: paths./v1/linked-accounts/unlink.post.responses.400.description
+"The client is not in the session list, or no tenant in the tenant list belongs to the client.
+The response is the same when the user is unknown or is not a member of the Organization of the calling tenant.
+The error code is `forbidden`.
+","İstemci oturum listesinde değildir ya da kiracı listesinde istemciye ait kiracı yoktur.
+Kullanıcı bilinmiyorsa ya da çağıran kiracının kuruluşunun üyesi değilse yanıt aynıdır.
+Hata kodu `forbidden` olur.
+",identity_sync.openapi.yaml: paths./v1/linked-accounts/unlink.post.responses.403.description
+The link is the last way to sign in. Nothing changed. The error code is `last_sign_in_method`.,Bağ son giriş yoludur. Hiçbir şey değişmedi. Hata kodu `last_sign_in_method` olur.,identity_sync.openapi.yaml: paths./v1/linked-accounts/unlink.post.responses.409.description
 The alias of the platform in Keycloak. An example is `google`.,Platformun Keycloak'taki takma adı. Örnek: `google`.,identity_sync.openapi.yaml: components.schemas.LoginProvider.properties.alias.description
 "The name of the platform on the button. If Keycloak has no display name, it is the alias.",Düğmedeki platform adı. Keycloak'ta görünen ad yoksa takma ad kullanılır.,identity_sync.openapi.yaml: components.schemas.LoginProvider.properties.display_name.description
 The alias of the platform in Keycloak.,Platformun Keycloak'taki takma adı.,identity_sync.openapi.yaml: components.schemas.LinkedProvider.properties.alias.description
 The name of the platform on the account page.,Hesap sayfasındaki platform adı.,identity_sync.openapi.yaml: components.schemas.LinkedProvider.properties.display_name.description
+The alias of the platform in Keycloak.,Platformun Keycloak'taki adı.,identity_sync.openapi.yaml: components.schemas.UnlinkAccountRequest.properties.provider.description
 True when the member has linked an account of this platform.,Üye bu platformun bir hesabını bağladıysa değer doğrudur.,identity_sync.openapi.yaml: components.schemas.LinkedProvider.properties.linked.description
 The number of sign-in ways without a platform. Only a password and a passkey count.,Platform dışındaki giriş yollarının sayısı. Yalnız parola ve geçiş anahtarı sayılır.,identity_sync.openapi.yaml: components.schemas.LinkedAccounts.properties.local_sign_in_methods.description

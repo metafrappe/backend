@@ -817,6 +817,78 @@ paths:
                 $ref: "#/components/schemas/Error"
         "502":
           $ref: "#/components/responses/UpstreamFailed"
+  /v1/linked-accounts/unlink:
+    post:
+      operationId: unlinkAccount
+      summary: Removes one platform link of a member and returns the new list.
+      description: |
+        The source is the panel contract, G-160, and the security review of the sign-in product (AJA-458). The work item is AJA-473.
+        The account page of a `platform_core` site lets the signed-in user remove a linked platform.
+        The site takes the id of the user from its own session and identity link. The body carries this id and the platform alias.
+
+        The service finds the tenant from the `azp` value of the token. The body cannot choose the tenant.
+        The user must be a member of the Organization of the calling tenant. If not, the service returns 403.
+        An unknown user gets the same 403. So the reply does not tell whether a person exists.
+        The platform must be in the list of `GET /v1/login-providers` for this tenant.
+        A platform of another tenant and an unknown platform get the same 400.
+
+        The service never removes the last way to sign in. The answer is then 409 with the code `last_sign_in_method`.
+        A local credential counts as a way in. Examples are a password and a passkey.
+        A link counts only when its platform is in the tenant list. A second factor does not count.
+        A platform that is not linked changes nothing. The reply is then 200 with the current list.
+
+        The reply has the shape of `POST /v1/linked-accounts`. It is built from an allow list.
+        The log names the endpoint, the caller and the result. It never names the person or the platform.
+
+        Only a client in the `IDENTITY_SYNC_SESSION_AZP` list can call the endpoint.
+        This endpoint needs no human approval. The reason is that the user's own action starts the work.
+        This endpoint is destructive. The user links the platform again to undo it.
+        Remaining risk: two removals at the same moment can each see one other way in. The user may then have to use account recovery.
+      x-durum: uygulandi
+      x-yikici: true
+      x-yurutme: otomatik
+      security:
+        - serviceToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UnlinkAccountRequest"
+      responses:
+        "200":
+          description: The link is gone, or it did not exist. The reply is the new list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LinkedAccounts"
+        "400":
+          description: |
+            The body is invalid, or the platform is not in the tenant list.
+            For example, `provider` is missing, has another form, or the body has another field. The error code is `bad_request`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: |
+            The client is not in the session list, or no tenant in the tenant list belongs to the client.
+            The response is the same when the user is unknown or is not a member of the Organization of the calling tenant.
+            The error code is `forbidden`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: The link is the last way to sign in. Nothing changed. The error code is `last_sign_in_method`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          $ref: "#/components/responses/UpstreamFailed"
   /v1/account-deletions:
     post:
       operationId: requestAccountDeletion
@@ -969,7 +1041,7 @@ components:
         The `azp` value of the token must be in one of five lists.
         The `IDENTITY_SYNC_PREVIEW_AZP` list gives permission to preview invitations.
         The `IDENTITY_SYNC_EXECUTE_AZP` list gives permission to execute within the caller tenant organization.
-        The `IDENTITY_SYNC_SESSION_AZP` list opens only `/v1/sessions/revoke`, `/v1/login-providers` and `/v1/linked-accounts`.
+        The `IDENTITY_SYNC_SESSION_AZP` list opens only `/v1/sessions/revoke`, `/v1/login-providers`, `/v1/linked-accounts` and `/v1/linked-accounts/unlink`.
         The OPERATOR list alone opens platform reconciliation, replay and queue lists.
         The DELETION list opens only global account deletion for Press.
         EXECUTE and SESSION contain the same tenant clients. All other lists are disjoint.
@@ -1534,6 +1606,17 @@ components:
         subject:
           $ref: "#/components/schemas/ResourceId"
       additionalProperties: false
+    UnlinkAccountRequest:
+      type: object
+      required: [subject, provider]
+      properties:
+        subject:
+          $ref: "#/components/schemas/ResourceId"
+        provider:
+          type: string
+          pattern: "^[a-z0-9][a-z0-9_-]{0,63}$"
+          description: The alias of the platform in Keycloak.
+      additionalProperties: false
     LinkedProvider:
       type: object
       required: [alias, display_name, linked]
@@ -1914,3 +1997,4 @@ components:
             - method_not_allowed
             - storage_failed
             - upstream_failed
+            - last_sign_in_method

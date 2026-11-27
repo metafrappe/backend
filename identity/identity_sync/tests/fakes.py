@@ -261,6 +261,19 @@ class FakeKeycloak(FakeServer):
         self.federated.setdefault(subject, []).append(
             {"identityProvider": alias, "userId": f"outside-{alias}-id", "userName": user_name}
         )
+        self.on(
+            "DELETE",
+            f"{self.admin}/users/{subject}/federated-identity/{alias}",
+            lambda _r: self._unlink(subject, alias),
+        )
+
+    def _unlink(self, subject: str, alias: str) -> Reply:
+        rows = self.federated.get(subject, [])
+        kept = [row for row in rows if row.get("identityProvider") != alias]
+        if len(kept) == len(rows):
+            return 404, {"error": "Federated identity not found"}
+        self.federated[subject] = kept
+        return 204, None
 
     def add_credential(self, subject: str, kind: str, label: str = "") -> None:
         """Store a credential. Keycloak returns its id and its data too."""

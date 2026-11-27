@@ -26,6 +26,7 @@ from platform_core.identity.exceptions import (
 	IdentityLinkMissing,
 	IdentityServiceUnavailable,
 	InvalidInput,
+	LastSignInMethod,
 	LoginReadForbidden,
 )
 from platform_core.identity.service_client import identity_sync_bearer, invalidate_identity_sync_bearer
@@ -35,6 +36,7 @@ from platform_core.identity.service_client import identity_sync_bearer, invalida
 RATE_LIMIT = 30
 PROVIDERS_PATH = "/v1/login-providers"
 LINKED_PATH = "/v1/linked-accounts"
+UNLINK_PATH = "/v1/linked-accounts/unlink"
 IDENTITY_LINK = "PLT Identity Link"
 _TIMEOUT_SECONDS = 3
 _MAX_RESPONSE_BYTES = 64 * 1024
@@ -128,8 +130,17 @@ def _unavailable(endpoint: str, reason: str) -> IdentityServiceUnavailable:
 	)
 
 
-def _call(endpoint: str, method: str, path: str, payload: dict | None) -> object:
-	"""Call identity-sync once. A rejected token is dropped and the call is tried once more."""
+def _call(
+	endpoint: str,
+	method: str,
+	path: str,
+	payload: dict | None,
+	refusals: dict[int, Exception] | None = None,
+) -> object:
+	"""Call identity-sync once. A rejected token is dropped and the call is tried once more.
+
+	`refusals` maps a status of identity-sync to the error the site raises for it, for example 409.
+	"""
 	failure = None
 	try:
 		url = _identity_sync_origin() + path
@@ -150,6 +161,11 @@ def _call(endpoint: str, method: str, path: str, payload: dict | None) -> object
 			break
 		if status == 200:
 			return body
+		if refusals and status in refusals:
+			frappe.logger("login_reads").info(
+				"identity-sync request refused: endpoint=%s outcome=status_%s", endpoint, status
+			)
+			raise refusals[status]
 		if status == 403:
 			frappe.logger("login_reads").info(
 				"identity-sync read refused: endpoint=%s outcome=forbidden", endpoint
@@ -169,10 +185,33 @@ def _call(endpoint: str, method: str, path: str, payload: dict | None) -> object
 	raise _unavailable(endpoint, failure or "no_answer")
 
 
-def reject_parameters() -> None:
-	"""The two methods take no parameters. A `subject` or `user` value never chooses the person."""
-	if set(frappe.form_dict) - _ALLOWED_PARAMETERS:
+def reject_parameters(*allowed: str) -> None:
+	"""Refuse every parameter outside `allowed`. A `subject` or `user` value never chooses the person."""
+	if not set(frappe.form_dict) - _ALLOWED_PARAMETERS - set(allowed):
+		return
+	if not allowed:
 		frappe.throw(_("This endpoint takes no parameters.", context="platform_core.identity"), InvalidInput)
+	frappe.throw(
+		_("This endpoint does not take this parameter.", context="platform_core.identity"), InvalidInput
+	)
+
+
+def checked_alias(value: object) -> str:
+	"""A platform alias in the panel's form (G-159). Anything else is refused before any call."""
+	if not isinstance(value, str) or not _ALIAS.fullmatch(value):
+		frappe.throw(_("This sign-in platform is not valid.", context="platform_core.identity"), InvalidInput)
+	return value
+
+
+def require_open_provider(value: object) -> str:
+	"""The alias of an open sign-in platform of this site (AJA-473). The list comes from identity-sync."""
+	alias = checked_alias(value)
+	if alias not in {row["alias"] for row in list_login_providers()["providers"]}:
+		frappe.throw(
+			_("This sign-in platform is not open on this site.", context="platform_core.identity"),
+			InvalidInput,
+		)
+	return alias
 
 
 def session_subject() -> str:
@@ -233,10 +272,7 @@ def list_login_providers() -> dict:
 	return {"providers": _provider_rows(reply.get("providers"), endpoint, linked=False)}
 
 
-def list_linked_accounts() -> dict:
-	endpoint = "list_linked_accounts"
-	subject = session_subject()
-	reply = _call(endpoint, "POST", LINKED_PATH, {"subject": subject})
+def _linked_reply(reply: object, endpoint: str) -> dict:
 	if not isinstance(reply, dict):
 		raise _unavailable(endpoint, "invalid_reply")
 	count = reply.get("local_sign_in_methods")
@@ -246,3 +282,33 @@ def list_linked_accounts() -> dict:
 		"providers": _provider_rows(reply.get("providers"), endpoint, linked=True),
 		"local_sign_in_methods": count,
 	}
+
+
+def list_linked_accounts() -> dict:
+	endpoint = "list_linked_accounts"
+	subject = session_subject()
+	return _linked_reply(_call(endpoint, "POST", LINKED_PATH, {"subject": subject}), endpoint)
+
+
+def unlink_account(provider: object) -> dict:
+	"""Remove the signed-in user's link to one platform (AJA-473). The reply is the new list.
+
+	identity-sync keeps the last way to sign in and answers 409. A platform outside this site's
+	list gets 400 there. The person comes only from the session.
+	"""
+	endpoint = "unlink_account"
+	alias = checked_alias(provider)
+	subject = session_subject()
+	refusals = {
+		400: InvalidInput(
+			_("This sign-in platform is not open on this site.", context="platform_core.identity")
+		),
+		409: LastSignInMethod(
+			_(
+				"This is your last way to sign in. Add another way before you remove it.",
+				context="platform_core.identity",
+			)
+		),
+	}
+	reply = _call(endpoint, "POST", UNLINK_PATH, {"subject": subject, "provider": alias}, refusals)
+	return _linked_reply(reply, endpoint)

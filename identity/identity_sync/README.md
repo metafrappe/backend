@@ -403,6 +403,24 @@ Kurallar şunlardır:
 
 Servis bu iş için Keycloak'ta `view-identity-providers` rolünü taşır.
 
+## Giriş ürününde bağ kaldırma
+
+Kiracı sitesi bu ucu hesap sayfası için çağırır (AJA-473).
+
+`POST /v1/linked-accounts/unlink` bir üyenin tek platform bağını kaldırır. Gövde `{"subject": "...", "provider": "google"}` biçimindedir.
+
+Kurallar şunlardır:
+
+- Çağıran istemci ve kiracı kuralları okuma uçlarıyla aynıdır.
+- Platform kiracının listesinde olmalıdır. Liste dışındaki platform 400 alır.
+- Bağ son giriş yoluysa servis bağı silmez. Yanıt 409 olur. Hata kodu `last_sign_in_method` olur.
+- Parola ve geçiş anahtarı giriş yolu sayılır. Tek kullanımlık kod sayılmaz.
+- Bağlı olmayan platform hiçbir şeyi değiştirmez. Yanıt 200 olur.
+- Yanıt `POST /v1/linked-accounts` yanıtıyla aynı biçimdedir.
+- Kayıt platform adını ve kişiyi yazmaz.
+
+Servis bu iş için Keycloak'ta `manage-users` rolünü kullanır. Bu rol zaten vardır.
+
 ## Yetki tablosu
 
 Bu tablo her ucu her çağıran türüyle gösterir. Tabloyu `tests/test_access_matrix.py` dosyası gerçek HTTP girişinden sınar. Reddedilen hiçbir çağıran hedefe yazmaz. Test bunu da denetler.
@@ -421,6 +439,7 @@ Bu tablo her ucu her çağıran türüyle gösterir. Tabloyu `tests/test_access_
 | `POST /v1/sessions/revoke` | 401 | 401 | 403 | 401 | 401 | 403 | 200 |
 | `GET /v1/login-providers` | 401 | 401 | 403 | 401 | 401 | 200, kendi listesi | 200 |
 | `POST /v1/linked-accounts` | 401 | 401 | 403 | 401 | 401 | 403 | 200 |
+| `POST /v1/linked-accounts/unlink` | 401 | 401 | 403 | 401 | 401 | 403 | 200 |
 | `POST /v1/account-deletions` | 401 | 401 | 403 | 401 | 401 | 403 | 200 |
 | `POST /v1/events` | 401 | 401 | 401 | 401 | 401 | 401 | 202, imzayla |
 | `GET /healthz` | 200 | 200 | 200 | 200 | 200 | 200 | 200 |

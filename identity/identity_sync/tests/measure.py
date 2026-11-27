@@ -213,6 +213,14 @@ class _Bench:
         self.keycloak.add_credential(subject, "password")
         return self.call("POST", "/v1/linked-accounts", {"subject": subject}, SITE)
 
+    def unlink_account(self) -> Callable[[], int]:
+        # A password stays, so the link is never the last way in and every call removes it.
+        subject = self.subjects[self.counter % len(self.subjects)]
+        self.counter += 1
+        self.keycloak.link_account(subject, "google", f"{subject}@example.test")
+        self.keycloak.add_credential(subject, "password")
+        return self.call("POST", "/v1/linked-accounts/unlink", {"subject": subject, "provider": "google"}, SITE)
+
     def delete_account(self) -> Callable[[], int]:
         # Accounts outside the sample set, so the sample keeps its size for the other endpoints.
         subject = self.fresh("gone")
@@ -383,6 +391,7 @@ def run(
             ("POST /v1/events", "write", bench.event),
             ("POST /v1/invitations (execute)", "write", bench.execute_invitation),
             ("POST /v1/sessions/revoke", "write", bench.revoke_session),
+            ("POST /v1/linked-accounts/unlink", "write", bench.unlink_account),
             ("POST /v1/account-deletions", "write", bench.delete_account),
             # Last: every call adds one account to Keycloak, so the lists grow.
             ("POST /v1/reconcile (execute)", "write", bench.execute_reconcile),

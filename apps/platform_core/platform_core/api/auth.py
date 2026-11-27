@@ -8,7 +8,14 @@ from frappe import _
 from frappe.rate_limiter import rate_limit
 
 from platform_core.identity import csrf_token, login_accounts, provider_setup, sign_in, sign_out
-from platform_core.identity.exceptions import InvalidRedirect, KeycloakLoginNotConfigured
+from platform_core.identity.exceptions import (
+	IdentityLinkMissing,
+	IdentityServiceUnavailable,
+	InvalidInput,
+	InvalidRedirect,
+	KeycloakLoginNotConfigured,
+	LoginReadForbidden,
+)
 from platform_core.identity.safe_errors import safe_errors
 from platform_core.shell.http import no_store, require_session
 
@@ -52,21 +59,66 @@ def get_login_url(redirect_to: str | None = None) -> dict:
 @frappe.whitelist(allow_guest=True, methods=["GET"])  # nosemgrep: frappe-missing-permission
 @_render_browser_rate_limit
 @rate_limit(limit=20, seconds=60)
-def start_login(redirect_to: str | None = None, switch_account: int = 0) -> None:
+def start_login(redirect_to: str | None = None, switch_account: int = 0, provider: str | None = None) -> None:
 	"""Browser entry point of the sign-in: same work as `get_login_url`, then a 302 to Keycloak.
-	The brand button on the tenant `/login` page links here."""
+	The brand button on the tenant `/login` page links here.
+
+	`provider` names an open sign-in platform of this site (G-159, AJA-473). Keycloak then gets
+	`kc_idp_hint` and the browser goes straight to that platform. Any other value is refused."""
 	try:
-		result = sign_in.build_login_url(redirect_to, force_login=switch_account == 1)
-	except (InvalidRedirect, KeycloakLoginNotConfigured) as error:
-		frappe.respond_as_web_page(
-			_("Sign-in failed", context="platform_core.identity"),
-			str(error),
-			http_status_code=error.http_status_code,
-			indicator_color="red",
-		)
+		alias = login_accounts.require_open_provider(provider) if provider is not None else None
+		result = sign_in.build_login_url(redirect_to, force_login=switch_account == 1, provider=alias)
+	except _BROWSER_REFUSALS as error:
+		_refuse_in_browser(error)
 		return
 	frappe.local.response["type"] = "redirect"
 	frappe.local.response["location"] = result["login_url"]
+
+
+# The link route takes no record selector. The person comes only from the session and its identity link.
+@frappe.whitelist(methods=["GET"])  # nosemgrep: frappe-missing-permission
+@_render_browser_rate_limit
+@rate_limit(limit=20, seconds=60, user_based=True)
+@safe_errors
+def start_link(provider: str | None = None, redirect_to: str | None = None) -> None:
+	"""Starts Keycloak's account link for one open platform, then a 302 to Keycloak (G-160, AJA-473).
+
+	The account page links here. Keycloak gets `kc_action=idp_link:<provider>`. Keycloak links by the
+	platform's own user id, never by e-mail. The callback accepts only the subject of this session.
+	Guests get 403 from Frappe. A `subject` or `user` parameter is refused."""
+	require_session()
+	try:
+		login_accounts.reject_parameters("provider", "redirect_to")
+		alias = login_accounts.checked_alias(provider)
+		subject = login_accounts.session_subject()
+		login_accounts.require_open_provider(alias)
+		result = sign_in.build_login_url(redirect_to, provider=alias, link_subject=subject)
+	except _BROWSER_REFUSALS as error:
+		_refuse_in_browser(error)
+		return
+	frappe.local.response["type"] = "redirect"
+	frappe.local.response["location"] = result["login_url"]
+
+
+_BROWSER_REFUSALS = (
+	InvalidInput,
+	InvalidRedirect,
+	KeycloakLoginNotConfigured,
+	IdentityLinkMissing,
+	LoginReadForbidden,
+	IdentityServiceUnavailable,
+)
+
+
+def _refuse_in_browser(error: Exception) -> None:
+	"""The two start routes are page changes. A refusal is an HTML page with the error's own status."""
+	frappe.local.response_headers["Cache-Control"] = "no-store"
+	frappe.respond_as_web_page(
+		_("Sign-in failed", context="platform_core.identity"),
+		str(error),
+		http_status_code=error.http_status_code,
+		indicator_color="red",
+	)
 
 
 # The login routes validate browser state and never take a Frappe record selector. Session routes check the current session or role.
@@ -165,3 +217,18 @@ def list_linked_accounts() -> dict:
 	require_session()
 	login_accounts.reject_parameters()
 	return login_accounts.list_linked_accounts()
+
+
+# The link route takes no record selector. The person comes only from the session and its identity link.
+@frappe.whitelist(methods=["POST"])  # nosemgrep: frappe-missing-permission
+@rate_limit(limit=10, seconds=60, user_based=True)
+@safe_errors
+def unlink_account(provider: str | None = None) -> dict:
+	"""Removes the signed-in user's link to one platform (G-160, AJA-473). The reply is the new list.
+
+	The body is `{"provider": "<alias>"}`. The reply has the `list_linked_accounts` shape.
+	The last way to sign in gives 409 `LastSignInMethod`. Guests get 403. A `subject` or `user`
+	parameter is refused. Frappe checks the CSRF token. The reply is never stored (`no-store`)."""
+	require_session()
+	login_accounts.reject_parameters("provider")
+	return login_accounts.unlink_account(provider)

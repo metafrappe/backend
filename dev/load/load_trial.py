@@ -14,6 +14,7 @@ import argparse
 import json
 import sys
 from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from http.client import HTTPConnection
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from math import ceil
@@ -88,7 +89,7 @@ def run_trial(base_url, paths, requests, concurrency, site=None):
     report = {}
     with ThreadPoolExecutor(max_workers=concurrency) as pool:
         for path in paths:
-            results = list(pool.map(lambda _index: one_request(host, port, path, site), range(requests)))
+            results = list(pool.map(partial(one_request, host, port, path), [site] * requests))
             ok = [result for result in results if result[0] is not None and 200 <= result[0] < 400]
             server = [result[2] for result in ok if result[2] is not None]
             report[path] = {
@@ -133,7 +134,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
     parser.add_argument("--site", help="Frappe site name, sent as X-Frappe-Site-Name.")
-    parser.add_argument("--path", action="append", dest="paths", help="Path to request. Repeat for more.")
+    parser.add_argument("--path", action="append", dest="paths", help="Path to request; repeatable.")
     parser.add_argument("--requests", type=int, default=50, help="Requests per path.")
     parser.add_argument("--concurrency", type=int, default=4)
     parser.add_argument("--self-test", action="store_true", help="Run against a stand-in local server.")
@@ -142,12 +143,19 @@ def main(argv=None):
         report = self_test()
     else:
         if local_target(args.base_url) is None:
-            print("Only local http targets are allowed: localhost, 127.0.0.1, ::1 or *.localhost.", file=sys.stderr)
+            print(
+                "Only local http targets are allowed: localhost, 127.0.0.1, ::1 or *.localhost.",
+                file=sys.stderr,
+            )
             return 2
         if not 1 <= args.requests <= MAX_REQUESTS or not 1 <= args.concurrency <= MAX_CONCURRENCY:
-            print(f"Use 1-{MAX_REQUESTS} requests and 1-{MAX_CONCURRENCY} parallel requests.", file=sys.stderr)
+            print(
+                f"Use 1-{MAX_REQUESTS} requests and 1-{MAX_CONCURRENCY} parallel requests.",
+                file=sys.stderr,
+            )
             return 2
-        report = run_trial(args.base_url, args.paths or ["/api/method/ping"], args.requests, args.concurrency, args.site)
+        paths = args.paths or ["/api/method/ping"]
+        report = run_trial(args.base_url, paths, args.requests, args.concurrency, args.site)
     print(json.dumps(report, indent=2, sort_keys=True))
     return 1 if any(entry["errors"] for entry in report.values()) else 0
 

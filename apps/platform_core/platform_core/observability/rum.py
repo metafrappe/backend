@@ -7,6 +7,7 @@ DevOps forwards to Grafana for p75 and p95 views. No third party receives the da
 """
 
 import json
+import logging
 import math
 import re
 
@@ -60,4 +61,7 @@ def clean_beacon(beacon) -> dict:
 
 def store(record: dict) -> None:
 	"""Write one JSON line. The line has only the cleaned beacon fields."""
-	frappe.logger(LOGGER, allow_site=True).info(json.dumps(record, sort_keys=True))
+	logger = frappe.logger(LOGGER, allow_site=True)
+	# Frappe logs only errors outside the dev server. The RUM log is data, so it keeps INFO lines.
+	logger.setLevel(logging.INFO)
+	logger.info(json.dumps(record, sort_keys=True))

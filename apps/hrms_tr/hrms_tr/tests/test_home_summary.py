@@ -395,8 +395,11 @@ class HomeSummaryRequestTest(IntegrationTestCase):
 
 		response = self.reject("manager", "open_b", version="2000-01-01 00:00:00.000001")
 
-		self.assertEqual(response.status_code, 417, response.data[:300])
-		self.assertEqual(response.json["exc_type"], "TimestampMismatchError")
+		# The contract's conflict reply: 409, its error name and the latest version (AJA-1751).
+		self.assertEqual(response.status_code, 409, response.data[:300])
+		self.assertEqual(response.json["exc_type"], "VersionConflictError")
+		self.assertEqual(response.json["conflict"]["code"], "VersionConflictError")
+		self.assertEqual(response.json["conflict"]["current_version"], before)
 		self.assertEqual(self.state("open_b"), ("Open", 0))
 		self.assertEqual(self.version("open_b"), before)
 

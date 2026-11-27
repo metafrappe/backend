@@ -371,6 +371,17 @@ paths:
           examples:
             panel:
               value: /panel
+        - name: provider
+          in: query
+          required: false
+          description: |
+            The alias of an open sign-in platform of this site (G-159, AJA-473). Example: `google`.
+            The server checks the alias against the `list_login_providers` list. It then adds `kc_idp_hint=<alias>`.
+            The browser goes straight to the platform page. Any other value returns 400 and makes no redirect.
+            If identity-sync does not answer, the endpoint returns 503. Without `provider` the Keycloak sign-in page opens.
+          schema:
+            type: string
+            pattern: "^[a-z0-9][a-z0-9_-]{0,63}$"
         - name: switch_account
           in: query
           description: |
@@ -783,6 +794,124 @@ paths:
           description: |
             The request has no session, the session has no matching identity link, or the person is not a member of this tenant.
             The `exc_type` value is `PermissionError`, `IdentityLinkMissing` or `LoginReadForbidden`.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FrappeError"}
+        "401":
+          $ref: "#/components/responses/OturumBitti"
+        "429":
+          $ref: "#/components/responses/IstekSiniri"
+        "503":
+          description: identity-sync or Keycloak did not answer. The `exc_type` value is `IdentityServiceUnavailable`.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FrappeError"}
+
+  /platform_core.api.auth.start_link:
+    get:
+      tags: [login]
+      operationId: startLink
+      summary: Starts the account link for one platform and redirects the browser to Keycloak.
+      description: |
+        The source is the panel contract (`atonota-web`, `src/auth/README.md`, G-160) and the security review AJA-458. The work item is AJA-473.
+        The link on the account page goes to this endpoint. This endpoint is a browser flow.
+        The response is a redirect or an HTML page.
+
+        The method needs a signed-in session. A guest gets 403.
+        The person comes only from the session and its `PLT Identity Link` record. Without the record the endpoint returns 403.
+        The platform must be in the `list_login_providers` list. Any other value returns 400.
+        A `subject`, a `user` or any other parameter returns 400. The `redirect_to` rule is the same as on `start_login`.
+
+        The server keeps the subject of the session in the `state` record.
+        Keycloak gets `kc_action=idp_link:<provider>`. Keycloak links the platform by its own user id, never by e-mail.
+        The `keycloak_callback` endpoint accepts only an ID token of the same subject. Another subject gets 403 and no session.
+        After the link the browser goes back to `redirect_to`. The panel then reads the list again.
+        The limit is 20 requests per minute per signed-in user.
+      x-yikici: false
+      security:
+        - frappeSession: []
+      parameters:
+        - name: provider
+          in: query
+          required: true
+          description: The alias of an open sign-in platform of this site, for example `facebook`.
+          schema:
+            type: string
+            pattern: "^[a-z0-9][a-z0-9_-]{0,63}$"
+        - name: redirect_to
+          in: query
+          required: false
+          description: The relative path to return to after the link. The rule is the same as on `start_login`.
+          schema:
+            type: string
+            maxLength: 2048
+      responses:
+        "302":
+          description: The link flow has started. The browser goes to the Keycloak authorization address with `kc_action`.
+        "400":
+          description: The platform, a parameter or `redirect_to` is not valid. The response is an HTML page.
+        "403":
+          description: The request has no session, the session has no matching identity link, or identity-sync refused the site.
+        "429":
+          $ref: "#/components/responses/IstekSiniri"
+        "503":
+          description: identity-sync or Keycloak did not answer. The response is an HTML page.
+
+  /platform_core.api.auth.unlink_account:
+    post:
+      tags: [login]
+      operationId: unlinkAccount
+      summary: Removes one platform link of the signed-in user.
+      description: |
+        The source is the panel contract (`atonota-web`, `src/auth/README.md`, G-160) and the security review AJA-458. The work item is AJA-473.
+        The body is `{"provider": "<alias>"}`. The method needs a signed-in session and the CSRF token. A guest gets 403.
+        The person comes only from the session and its `PLT Identity Link` record. Without the record the method makes no call and returns 403 and `IdentityLinkMissing`.
+        A `subject`, a `user` or any other value returns 400 and `InvalidInput`. A badly formed alias returns 400 too.
+        The site calls identity-sync (`POST /v1/linked-accounts/unlink`) with its own service token.
+
+        identity-sync never removes the last way to sign in. The method then returns 409 and `LastSignInMethod`. The link stays.
+        A platform outside the list of this site returns 400 and `InvalidInput`. A person of another tenant gets 403 and `LoginReadForbidden`.
+        The reply is the new list. It has the `list_linked_accounts` shape and is built from an allow list.
+        The reply carries `Cache-Control: private, no-store`. The limit is 10 requests per minute per signed-in user.
+      x-yikici: true
+      security:
+        - frappeSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider]
+              properties:
+                provider:
+                  type: string
+                  pattern: "^[a-z0-9][a-z0-9_-]{0,63}$"
+              additionalProperties: false
+      responses:
+        "200":
+          description: The link is gone, or it did not exist. The reply is the new list.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message: {$ref: "#/components/schemas/LinkedAccounts"}
+        "400":
+          description: The body or the platform is not valid. The `exc_type` value is `InvalidInput`.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FrappeError"}
+        "403":
+          description: |
+            The request has no session, the session has no matching identity link, or the person is not a member of this tenant.
+            The `exc_type` value is `PermissionError`, `IdentityLinkMissing` or `LoginReadForbidden`.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FrappeError"}
+        "409":
+          description: The link is the last way to sign in. The link stays. The `exc_type` value is `LastSignInMethod`.
           content:
             application/json:
               schema: {$ref: "#/components/schemas/FrappeError"}

@@ -115,3 +115,9 @@ class IdentityServiceUnavailable(frappe.ValidationError):
 	http_status_code = 503
 	skip_error_log = True
 	expected_outage = True
+
+
+class LastSignInMethod(frappe.ValidationError):
+	"""The link is the user's last way to sign in. identity-sync kept it (AJA-473)."""
+
+	http_status_code = 409

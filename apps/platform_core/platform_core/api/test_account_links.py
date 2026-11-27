@@ -1,4 +1,4 @@
-"""AtonotA Login account links through Frappe's HTTP dispatch (AJA-473).
+"""Sign-in product account links through Frappe's HTTP dispatch (AJA-473).
 
 Expected values come from the panel contract (`atonota-web`, `src/auth/README.md`, G-159 and G-160)
 and from the AJA-458 security review (D-1):
@@ -108,7 +108,7 @@ class TestPanelMethods(AccountLinkCase):
 	def test_panel_users_may_call_the_link_methods(self):
 		"""The panel account is a Website User. Frappe refuses every method outside this list with 403."""
 		allowed = set(frappe.get_hooks("website_user_allowed_methods"))
-		for method in ("start_link", "unlink_account"):
+		for method in ("start_link", "keycloak_callback", "unlink_account"):
 			with self.subTest(method=method):
 				self.assertIn("platform_core.api.auth." + method, allowed)
 
@@ -177,12 +177,17 @@ class TestStartLink(AccountLinkCase):
 	def test_finished_link_returns_to_the_panel_path(self):
 		self.serve(FakeIdentitySync(replies()))
 		client = self.login()
+		sid = client.get_cookie("sid").value
+		sessions = h.session_count(h.AYSE)
 		query = location_query(self.start(client, provider="facebook", redirect_to="/account"))
 		with h.jwks_patch():
 			finished = h.finish_login(client, query, h.id_token(query, h.userinfo(SUBJECT, h.AYSE)))
 		self.assertEqual(finished.status_code, 302, finished.data[:300])
 		self.assertEqual(urlparse(finished.headers["Location"]).path, "/account")
 		self.assertEqual(h.logged_user(client), h.AYSE)
+		# The open panel session stays. The link opens no second session.
+		self.assertEqual(client.get_cookie("sid").value, sid)
+		self.assertEqual(h.session_count(h.AYSE), sessions)
 
 	def test_link_finished_by_another_person_is_refused(self):
 		"""Keycloak must link the account of the person who started it. Another subject opens no session."""
@@ -250,7 +255,9 @@ class TestStartLink(AccountLinkCase):
 	def test_post_is_refused(self):
 		self.serve(FakeIdentitySync(replies()))
 		client = self.login()
-		response = h.request(client.post, START_LINK, json={"provider": "facebook"}, headers=h.csrf_headers(client))
+		response = h.request(
+			client.post, START_LINK, json={"provider": "facebook"}, headers=h.csrf_headers(client)
+		)
 		self.assertEqual(response.status_code, 403)
 
 

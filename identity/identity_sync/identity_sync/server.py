@@ -527,6 +527,50 @@ class _Api:
         _LOG.info("read operation=list_linked_accounts azp=%s outcome=executed", azp)
         return 200, reply
 
+    def post_unlink_account(self, body: bytes, azp: str) -> Reply:
+        """Remove one platform link of a member (AJA-473). The reply is the new linked-account list.
+
+        The person must be a member of the calling tenant's organization. The platform must be in the
+        tenant's list; another tenant's platform and an unknown one get the same 400. A platform that
+        is not linked changes nothing. The last way to sign in is kept and the reply is 409.
+        """
+        payload = _json_object(body)
+        if set(payload) != {"subject", "provider"}:
+            raise _BadRequest
+        subject = _text(payload, "subject", required=True, max_length=128)
+        provider = payload.get("provider")
+        if not RESOURCE_ID.fullmatch(subject) or not isinstance(provider, str) or not login_reads.ALIAS.fullmatch(provider):
+            raise _BadRequest
+        operation = "unlink_account"
+        tenant = self._login_tenant(operation, azp)
+        keycloak = self._app.keycloak
+        try:
+            if not self._is_member(subject, tenant.organization):
+                _LOG.warning("write operation=%s azp=%s outcome=forbidden", operation, azp)
+                raise _Forbidden
+            platforms = login_reads.visible_to(self._platforms.get(), tenant.organization)
+            if provider not in {item.alias for item in platforms}:
+                _LOG.warning("write operation=%s azp=%s outcome=unknown_platform", operation, azp)
+                raise _BadRequest
+            federated = keycloak.list_federated_identities(subject)
+            credentials = keycloak.list_credentials(subject)
+            if any(row.get("identityProvider") == provider for row in federated):
+                if login_reads.remaining_ways_in(platforms, federated, credentials, provider) == 0:
+                    _LOG.warning("write operation=%s azp=%s outcome=last_sign_in_method", operation, azp)
+                    return 409, {"error": "last_sign_in_method"}
+                keycloak.delete_federated_identity(subject, provider)
+                federated = keycloak.list_federated_identities(subject)
+                outcome = "executed"
+            else:
+                outcome = "not_linked"
+            reply = login_reads.linked_accounts(platforms, federated, credentials)
+        except (HttpError, TransportError):
+            _LOG.warning("write operation=%s azp=%s outcome=upstream_failed", operation, azp)
+            raise
+        # The log names the endpoint, the caller and the result, never the person or the platform.
+        _LOG.info("write operation=%s azp=%s outcome=%s", operation, azp, outcome)
+        return 200, reply
+
     def _login_tenant(self, operation: str, azp: str) -> Tenant:
         tenant = self._tenant_of(azp)
         if tenant is None:
@@ -644,6 +688,7 @@ def make_server(
         "/v1/sessions/revoke": ("POST", api.post_revoke_session),
         "/v1/login-providers": ("GET", api.get_login_providers),
         "/v1/linked-accounts": ("POST", api.post_linked_accounts),
+        "/v1/linked-accounts/unlink": ("POST", api.post_unlink_account),
         "/v1/account-deletions": ("POST", lambda body, azp: api.post_account_deletion(body, azp, clock())),
     }
     # Routes for platform_core site clients. Every other token route is for the preview and approval flow.
@@ -656,6 +701,7 @@ def make_server(
         "/v1/sessions/revoke": settings.session_azp,
         "/v1/login-providers": settings.session_azp,
         "/v1/linked-accounts": settings.session_azp,
+        "/v1/linked-accounts/unlink": settings.session_azp,
         "/v1/account-deletions": settings.deletion_azp,
     }
     operator_routes = {"/v1/reconcile", "/v1/dead-letters/replay", "/v1/dead-letters", "/v1/operations"}

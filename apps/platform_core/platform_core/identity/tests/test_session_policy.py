@@ -251,12 +251,14 @@ class TestSessionPolicy(FrappeAPITestCase):
 	def test_website_user_allow_list_has_only_the_identity_methods_a_portal_user_calls(self):
 		# The contract's Website User method allowlist: each app adds only its own methods.
 		# Guest endpoints (start_login and the others) and service endpoints stay out of the list.
+		# One exception: the account link returns to `keycloak_callback` while the panel session is open
+		# (AJA-473). The callback is a guest endpoint anyway, so the list gives no new right.
 		allowed = set(frappe.get_hooks("website_user_allowed_methods"))
 		self.assertIn("platform_core.api.auth.logout", allowed)
+		self.assertIn("platform_core.api.auth.keycloak_callback", allowed)
 		for method in (
 			"platform_core.api.auth.get_login_url",
 			"platform_core.api.auth.start_login",
-			"platform_core.api.auth.keycloak_callback",
 			"platform_core.api.auth.setup_keycloak_login",
 			"platform_core.api.keycloak_backchannel_logout",
 			"platform_core.api.identity.provision",

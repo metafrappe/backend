@@ -117,6 +117,10 @@ website_user_allowed_methods = [
 	# `atonota_login` reads (AJA-459). The server takes the person from the session, never from the request.
 	"platform_core.api.auth.list_login_providers",
 	"platform_core.api.auth.list_linked_accounts",
+	# AJA-473: the link flow returns to the callback while the panel session is open. Guests may call it anyway.
+	"platform_core.api.auth.start_link",
+	"platform_core.api.auth.keycloak_callback",
+	"platform_core.api.auth.unlink_account",
 	"platform_core.api.shell.get_bootstrap",
 	"platform_core.api.collection.group_summary",
 	"platform_core.api.meta.get_doctype",

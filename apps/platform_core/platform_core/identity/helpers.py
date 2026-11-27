@@ -115,7 +115,9 @@ def authorize_url(
 	nonce: str,
 	challenge: str,
 	prompt: str | None = None,
+	extra: dict[str, str] | None = None,
 ) -> str:
+	"""`extra` carries Keycloak's own parameters, such as `kc_idp_hint` and `kc_action` (AJA-473)."""
 	params = {
 		"client_id": client_id,
 		"redirect_uri": redirect_uri,
@@ -128,6 +130,7 @@ def authorize_url(
 	}
 	if prompt:
 		params["prompt"] = prompt
+	params.update(extra or {})
 	return realm_url(public_url, realm) + "/protocol/openid-connect/auth?" + urlencode(params)
 
 

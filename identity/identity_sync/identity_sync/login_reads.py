@@ -115,6 +115,23 @@ def linked_accounts(
     }
 
 
+def remaining_ways_in(
+    platforms: Iterable[Platform],
+    federated: Iterable[Mapping[str, object]],
+    credentials: Iterable[Mapping[str, object]],
+    removed: str,
+) -> int:
+    """The ways to sign in that stay after the link to `removed` is gone (AJA-473).
+
+    Local credentials count. Links count only for platforms in the tenant's list: the tenant's
+    sign-in page shows no other platform. A second factor such as `otp` does not count.
+    """
+    shown = {item.alias for item in platforms}
+    linked = {str(row.get("identityProvider", "")) for row in federated}
+    local = sum(1 for row in credentials if row.get("type") in LOCAL_SIGN_IN_TYPES)
+    return local + len((linked & shown) - {removed})
+
+
 class CatalogCache:
     """Keeps the realm's platform list for a short time. The linked accounts are never kept.
 

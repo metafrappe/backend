@@ -45,7 +45,7 @@ def request_schema(method: str, path: str) -> dict:
 
 class DocumentationTest(unittest.TestCase):
     def test_contract_lists_operations(self) -> None:
-        self.assertEqual(len(operations()), 12)
+        self.assertEqual(len(operations()), 13)
 
     def test_every_operation_is_documented(self) -> None:
         # Every endpoint has a summary, description and destructive-action flag (`docs/sozlesmeler.md`, section 10).

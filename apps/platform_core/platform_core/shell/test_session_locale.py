@@ -4,12 +4,15 @@ The user setting comes first, then the tenant setting, then en-GB (Decision 44).
 """
 
 import json
+import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import get_system_timezone
 
+from platform_core import market_gate
 from platform_core.shell import session_locale
 from platform_core.shell.bootstrap import _bootstrap_cache_key, compact_bootstrap, get_bootstrap
 from platform_core.shell.cache import bump_permission_version
@@ -131,8 +134,27 @@ class TestSessionLocale(IntegrationTestCase):
 		self.assertIsNone(locale["selected_market"])
 		self.assertEqual(locale["open_markets"], ["TR"])
 
+	def open_markets_setting(self, markets):
+		"""Point the market gate at a setting file that lists these markets (AJA-1932)."""
+		folder = tempfile.TemporaryDirectory()
+		self.addCleanup(folder.cleanup)
+		setting = Path(folder.name) / "open_markets.json"
+		setting.write_text(json.dumps({"open_markets": markets}), encoding="utf-8")
+		return patch.object(market_gate, "SETTING_FILE", setting)
+
+	def test_open_markets_follow_the_market_gate_setting(self):
+		# AJA-1932: the bootstrap and the purchase gate read one list. A second list drifts.
+		frappe.db.set_default("market", "DE", self.user)
+		with self.open_markets_setting(["TR", "DE"]):
+			locale = self.locale()
+			self.assertEqual(market_gate.open_markets(), ["TR", "DE"])
+		self.assertEqual(locale["open_markets"], ["TR", "DE"])
+		self.assertEqual(locale["selected_market"], "DE")
+		self.assertEqual(locale["transaction_currency"], "EUR")
+		self.assertFalse(hasattr(session_locale, "OPEN_MARKETS"))
+
 	def test_cache_key_contains_language_market_and_currency(self):
-		with patch.object(session_locale, "OPEN_MARKETS", ("TR", "DE")):
+		with self.open_markets_setting(["TR", "DE"]):
 			frappe.db.set_default("market", "TR", self.user)
 			turkey = get_bootstrap(self.user)
 			frappe.db.set_default("market", "DE", self.user)

@@ -7,7 +7,7 @@ paths:
     post:
       operationId: createPriceRevision
       summary: Copy a Site Plan with a new Turkish lira price.
-      description: Requires System Manager and Site Plan create permission. Creates a disabled successor and records a notice for each active subscriber team in the same transaction. Each team must have an email address. Email is queued in the transaction and sent after commit. The effective date must be at least 30 calendar days from the site date.
+      description: Requires System Manager and Site Plan create permission. Creates a disabled successor and records a notice for each active subscriber team in the same transaction. Each team must have an email address. Email is sent at once during the request, before the transaction commits. If the request then fails, the email may already be sent. The effective date must be at least 30 calendar days from the site date.
       requestBody:
         required: true
         content:
@@ -35,6 +35,42 @@ paths:
           description: The caller cannot create a price revision.
         "417":
           description: Invalid plan name, price, or effective date, or a subscriber team has no email address.
+  /api/method/press_tr.pricing.get_panel_plans:
+    get:
+      operationId: getPanelPlans
+      summary: List the panel site plans with Turkish lira prices.
+      description: |
+        This endpoint wraps the Press function `press.api.site.get_site_plans`.
+        The `override_whitelisted_methods` hook routes the Press address to this function. The address is listed in `x-frappe-original`.
+        The endpoint returns the Press plan list. It sets `currency` to `TRY` on every plan and adds the `price_try` value of the Site Plan.
+        Press decides who may call the original function. This endpoint adds no access rule and changes no record.
+      x-frappe-original: [press.api.site.get_site_plans]
+      responses:
+        "200":
+          description: The Press plan list with Turkish lira prices.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: array
+                    items:
+                      type: object
+                      required: [name, currency]
+                      properties:
+                        name: {type: string}
+                        currency: {type: string, enum: [TRY]}
+                        price_try: {type: [number, "null"]}
+    post:
+      operationId: postPanelPlans
+      summary: List the panel site plans with Turkish lira prices by POST.
+      description: Same response as the GET operation. Press clients may call the original address by POST.
+      x-frappe-original: [press.api.site.get_site_plans]
+      responses:
+        "200":
+          description: The Press plan list with Turkish lira prices. The shape is the same as the GET response.
   /api/method/press_tr.api.auth.get_login_url:
     post:
       operationId: getLoginUrl

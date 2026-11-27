@@ -227,7 +227,8 @@ class PriceRevisionTest(unittest.TestCase):
             hooks.doc_events["Site Plan"]["on_update"], "press_tr.pricing.move_subscriptions_on_activation"
         )
         self.assertEqual(
-            hooks.override_whitelisted_methods["press.api.site.get_site_plans"], "press_tr.pricing.get_panel_plans"
+            hooks.override_whitelisted_methods["press.api.site.get_site_plans"],
+            "press_tr.pricing.get_panel_plans",
         )
         self.assertEqual(hooks.doc_events["Site Plan"]["validate"], "press_tr.pricing.reject_price_edit")
         self.assertIn("press_tr.pricing.SitePlanPricing", hooks.extend_doctype_class["Site Plan"])

@@ -1,0 +1,1057 @@
+{
+  "about": "G-143: every /api/method endpoint of a tenant site and the client that calls it. Check: dev/security/tenant_endpoints.py. press_tr runs on the Press control plane and is not listed.",
+  "apps": [
+    "platform_core",
+    "hrms_tr"
+  ],
+  "sources": {
+    "spa": "The panel single page app calls it. Evidence names the file in metafrappe/frontend.",
+    "mcp": "An MCP client or an AI agent calls it.",
+    "mobile": "The phone app or the installed web app (PWA) calls it for offline sync.",
+    "integration": "Another server calls it: Keycloak, the identity-sync service or the verification provider.",
+    "desk": "An operator calls it from Frappe Desk. The panel does not call it.",
+    "override": "It replaces a Frappe or HRMS method through override_whitelisted_methods. Clients call the original path.",
+    "none": "No caller was found on 28 November 2026. Keep it off the edge allow list until a caller is shown."
+  },
+  "endpoints": [
+    {
+      "route": "/api/method/hrms_tr.api.approve_leave",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/hrms_tr.api.cancel_leave",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/hrms_tr.api.get_home_summary",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/hrms_tr.api.get_leave_approver",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "none",
+      "evidence": "In website_user_allowed_methods; no frontend call found."
+    },
+    {
+      "route": "/api/method/hrms_tr.api.get_leave_request_context",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/views/record/adapter.ts"
+    },
+    {
+      "route": "/api/method/hrms_tr.api.reject_leave",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/hrms_tr.hrms_endpoints.deny_legacy_leave_query",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.access.link_search.search_link",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.access.link_search.search_widget",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.access.link_search.validate_link_and_fetch",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.api.access.explain_permission",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.access.get_access_summary",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.access.list_permission_logs",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.access.list_role_permissions",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.access.remove_role_permission",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "none",
+      "evidence": "In website_user_allowed_methods for the G-62 panel; no frontend call found."
+    },
+    {
+      "route": "/api/method/platform_core.api.access.set_field_level",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "desk",
+      "evidence": "System Manager only (docstring). No panel call."
+    },
+    {
+      "route": "/api/method/platform_core.api.access.set_level_access",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "desk",
+      "evidence": "System Manager only (docstring). No panel call."
+    },
+    {
+      "route": "/api/method/platform_core.api.access.set_role_permission",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.ai.approve_proposal",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.ai.get_proposal",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.ai.issue_agent_token",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "mcp",
+      "evidence": "Gives an agent token from a human session (platform_core/ai/agent_token.py, e2e/integration.spec.ts)."
+    },
+    {
+      "route": "/api/method/platform_core.api.ai.list_proposals",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.ai.list_second_approvals",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "none",
+      "evidence": "In website_user_allowed_methods; no frontend call found."
+    },
+    {
+      "route": "/api/method/platform_core.api.ai.mcp",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest",
+      "source": "mcp",
+      "evidence": "The MCP endpoint of the AI access layer; the panel chat also calls it (frontend src/api/ai-agent.ts)."
+    },
+    {
+      "route": "/api/method/platform_core.api.ai.mcp_resource_metadata",
+      "methods": [
+        "GET"
+      ],
+      "access": "guest",
+      "source": "mcp",
+      "evidence": "OAuth resource metadata that MCP clients read first (platform_core/ai/oauth.py)."
+    },
+    {
+      "route": "/api/method/platform_core.api.ai.propose_revert",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "none",
+      "evidence": "In website_user_allowed_methods; no frontend call found."
+    },
+    {
+      "route": "/api/method/platform_core.api.ai.purge_logs",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "desk",
+      "evidence": "System Manager only; kept off website_user_allowed_methods (hooks.py)."
+    },
+    {
+      "route": "/api/method/platform_core.api.ai.reject_proposal",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.ai.resolve_proposal",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.atonota_login.evaluate",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "none",
+      "evidence": "In website_user_allowed_methods for Atonota Login (G-161, G-166); no frontend call found."
+    },
+    {
+      "route": "/api/method/platform_core.api.atonota_login.open_paid_plan",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "none",
+      "evidence": "In website_user_allowed_methods for Atonota Login (G-161, G-166); no frontend call found."
+    },
+    {
+      "route": "/api/method/platform_core.api.atonota_login.verification_notice",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest",
+      "source": "integration",
+      "evidence": "The external verification provider sends its signed result notice here (G-164)."
+    },
+    {
+      "route": "/api/method/platform_core.api.auth.get_csrf_token",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "docs/contracts.md (separate UI section): a separate UI reads the CSRF token from this endpoint. metafrappe/frontend reads it from the /panel page (src/api/csrf.ts)."
+    },
+    {
+      "route": "/api/method/platform_core.api.auth.get_login_url",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.auth.keycloak_callback",
+      "methods": [
+        "GET"
+      ],
+      "access": "guest",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/auth/auth.ts (Keycloak sends the browser back here)"
+    },
+    {
+      "route": "/api/method/platform_core.api.auth.list_linked_accounts",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/login-client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.auth.list_login_providers",
+      "methods": [
+        "GET"
+      ],
+      "access": "guest",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/login-client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.auth.logout",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts, src/auth/auth.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.auth.setup_keycloak_login",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "desk",
+      "evidence": "System Manager only (docstring)."
+    },
+    {
+      "route": "/api/method/platform_core.api.auth.start_login",
+      "methods": [
+        "GET"
+      ],
+      "access": "guest",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/auth/auth.ts, src/auth/LoginScreen.tsx; backend www/login.py redirects here"
+    },
+    {
+      "route": "/api/method/platform_core.api.collection.group_summary",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/group-summary.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.help.get_component_help",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "none",
+      "evidence": "In website_user_allowed_methods (G-138); no frontend call found."
+    },
+    {
+      "route": "/api/method/platform_core.api.help.get_field_help",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "none",
+      "evidence": "In website_user_allowed_methods (G-138); no frontend call found."
+    },
+    {
+      "route": "/api/method/platform_core.api.help.get_help_coverage",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "desk",
+      "evidence": "System Manager only (docstring)."
+    },
+    {
+      "route": "/api/method/platform_core.api.identity.anonymize_user",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "integration",
+      "evidence": "identity-sync service token only (platform_core/identity/service_token.py)."
+    },
+    {
+      "route": "/api/method/platform_core.api.identity.change_email",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "integration",
+      "evidence": "identity-sync service token only (platform_core/identity/service_token.py)."
+    },
+    {
+      "route": "/api/method/platform_core.api.identity.invite_user",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/modules/administration/users-client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.identity.list_identities",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "integration",
+      "evidence": "identity-sync reconciliation reads it (identity/identity_sync/identity_sync/sites.py)."
+    },
+    {
+      "route": "/api/method/platform_core.api.identity.provision",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "integration",
+      "evidence": "identity-sync service token only (platform_core/identity/service_token.py)."
+    },
+    {
+      "route": "/api/method/platform_core.api.identity.set_enabled",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "integration",
+      "evidence": "identity-sync service token only (platform_core/identity/service_token.py)."
+    },
+    {
+      "route": "/api/method/platform_core.api.identity.set_user_role_profiles",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/modules/administration/users-client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.keycloak_backchannel_logout",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest",
+      "source": "integration",
+      "evidence": "Keycloak sends back-channel logout here."
+    },
+    {
+      "route": "/api/method/platform_core.api.meta.get_doctype",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts, src/views/record/adapter.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.meta.validate_mobile_policy",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "desk",
+      "evidence": "Checks the site metadata for a System Manager (docstring)."
+    },
+    {
+      "route": "/api/method/platform_core.api.mobile.revoke_user_installations",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "integration",
+      "evidence": "identity-sync service token (OTHER_SERVICE_ENDPOINTS in platform_core/identity/service_token.py)."
+    },
+    {
+      "route": "/api/method/platform_core.api.mobile.v1_activity",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "mobile",
+      "evidence": "Offline sync of the phone app and the PWA (contracts/platform_core-mobile.openapi.yaml, e2e/mobile-pkce.spec.ts)."
+    },
+    {
+      "route": "/api/method/platform_core.api.mobile.v1_cleanup",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "mobile",
+      "evidence": "Offline sync of the phone app and the PWA (contracts/platform_core-mobile.openapi.yaml, e2e/mobile-pkce.spec.ts)."
+    },
+    {
+      "route": "/api/method/platform_core.api.mobile.v1_list_installations",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.mobile.v1_pull",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "mobile",
+      "evidence": "Offline sync of the phone app and the PWA (contracts/platform_core-mobile.openapi.yaml, e2e/mobile-pkce.spec.ts)."
+    },
+    {
+      "route": "/api/method/platform_core.api.mobile.v1_push",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "mobile",
+      "evidence": "Offline sync of the phone app and the PWA (contracts/platform_core-mobile.openapi.yaml, e2e/mobile-pkce.spec.ts)."
+    },
+    {
+      "route": "/api/method/platform_core.api.mobile.v1_register",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "mobile",
+      "evidence": "Offline sync of the phone app and the PWA (contracts/platform_core-mobile.openapi.yaml, e2e/mobile-pkce.spec.ts)."
+    },
+    {
+      "route": "/api/method/platform_core.api.mobile.v1_revoke",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "mobile",
+      "evidence": "Offline sync of the phone app and the PWA (contracts/platform_core-mobile.openapi.yaml, e2e/mobile-pkce.spec.ts)."
+    },
+    {
+      "route": "/api/method/platform_core.api.mobile.v1_revoke_installation",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.mobile_pwa.v1_activity",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "mobile",
+      "evidence": "Offline sync of the phone app and the PWA (contracts/platform_core-mobile.openapi.yaml, e2e/mobile-pkce.spec.ts)."
+    },
+    {
+      "route": "/api/method/platform_core.api.mobile_pwa.v1_list_installations",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.mobile_pwa.v1_pull",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "mobile",
+      "evidence": "Offline sync of the phone app and the PWA (contracts/platform_core-mobile.openapi.yaml, e2e/mobile-pkce.spec.ts)."
+    },
+    {
+      "route": "/api/method/platform_core.api.mobile_pwa.v1_push",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "mobile",
+      "evidence": "Offline sync of the phone app and the PWA (contracts/platform_core-mobile.openapi.yaml, e2e/mobile-pkce.spec.ts)."
+    },
+    {
+      "route": "/api/method/platform_core.api.mobile_pwa.v1_register",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "mobile",
+      "evidence": "Offline sync of the phone app and the PWA (contracts/platform_core-mobile.openapi.yaml, e2e/mobile-pkce.spec.ts)."
+    },
+    {
+      "route": "/api/method/platform_core.api.mobile_pwa.v1_revoke",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "mobile",
+      "evidence": "Offline sync of the phone app and the PWA (contracts/platform_core-mobile.openapi.yaml, e2e/mobile-pkce.spec.ts)."
+    },
+    {
+      "route": "/api/method/platform_core.api.mobile_pwa.v1_revoke_installation",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.model.check_connection",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/provider-client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.model.clear_api_credential",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "desk",
+      "evidence": "Model gateway maintenance for an AI or site manager. No panel call."
+    },
+    {
+      "route": "/api/method/platform_core.api.model.complete",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/ai-agent.ts, src/api/client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.model.create_file_job",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "none",
+      "evidence": "Large file jobs (G-156); no frontend call found."
+    },
+    {
+      "route": "/api/method/platform_core.api.model.file_job_status",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "none",
+      "evidence": "Large file jobs (G-156); no frontend call found."
+    },
+    {
+      "route": "/api/method/platform_core.api.model.provider_catalog",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/provider-client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.model.purge_usage",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "desk",
+      "evidence": "Model gateway maintenance for an AI or site manager. No panel call."
+    },
+    {
+      "route": "/api/method/platform_core.api.model.reconcile_stale_pending",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "desk",
+      "evidence": "Model gateway maintenance for an AI or site manager. No panel call."
+    },
+    {
+      "route": "/api/method/platform_core.api.model.resolve_usage",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "desk",
+      "evidence": "Model gateway maintenance for an AI or site manager. No panel call."
+    },
+    {
+      "route": "/api/method/platform_core.api.model.retry_file_chunk",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "none",
+      "evidence": "Large file jobs (G-156); no frontend call found."
+    },
+    {
+      "route": "/api/method/platform_core.api.model.save_connection",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/provider-client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.model.start_file_job",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "none",
+      "evidence": "Large file jobs (G-156); no frontend call found."
+    },
+    {
+      "route": "/api/method/platform_core.api.model.test_api",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "desk",
+      "evidence": "A test request by an AI or site manager. No panel call."
+    },
+    {
+      "route": "/api/method/platform_core.api.reseller.approve_customer_request",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "desk",
+      "evidence": "Platform Operator in Desk only (hooks.py comment)."
+    },
+    {
+      "route": "/api/method/platform_core.api.reseller.customer_status",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/reseller-client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.reseller.list_customers",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/reseller-client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.reseller.request_customer",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/reseller-client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.api.shell.get_bootstrap",
+      "methods": [
+        "GET"
+      ],
+      "access": "authenticated",
+      "source": "spa",
+      "evidence": "metafrappe/frontend main f90be99: src/api/client.ts"
+    },
+    {
+      "route": "/api/method/platform_core.identity.enterprise_membership.approve_exception",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "desk",
+      "evidence": "Needs a human session with CSRF; agent tokens are refused (docstring). No panel call."
+    },
+    {
+      "route": "/api/method/platform_core.identity.enterprise_membership.revoke_exception",
+      "methods": [
+        "POST"
+      ],
+      "access": "authenticated",
+      "source": "desk",
+      "evidence": "Needs a human session with CSRF; agent tokens are refused (docstring). No panel call."
+    },
+    {
+      "route": "/api/method/platform_core.identity.login_policy.custom",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.identity.login_policy.ldap_login",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.identity.login_policy.login_via_facebook",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.identity.login_policy.login_via_fairlogin",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.identity.login_policy.login_via_frappe",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.identity.login_policy.login_via_github",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.identity.login_policy.login_via_google",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.identity.login_policy.login_via_key",
+      "methods": [
+        "GET"
+      ],
+      "access": "guest",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.identity.login_policy.login_via_keycloak",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.identity.login_policy.login_via_office365",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.identity.login_policy.login_via_salesforce",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.identity.login_policy.login_via_token",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "access": "guest",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.identity.login_policy.reset_password",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.identity.login_policy.send_login_link",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.identity.login_policy.sign_up",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    },
+    {
+      "route": "/api/method/platform_core.identity.login_policy.update_password",
+      "methods": [
+        "POST"
+      ],
+      "access": "guest",
+      "source": "override",
+      "evidence": "Target of override_whitelisted_methods in hooks.py; it refuses or guards the original method."
+    }
+  ],
+  "desk": [
+    {
+      "route": "/api/method/frappe.auth.get_logged_user",
+      "methods": [
+        "GET"
+      ],
+      "handler": null,
+      "reason": "The panel checks the session with it (frontend src/api/client.ts). It is in website_user_allowed_methods."
+    },
+    {
+      "route": "/api/method/logout",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "handler": null,
+      "reason": "Frappe's own sign out. It is in website_user_allowed_methods."
+    },
+    {
+      "route": "/api/method/frappe.desk.search.search_link",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "handler": "platform_core.access.link_search.search_link",
+      "reason": "The panel record view searches link fields through it (frontend src/views/record/adapter.ts). platform_core replaces it so the access rules apply."
+    },
+    {
+      "route": "/api/method/frappe.desk.search.search_widget",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "handler": "platform_core.access.link_search.search_widget",
+      "reason": "Desk link fields search through it. platform_core replaces it so the access rules apply."
+    },
+    {
+      "route": "/api/method/frappe.client.validate_link_and_fetch",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "handler": "platform_core.access.link_search.validate_link_and_fetch",
+      "reason": "Desk forms validate a link value through it. platform_core replaces it because the request can name a search function."
+    },
+    {
+      "route": "/api/method/frappe.desk.form.load.getdoctype",
+      "methods": [
+        "GET"
+      ],
+      "handler": null,
+      "reason": "Desk loads a form's DocType metadata through it. Operators still use Desk forms, for example to approve reseller requests."
+    },
+    {
+      "route": "/api/method/frappe.handler.upload_file",
+      "methods": [
+        "POST"
+      ],
+      "handler": null,
+      "reason": "Desk attaches files through it. The File class guard of platform_core checks report files. No panel call was found on 28 November 2026."
+    },
+    {
+      "route": "/api/method/frappe.desk.query_report.run",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "handler": null,
+      "reason": "Desk report views run reports through it. The Report class guard of platform_core applies the access rules."
+    }
+  ]
+}

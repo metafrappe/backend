@@ -58,6 +58,7 @@ else
 fi
 "${py[@]}" -m unittest discover -s backend/dev/security -p test_endpoints.py || status=1
 "${py[@]}" backend/dev/security/endpoints.py backend || status=1
+"${py[@]}" -m unittest discover -s backend/dev/security -p test_tenant_endpoints.py || status=1
 backend/dev/bin/ai-readiness --self-test || status=1
 if commit_base="$(git merge-base HEAD refs/heads/backend)"; then
     backend/dev/bin/ai-readiness --commit-base "$commit_base" || status=1

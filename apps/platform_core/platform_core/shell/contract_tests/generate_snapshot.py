@@ -21,6 +21,9 @@ PROJECTION_COMPONENTS = (
 	"Error",
 	"Formatting",
 	"Language",
+	"Locale",
+	"CalendarDate",
+	"Instant",
 )
 
 

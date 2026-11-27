@@ -726,5 +726,103 @@
         "description": "Language name as stored in the Language record."
       }
     }
+  },
+  "Locale": {
+    "type": "object",
+    "description": "Language, region, time zone, currency, billing country, measurement system and market of the session. Each value is a separate field. Choosing a language does not open a market. The response language of the shell stays in user.language and the site time zone stays in formatting.time_zone.",
+    "additionalProperties": false,
+    "required": [
+      "language_tag",
+      "language",
+      "region",
+      "time_zone",
+      "transaction_currency",
+      "billing_country",
+      "measurement_system",
+      "selected_market",
+      "open_markets"
+    ],
+    "properties": {
+      "language_tag": {
+        "type": "string",
+        "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+        "default": "en-GB",
+        "description": "Full BCP 47 language tag of the interface, such as en-GB or de-DE. Built from language and region. The default is en-GB when the user and the tenant have no setting."
+      },
+      "language": {
+        "type": "string",
+        "pattern": "^[a-z]{2,3}$",
+        "default": "en",
+        "description": "ISO 639 language subtag of language_tag, such as en. The default is en."
+      },
+      "region": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "pattern": "^[A-Z]{2}$",
+        "default": "GB",
+        "description": "ISO 3166-1 alpha-2 region subtag of language_tag, such as GB. Null only when language_tag has no region subtag. The default is GB. The region formats numbers and dates. It does not select a market or a billing country."
+      },
+      "time_zone": {
+        "type": "string",
+        "pattern": "^(UTC|[A-Za-z_]+(/[A-Za-z0-9_+-]+)+)$",
+        "description": "IANA time zone of the user, such as Europe/Istanbul. When the user has no time zone, the value equals formatting.time_zone of the site."
+      },
+      "transaction_currency": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "pattern": "^[A-Z]{3}$",
+        "default": null,
+        "description": "ISO 4217 currency for prices and payments, such as EUR. The tenant setting comes first, then the currency of the selected market. Null when neither is set. With null the client shows no price and offers no priced action."
+      },
+      "billing_country": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "pattern": "^[A-Z]{2}$",
+        "default": null,
+        "description": "ISO 3166-1 alpha-2 country of the tenant billing address, such as TR. Null when the tenant has no billing address."
+      },
+      "measurement_system": {
+        "type": "string",
+        "enum": [
+          "metric",
+          "imperial"
+        ],
+        "default": "metric",
+        "description": "Measurement system for quantities. The default is metric."
+      },
+      "selected_market": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "pattern": "^[A-Z]{2}$",
+        "description": "Code of the selected market, such as TR. When the user and the tenant have no market, the value is the first item of open_markets. Null when the stored market is not in open_markets. The client then asks the user to choose a market."
+      },
+      "open_markets": {
+        "type": "array",
+        "uniqueItems": true,
+        "description": "Market codes that are open on this platform, such as [\"TR\"]. Until the product owner announces the list, only TR is open.",
+        "items": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        }
+      }
+    }
+  },
+  "CalendarDate": {
+    "type": "string",
+    "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$",
+    "description": "Calendar day in YYYY-MM-DD form, such as 2026-11-27. It carries no time and no time zone. The client never shifts it by a time zone."
+  },
+  "Instant": {
+    "type": "string",
+    "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$",
+    "description": "Moment in time as an ISO 8601 date-time with a time zone offset, such as 2026-11-27T09:30:00+03:00 or 2026-11-27T06:30:00Z. A value without an offset is invalid."
   }
 }

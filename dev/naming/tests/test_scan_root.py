@@ -58,6 +58,15 @@ class ScanRootTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0, result.stdout)
         self.assertIn("no files", result.stderr.lower())
 
+    def test_root_outside_git_fails(self):
+        # A wrong root, such as the folder above the repository, must not pass.
+        outside = self.root.parent / "outside"
+        (outside / "libs").mkdir(parents=True)
+        (outside / "libs/sample.py").write_text("total = 1\n", encoding="utf-8")
+        result = run_check(outside)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("git", result.stderr.lower())
+
     def test_real_repository_scan_is_not_empty(self):
         result = run_check(CHECK.parents[2])
         self.assertGreater(scanned(result) or 0, 0, result.stderr)

@@ -48,7 +48,7 @@ fi
 
 python_bin="${PYTHON:-python3.14}"
 "$python_bin" -B "$naming_dir/apply_renames.py"
-git add -A -- backend/
+git add -A -- .
 planned_tree="$(git write-tree)"
 
 "$python_bin" -B "$naming_dir/apply_renames.py" --check-modules

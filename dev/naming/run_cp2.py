@@ -69,9 +69,6 @@ def transition(repo, entry, backend_ref, copy, test_command, apply, env):
         git(copy, env, "remote", "remove", "origin")
         checkout = branch if branch and branch not in PROTECTED_BRANCHES else "cp2-preview"
         git(copy, env, "switch", "--quiet", "-C", checkout, ref)
-        if not (copy / "backend").is_dir():
-            row["output"] = "No backend directory in the checked-out commit."
-            return row
         git(copy, env, "update-ref", "refs/heads/backend", backend_ref)
         if not dry_run:
             check_author_guard(copy, env)
@@ -86,7 +83,7 @@ def transition(repo, entry, backend_ref, copy, test_command, apply, env):
             raise ValueError("The dry run changed HEAD inside the copy.")
         if not result.returncode and new_head != ref:
             row["commit"] = new_head
-        file_changes = git(copy, env, "diff", "--find-renames", "--name-only", "-z", ref, "--", "backend/")
+        file_changes = git(copy, env, "diff", "--find-renames", "--name-only", "-z", ref)
         row["changed_files"] = sum(bool(filename) for filename in file_changes.split("\0"))
         row["status"] = "failed" if result.returncode else "passed"
         if row["commit"]:
@@ -117,7 +114,7 @@ def main():
         "unittest",
         "discover",
         "-s",
-        "backend/dev/tests",
+        "dev/tests",
     ]
     env = {
         key: value

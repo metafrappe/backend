@@ -6,8 +6,36 @@ import os
 import re
 import subprocess
 from pathlib import Path
+from zoneinfo import available_timezones
 
 BENCH = Path("/home/frappe/frappe-bench")
+# Decision 44: a new tenant site starts in British English.
+SITE_LANGUAGE = "en-GB"
+# The tenant's country is not known at creation. Türkiye is the only open market for now.
+DEFAULT_TIME_ZONE = "Europe/Istanbul"
+
+
+def check_time_zone(time_zone: str) -> str:
+    """Return the IANA time zone name or stop with a clear message."""
+    if time_zone not in available_timezones():
+        raise SystemExit(f"Invalid time zone {time_zone!r}: use an IANA name such as Europe/Istanbul.")
+    return time_zone
+
+
+def apply_locale(site: str, time_zone: str) -> None:
+    """Write the language and time zone of a site that was just created."""
+    import frappe
+    from frappe.translate import set_default_language
+
+    frappe.init(site)
+    frappe.connect()
+    try:
+        frappe.db.set_single_value("System Settings", {"language": SITE_LANGUAGE, "time_zone": time_zone})
+        frappe.db.set_default("time_zone", time_zone)
+        set_default_language(SITE_LANGUAGE)
+        frappe.db.commit()
+    finally:
+        frappe.destroy()
 
 
 def configure() -> None:
@@ -32,7 +60,8 @@ def configure() -> None:
     apps_path.write_text("\n".join(dict.fromkeys([a for a in apps if a] + ["platform_core"])) + "\n")
 
 
-def prepare(site: str, apps: list[str]) -> None:
+def prepare(site: str, apps: list[str], time_zone: str = DEFAULT_TIME_ZONE) -> None:
+    check_time_zone(time_zone)
     import frappe
     from frappe.commands.site import new_site
 
@@ -58,6 +87,8 @@ def prepare(site: str, apps: list[str]) -> None:
             standalone_mode=False,
         )
         frappe.destroy()
+        # Only a new site gets these values; a second run never creates or changes a site.
+        apply_locale(site, time_zone)
     config = json.loads(path.read_text())
     config.update(
         allow_tests=site.startswith("test-"),
@@ -79,12 +110,17 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("site")
     parser.add_argument("--app", action="append", default=[])
+    parser.add_argument("--time-zone", default=DEFAULT_TIME_ZONE, help="IANA name, e.g. Europe/Istanbul")
     args = parser.parse_args()
     if args.site != "tenant1.localhost" and not re.fullmatch(r"test-[a-z0-9-]+\.localhost", args.site):
         parser.error("Only tenant1.localhost and test-*.localhost are allowed")
     if any(not re.fullmatch(r"[a-z][a-z0-9_]*", app) for app in args.app):
         parser.error("Invalid app name")
-    prepare(args.site, args.app)
+    try:
+        check_time_zone(args.time_zone)
+    except SystemExit as error:
+        parser.error(str(error))
+    prepare(args.site, args.app, args.time_zone)
 
 
 if __name__ == "__main__":

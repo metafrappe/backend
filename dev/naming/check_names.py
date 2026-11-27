@@ -21,7 +21,7 @@ from pathlib import Path
 GIT_PATH = shutil.which("git")
 GIT = str(Path(GIT_PATH).absolute()) if GIT_PATH else None
 
-APP_PREFIXES = {"platform_core": "PLT", "press_tr": "PTR", "hrms_tr": "HRT"}
+APP_PREFIXES = {"platform_core": "PLT", "press_tr": "PTR", "hrms_tr": "HRT", "tr_localization": "TRL"}
 RECORD_KINDS = {"DocType", "Report", "Role", "Workspace", "Print Format"}
 JSON_RECORD_FOLDERS = {"doctype", "report", "workspace", "print_format", "role", "fixtures", "custom"}
 FIELD_NAME = re.compile(r"[a-z][a-z0-9_]{0,63}")

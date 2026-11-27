@@ -1,4 +1,4 @@
-# Production image of the tenant site: ERPNext, HRMS, platform_core and hrms_tr.
+# Production image of the tenant site: ERPNext, HRMS, platform_core, hrms_tr and tr_localization.
 # Build context is the backend folder:
 #   docker build -f deploy/images/tenant.Dockerfile .
 # The image holds code and built assets only. Site data, site_config.json and secrets live in
@@ -17,13 +17,15 @@ COPY --chown=1000:0 libs/oidc_verify /tmp/oidc_verify
 COPY --chown=1000:0 identity/atonota_login /tmp/atonota_login
 COPY --chown=1000:0 apps/platform_core /home/frappe/frappe-bench/apps/platform_core
 COPY --chown=1000:0 apps/hrms_tr /home/frappe/frappe-bench/apps/hrms_tr
+COPY --chown=1000:0 apps/tr_localization /home/frappe/frappe-bench/apps/tr_localization
 COPY --chown=1000:0 contracts/platform_core-ai.openapi.yaml contracts/platform_core-identity.openapi.yaml contracts/platform_core-access.openapi.yaml /home/frappe/frappe-bench/contracts/
 COPY --chown=1000:0 contracts/platform_core-model-gateway.openapi.yaml /home/frappe/frappe-bench/apps/platform_core/contracts/
-RUN uv pip install --python env/bin/python --no-deps -e apps/platform_core \
+RUN uv pip install --python env/bin/python --no-deps -e apps/tr_localization \
+    && uv pip install --python env/bin/python --no-deps -e apps/platform_core \
     && uv pip install --python env/bin/python --no-deps /tmp/oidc_verify \
     && uv pip install --python env/bin/python --no-deps /tmp/atonota_login \
     && uv pip install --python env/bin/python --no-deps -e apps/hrms_tr \
     && uv pip check --python env/bin/python \
     && rm -rf /tmp/oidc_verify /tmp/atonota_login \
-    && printf '\nplatform_core\nhrms_tr\n' >> sites/apps.txt \
-    && bench build --apps hrms,platform_core,hrms_tr
+    && printf '\ntr_localization\nplatform_core\nhrms_tr\n' >> sites/apps.txt \
+    && bench build --apps hrms,platform_core,hrms_tr,tr_localization

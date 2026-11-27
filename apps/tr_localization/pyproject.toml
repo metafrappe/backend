@@ -1,0 +1,27 @@
+[project]
+name = "tr_localization"
+description = "Turkey localization for ERPNext 16"
+requires-python = ">=3.14"
+license = "MIT"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = ["requests~=2.33.0"]
+
+[build-system]
+requires = ["flit_core>=3.11,<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.bench.frappe-dependencies]
+frappe = ">=16.0.0,<17.0.0"
+erpnext = ">=16.55.0,<17.0.0"
+
+[tool.ruff]
+line-length = 110
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

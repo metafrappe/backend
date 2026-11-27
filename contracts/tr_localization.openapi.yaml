@@ -1,0 +1,63 @@
+openapi: 3.1.0
+info:
+  title: Turkey localization exchange import
+  version: 0.2.0
+paths:
+  /api/method/tr_localization.api.exchange.import_rates:
+    post:
+      operationId: tr_localization.api.exchange.import_rates
+      summary: Import the latest TCMB currency bulletin
+      description: >-
+        An Accounts Manager or System Manager with Currency Exchange create permission
+        imports the fixed HTTPS TCMB bulletin. No caller URL, site or company is accepted.
+        The bulletin date is retained. Bulletins older than seven days or in the future
+        are rejected. ForexBuying and ForexSelling are divided by Unit and stored separately
+        for buying and selling against TRY, rounded to native nine-digit precision.
+        An empty buying or selling quote is not fabricated. A currency with neither
+        quote fails validation. Existing equal records are retained.
+        Currencies absent from this site are skipped without creating Currency records.
+        The response lists unique skipped currency codes in sorted order and their count.
+        Inserted and unchanged count quotes, while skipped_currency_count counts currencies.
+        If all currencies are skipped, the bulletin date is still returned with zero writes.
+        Conflicting records fail the request. Frappe owns the transaction.
+        This endpoint does not schedule another import.
+      security:
+        - cookieAuth: []
+        - tokenAuth: []
+      responses:
+        '200':
+          description: Import counts wrapped in Frappe message
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: object
+                    required: [date, inserted, unchanged, skipped_currencies, skipped_currency_count]
+                    properties:
+                      date: {type: string, format: date}
+                      inserted: {type: integer, minimum: 0}
+                      unchanged: {type: integer, minimum: 0}
+                      skipped_currencies:
+                        type: array
+                        uniqueItems: true
+                        items: {type: string, pattern: '^[A-Z]{3}$'}
+                      skipped_currency_count: {type: integer, minimum: 0}
+        '403':
+          description: Guest, missing role, missing create permission, failed CSRF check or method other than POST
+        '417':
+          description: Invalid, stale, conflicting or unavailable currency bulletin
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sid
+      description: Frappe session; POST also requires X-Frappe-CSRF-Token
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Native Frappe token credentials for an authorized account

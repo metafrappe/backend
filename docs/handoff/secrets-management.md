@@ -40,14 +40,16 @@ Bu listelerde yalnız anahtar adı ve değer biçimi vardır. Gerçek değer yok
 4. Hüseyin Cengiz her sır dosyasının iznini `0600` yapar.
 5. Hüseyin Cengiz dosyanın sahibini o ortamın dağıtım kullanıcısı yapar.
 6. Hüseyin Cengiz sunucu erişimini özel ağla sınırlar.
-7. Hüseyin Cengiz sunucu oturumunda SSH sertifikası kullanır.
+7. Hüseyin Cengiz her ortam için ayrı SSH anahtarı kullanır.
 8. Hüseyin Cengiz anahtar yenileme planını kaydeder.
 
 Örneğin alpha sır dosyalarının sahibi `deploy-alpha` kullanıcısıdır.
 Her ortamın sırları ayrıdır. alpha parolası prod ortamında kullanılmaz.
 Jenkins uygulama sırlarını görmez. Jenkins yalnız sunucuya bağlanır ve imaj yükler.
-Kimlik eşitleme servisi Keycloak istemci sırlarını üretir.
-Bu servis sırları Press'e yazar.
+Eşitleme servisinin Keycloak istemci sırrı iki dosyada durur.
+Bu dosyalar `keycloak.env` ve `identity-sync.env` dosyalarıdır.
+Hüseyin Cengiz iki dosyaya aynı değeri yazar.
+Anahtar adları `deploy/settings/identity-sync.production.env.example` dosyasındadır.
 Hüseyin Cengiz iyzico, Anthropic ve SMTP anahtarlarını 90 günlük plana alır.
 SMTP, e-posta göndermek için kullanılan bir yöntemdir.
 SSH, sunucuya güvenli giriş yöntemidir.

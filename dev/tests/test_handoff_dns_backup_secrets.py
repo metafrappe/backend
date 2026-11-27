@@ -24,7 +24,7 @@ LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 CODE = re.compile(r"`([^`\n]+)`")
 TOP_FOLDERS = ("apps/", "contracts/", "deploy/", "dev/", "docs/", "e2e/", "identity/", "libs/")
 COMMIT = re.compile(r"\b[0-9a-f]{7,40}\b")
-BRANCH = re.compile(r"\b(?:pc|feat|fix)/[\w.-]+")
+BRANCH = re.compile(r"(?<![\w/.-])(?:pc|feat|fix)/[\w.-]+")
 OLD_PREFIX = re.compile(r"(?<![\w/.-])backend/[\w./-]*")
 
 

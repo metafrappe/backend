@@ -4,6 +4,8 @@ The rules come from the contract `contracts/billing_identity.schema.json` (AJA-1
 country selects the address format. The interface language never selects it.
 """
 
+# ruff: noqa: RUF001
+
 import json
 from pathlib import Path
 
@@ -13,7 +15,7 @@ from frappe.tests import IntegrationTestCase
 from platform_core import billing_identity
 from platform_core.billing_identity import (
 	BillingIdentityError,
-	TaxIdServiceUnavailable,
+	TaxIdServiceUnavailableError,
 	address_format,
 	save_draft,
 )
@@ -52,7 +54,7 @@ def refusing_checker(country, tax_id):
 
 
 def silent_checker(country, tax_id):
-	raise TaxIdServiceUnavailable
+	raise TaxIdServiceUnavailableError
 
 
 def broken_checker(country, tax_id):
@@ -86,9 +88,7 @@ class BillingIdentityTest(IntegrationTestCase):
 
 	def test_tr_address_without_province_is_refused(self):
 		for province in (None, "", "  "):
-			self.assertEqual(
-				self.refused_fields(tr_billing(province=province)), {"billing_address.province"}
-			)
+			self.assertEqual(self.refused_fields(tr_billing(province=province)), {"billing_address.province"})
 		self.assertEqual(self.count(), 0)
 
 	def test_province_is_required_in_tr_when_the_language_is_en(self):
@@ -131,7 +131,9 @@ class BillingIdentityTest(IntegrationTestCase):
 		self.assertEqual(self.count(), 1)
 
 	def test_long_company_title_is_not_cut(self):
-		title = "Örnek Uluslararası Bilgi Teknolojileri Danışmanlık Yazılım Sanayi ve Ticaret Anonim Şirketi " * 3
+		title = (
+			"Örnek Uluslararası Bilgi Teknolojileri Danışmanlık Yazılım Sanayi ve Ticaret Anonim Şirketi " * 3
+		)
 		billing = tr_billing()
 		billing["party"]["name"] = title
 		clean = billing_identity.validate(billing)

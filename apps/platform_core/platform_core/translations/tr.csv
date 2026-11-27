@@ -1012,3 +1012,12 @@ Support URL,Destek bağlantısı,PLT Help Topic
 Optional HTTPS URL or same-site relative path. Leave blank when unavailable.,HTTPS adresini veya site içindeki yolu yazın. Bağlantı yoksa alanı boş bırakın.,PLT Help Topic
 Help links must use HTTPS or a same-site relative path.,Yardım bağlantılarında HTTPS adresi veya site içindeki yol kullanılmalıdır.,
 A valid component identifier is required.,Geçerli bir bileşen kimliği yazın.,
+Choose whether the billing party is a person or a company.,Faturanın kişiye mi şirkete mi kesileceğini seçin.,platform_core.billing_identity
+Enter the name or the company title.,Adı ya da şirket unvanını yazın.,platform_core.billing_identity
+Choose the billing country.,Fatura ülkesini seçin.,platform_core.billing_identity
+Enter the street address.,Sokak ve kapı numarasını yazın.,platform_core.billing_identity
+Enter the district.,İlçeyi yazın.,platform_core.billing_identity
+Enter the province.,İli yazın.,platform_core.billing_identity
+Enter the city.,Şehri yazın.,platform_core.billing_identity
+Enter the region.,Bölgeyi yazın.,platform_core.billing_identity
+Enter the postal code.,Posta kodunu yazın.,platform_core.billing_identity

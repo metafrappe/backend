@@ -47,6 +47,8 @@ Ayrıntılı istek ve yanıt biçimi `contracts/` klasöründeki OpenAPI dosyala
 | `site-tenant1-service` | Servis hesabı | İstemci kimlik bilgisi | Yok | Yok |
 | `identity-sync` | Servis hesabı | İstemci kimlik bilgisi | Yok | Yok |
 | `press-service` | Servis hesabı | İstemci kimlik bilgisi | Yok | Yok |
+| `site-ops` | Gizli sırlı | Yetkilendirme kodu ve PKCE (S256) | `<operasyon sitesi adresi>/api/method/platform_core.api.auth.keycloak_callback` | `<operasyon sitesi adresi>/api/method/platform_core.api.keycloak_backchannel_logout` |
+| `agent-service` | Servis hesabı | İstemci kimlik bilgisi | Yok | Yok |
 | `mobile-app` | Açık istemci | Yetkilendirme kodu ve PKCE (S256) | `ATONOTA_MOBILE_REDIRECT_URI` | `<kiracı adresi>/api/method/platform_core.api.keycloak_backchannel_logout` |
 | `account-console` | Açık istemci | Yetkilendirme kodu ve PKCE (S256) | Realm dosyasındaki Keycloak hesap sayfaları | Yok |
 
@@ -58,7 +60,9 @@ Ayrıntılı istek ve yanıt biçimi `contracts/` klasöründeki OpenAPI dosyala
 - Keycloak bir istemciye tek çıkış adresi verir. Bu adres `site-tenant1` sitesidir. Yeni kiracının telefon oturumu bu bildirimi almaz. O oturum en çok 300 saniye daha açık kalır.
 - Yeni kiracı için aynı biçimi kullanın. Örneğin `site-kiraci2` yazın.
 - Her kiracının iki istemcisi vardır. `site-<kiracı>` yalnız tarayıcı girişi içindir. Servis hesabı kapalıdır ve isteğe bağlı servis kapsamı taşımaz. `site-<kiracı>-service` yalnız servis hesabıdır. Tarayıcı akışı kapalıdır. Kiracının iki istemcisi içinde `aud-identity-sync` kapsamını yalnız servis istemcisi isteyebilir. Böylece tarayıcı girişi servis hedefli belirteç alamaz. Press'teki `press` ve `press-service` ayrımı da böyledir.
-- `agent-service`, `ops-bff` ve `site-ops` bu turda yoktur.
+- `site-ops` operasyon sitesinin istemcisidir (G-77). Çalışan oturum sınırlarını kullanır: 1 saat boşta kalma ve 24 saat toplam süre.
+- `agent-service` yapay zekâ aracı servisinin istemcisidir (G-77, G-148). Kiracı ayarındaki `ai_agent_audience` değeri bu adı taşır. İstemcinin tarayıcı akışı ve isteğe bağlı hedef kapsamı yoktur.
+- `ops-bff` bu turda yoktur.
 
 ### Hedef kapsamları
 

@@ -10,7 +10,7 @@ import unittest
 from helpers import DIRECTORY, USER_FILE, EXAMPLE_ENV, PASSWORD_LIST, REALM_FILE, read_users, read_realm
 
 PLACEHOLDER = re.compile(r"^\$\{[A-Z0-9_]+\}$")
-CLIENTS = {"site-tenant1", "press", "identity-sync", "press-service"}
+CLIENTS = {"site-tenant1", "press", "identity-sync", "press-service", "site-ops", "agent-service"}
 AUDIENCE_SCOPES = {"aud-site-tenant1": "site-tenant1", "aud-press": "press"}
 
 
@@ -97,13 +97,13 @@ class RealmFileTest(unittest.TestCase):
 
     def test_service_clients_do_not_use_full_scope(self):
         # Tam kapsam açık olsaydı hesap rolleri belirtece girer ve aud ikinci değer alırdı.
-        for name in ("identity-sync", "press-service"):
+        for name in ("identity-sync", "press-service", "agent-service"):
             self.assertTrue(self.clients[name]["serviceAccountsEnabled"], name)
             self.assertFalse(self.clients[name]["standardFlowEnabled"], name)
             self.assertFalse(self.clients[name]["fullScopeAllowed"], name)
 
     def test_browser_clients_use_code_flow_and_exact_redirect(self):
-        for name in ("site-tenant1", "press"):
+        for name in ("site-tenant1", "press", "site-ops"):
             client = self.clients[name]
             self.assertTrue(client["standardFlowEnabled"], name)
             self.assertFalse(client["implicitFlowEnabled"], name)
@@ -120,6 +120,52 @@ class RealmFileTest(unittest.TestCase):
         client = self.clients["site-tenant1"]
         self.assertEqual(client["redirectUris"], ["${ATONOTA_SITE_TENANT1_URL}/api/method/platform_core.api.auth.keycloak_callback"])
         self.assertEqual(client["attributes"]["pkce.code.challenge.method"], "S256")
+
+    def test_site_ops_client_is_confidential_with_exact_callback_and_pkce(self):
+        # G-77: the operations site has its own confidential client. G-144: exact redirect, PKCE S256.
+        client = self.clients["site-ops"]
+        self.assertEqual(client["clientAuthenticatorType"], "client-secret")
+        self.assertEqual(client["secret"], "${ATONOTA_SITE_OPS_SECRET}")
+        self.assertFalse(client["serviceAccountsEnabled"])
+        self.assertFalse(client["fullScopeAllowed"])
+        self.assertFalse(client["frontchannelLogout"])
+        self.assertEqual(client["redirectUris"], ["${ATONOTA_SITE_OPS_URL}/api/method/platform_core.api.auth.keycloak_callback"])
+        self.assertEqual(client["webOrigins"], [])
+        attributes = client["attributes"]
+        self.assertEqual(attributes["pkce.code.challenge.method"], "S256")
+        self.assertEqual(
+            attributes["backchannel.logout.url"],
+            "${ATONOTA_SITE_OPS_URL}/api/method/platform_core.api.keycloak_backchannel_logout",
+        )
+        self.assertEqual(client["optionalClientScopes"], [])
+
+    def test_agent_service_client_is_a_service_account_without_browser_flow(self):
+        # G-77: agent-service is the audience of the agent token (ai_agent_audience, G-148).
+        client = self.clients["agent-service"]
+        self.assertFalse(client["publicClient"])
+        self.assertEqual(client["clientAuthenticatorType"], "client-secret")
+        self.assertEqual(client["secret"], "${ATONOTA_AGENT_SERVICE_SECRET}")
+        self.assertEqual(client["redirectUris"], [])
+        self.assertEqual(client["webOrigins"], [])
+        self.assertEqual(client["attributes"]["use.refresh.tokens"], "false")
+        # Least privilege: the agent token never reaches the tenant, Press or the Admin API through Keycloak.
+        self.assertEqual(client["optionalClientScopes"], [])
+
+    def test_every_client_follows_g144_grant_and_redirect_rules(self):
+        # G-144: no wildcard redirect, implicit and password grant off, PKCE S256 for public browser clients.
+        for name, client in self.clients.items():
+            with self.subTest(client=name):
+                self.assertFalse(client["implicitFlowEnabled"])
+                self.assertFalse(client["directAccessGrantsEnabled"])
+                self.assertEqual(client["attributes"].get("oauth2.device.authorization.grant.enabled"), "false")
+                self.assertEqual(client["attributes"].get("oidc.ciba.grant.enabled"), "false")
+                for address in client.get("redirectUris", []):
+                    self.assertNotIn("*", address)
+                    self.assertNotEqual(address.rstrip("/"), "")
+                if client["standardFlowEnabled"]:
+                    self.assertEqual(client["attributes"].get("pkce.code.challenge.method"), "S256")
+                else:
+                    self.assertEqual(client.get("redirectUris", []), [])
 
     def test_client_secrets_are_placeholders(self):
         for client in self.clients.values():
@@ -187,7 +233,7 @@ class RealmFileTest(unittest.TestCase):
         self.assertNotIn("admin-api", self.clients["identity-sync"]["defaultClientScopes"])
         self.assertIn("admin-api", self.clients["identity-sync"]["optionalClientScopes"])
         self.assertIn("kc-admin-api", self.clients["identity-sync"]["optionalClientScopes"])
-        for name in ("press-service", "site-tenant1", "press"):
+        for name in ("press-service", "site-tenant1", "press", "site-ops", "agent-service"):
             self.assertNotIn("admin-api", self.clients[name].get("optionalClientScopes", []), name)
             self.assertNotIn("kc-admin-api", self.clients[name].get("optionalClientScopes", []), name)
             self.assertNotIn("kc-admin-api", self.clients[name].get("defaultClientScopes", []), name)

@@ -1,6 +1,6 @@
 """Gap backlog item 6: Karar 19 session lifetimes (project record O-25).
 
-Employee (tenant clients site-tenant1, mobile-app and mcp-external): 1 hour idle, 24 hours in total. After the level of
+Employee (tenant clients site-tenant1, mobile-app and mcp-external, and the operations site site-ops): 1 hour idle, 24 hours in total. After the level of
 authentication is older than 1 hour, an open Keycloak cookie does not skip the login.
 Customer (press): 7 days idle, 30 days in total, from the realm settings.
 
@@ -24,7 +24,7 @@ from helpers import admin, live_available, get_environment_value, read_realm, te
 
 HOUR = 3600
 DAY = 24 * HOUR
-EMPLOYEE_CLIENTS = ("site-tenant1", "mobile-app", "mcp-external")
+EMPLOYEE_CLIENTS = ("site-tenant1", "mobile-app", "mcp-external", "site-ops")
 LOA_CONFIG = "atonota-employee-loa"
 
 

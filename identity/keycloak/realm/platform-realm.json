@@ -1038,6 +1038,84 @@
       ]
     },
     {
+      "clientId": "site-ops",
+      "name": "Operations site",
+      "description": "Operations site (G-77). Confidential browser client: authorization code with PKCE S256, exact redirect (G-144). Employee session limits (O-25).",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${ATONOTA_SITE_OPS_SECRET}",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": false,
+      "fullScopeAllowed": false,
+      "consentRequired": false,
+      "rootUrl": "${ATONOTA_SITE_OPS_URL}",
+      "baseUrl": "${ATONOTA_SITE_OPS_URL}/panel",
+      "redirectUris": [
+        "${ATONOTA_SITE_OPS_URL}/api/method/platform_core.api.auth.keycloak_callback"
+      ],
+      "webOrigins": [],
+      "attributes": {
+        "backchannel.logout.url": "${ATONOTA_SITE_OPS_URL}/api/method/platform_core.api.keycloak_backchannel_logout",
+        "backchannel.logout.session.required": "true",
+        "backchannel.logout.revoke.offline.tokens": "false",
+        "post.logout.redirect.uris": "${ATONOTA_SITE_OPS_URL}/panel",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "oidc.ciba.grant.enabled": "false",
+        "use.refresh.tokens": "true",
+        "client_credentials.use_refresh_token": "false",
+        "pkce.code.challenge.method": "S256",
+        "client.session.idle.timeout": "3600",
+        "client.session.max.lifespan": "86400",
+        "acr.loa.map": "{\"employee\": 1}",
+        "default.acr.values": "employee",
+        "minimum.acr.value": "employee"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "email",
+        "basic"
+      ],
+      "optionalClientScopes": []
+    },
+    {
+      "clientId": "agent-service",
+      "name": "Agent service",
+      "description": "AI agent service (G-77, G-148). The tenant setting ai_agent_audience names this client. Service account only, no browser flow and no audience scopes.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${ATONOTA_AGENT_SERVICE_SECRET}",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": false,
+      "consentRequired": false,
+      "redirectUris": [],
+      "webOrigins": [],
+      "attributes": {
+        "use.refresh.tokens": "false",
+        "client_credentials.use_refresh_token": "false",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "oidc.ciba.grant.enabled": "false"
+      },
+      "defaultClientScopes": [
+        "roles",
+        "service_account",
+        "basic"
+      ],
+      "optionalClientScopes": []
+    },
+    {
       "clientId": "mobile-app",
       "name": "Mobile app",
       "description": "Phone app. Public client: no secret, authorization code with PKCE S256 only (mobile.md GR-2, GR-3).",

@@ -287,8 +287,31 @@ doc_events = {
 		"validate": "press_tr.press_identity.accounts.guard_reviewer_role",
 	},
 	# G-49: Press's own key format check never runs, so press_tr checks it on every Site save.
-	"Site": {"validate": "press_tr.backup_keys.validate_site_keys"},
+	# G-15: Site status changes go to the signed job status outbox.
+	"Site": {
+		"validate": "press_tr.backup_keys.validate_site_keys",
+		"on_update": "press_tr.job_status.runtime.on_record",
+	},
+	"Agent Job": {
+		"after_insert": "press_tr.job_status.runtime.on_record",
+		"on_update": "press_tr.job_status.runtime.on_record",
+	},
+	"Agent Job Callback": {"after_insert": "press_tr.job_status.runtime.after_callback"},
+	"Site Update": {"on_update": "press_tr.job_status.runtime.on_record"},
+	"Deploy Candidate Build": {"on_update": "press_tr.job_status.runtime.on_record"},
+	"New Bench Queue": {"on_update": "press_tr.job_status.runtime.on_record"},
+	"Bench": {
+		"after_insert": "press_tr.job_status.runtime.on_record",
+		"on_update": "press_tr.job_status.runtime.on_record",
+	},
+	"Press Webhook": {"validate": "press_tr.job_status.runtime.validate_webhook"},
 }
+after_job = ["press_tr.job_status.runtime.after_press_job"]
 extend_doctype_class = {"Account Request": ["press_tr.press_identity.accounts.AccountRequestPolicy"]}
 
-ai_write_closed_doctypes = ["PTR Identity Link", "PTR Keycloak Session"]
+ai_write_closed_doctypes = [
+	"PTR Identity Link",
+	"PTR Keycloak Session",
+	"PTR Job Status State",
+	"PTR Job Status Outbox",
+]

@@ -103,3 +103,7 @@
   code: plt_ai_route_target
   doctype: PLT AI Route Target
   definition_tr: Bu kayıt bir model yolunun hedefini tanımlar.
+- term_tr: Press olayı gelen kutusu
+  code: plt_press_event_inbox
+  doctype: PLT Press Event Inbox
+  definition_tr: Bu kayıt imzası doğrulanan Press olayını bir kez saklar.

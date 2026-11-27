@@ -1,0 +1,46 @@
+{
+ "doctype": "DocType",
+ "name": "PLT Press Event Inbox",
+ "module": "AI",
+ "description": "Unique authenticated Press status events. Agent execution is outside this inbox.",
+ "engine": "InnoDB",
+ "autoname": "field:event_id",
+ "naming_rule": "By fieldname",
+ "field_order": [
+  "event_id",
+  "payload"
+ ],
+ "fields": [
+  {
+   "fieldname": "event_id",
+   "fieldtype": "Data",
+   "label": "Event Id",
+   "description": "Unique signed event ID, shared across signing key rotation.",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "payload",
+   "fieldtype": "Code",
+   "label": "Payload",
+   "description": "Strictly validated status metadata, without execution output or secrets.",
+   "read_only": 1,
+   "options": "JSON",
+   "reqd": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "ASC",
+ "track_changes": 0,
+ "allow_rename": 0,
+ "actions": [],
+ "links": [],
+ "states": []
+}

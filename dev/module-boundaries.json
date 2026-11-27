@@ -22,6 +22,7 @@
       "oidc_verify"
     ],
     "press_tr.ansible_bridge": [],
+    "press_tr.job_status": [],
     "identity_sync": [
       "oidc_verify"
     ],
@@ -85,7 +86,8 @@
     "platform_core.api.ai": "platform_core.ai",
     "platform_core.api.mcp": "platform_core.ai",
     "platform_core.api.atonota_login": "platform_core.identity",
-    "platform_core.api.reseller": "platform_core.reseller"
+    "platform_core.api.reseller": "platform_core.reseller",
+    "platform_core.api.press_status": "platform_core.ai"
   },
   "forbidden_imports": [
     "openai",

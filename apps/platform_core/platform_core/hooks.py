@@ -11,6 +11,7 @@ before_login = ["platform_core.identity.login_policy.before_login"]
 before_request = [
 	# G-40: refuse System Console and test endpoints first, unless the site opts in.
 	"platform_core.development_access.guard_development_endpoints",
+	"platform_core.ai.press_events.guard_request",
 	"platform_core.identity.login_policy.before_request",
 	"platform_core.identity.session_policy.before_request",
 	"platform_core.shell.native_metadata.guard_website_rpc_before_request",
@@ -92,6 +93,7 @@ fixtures = [{"dt": "Role", "filters": [["name", "=", "PLT AI Manager"]]}]
 # Access Rules change only through the engine's own AI tools, not the generic write tools (O-28).
 # O-28: the identity link changes only through the identity endpoints, never through generic AI writes.
 ai_write_closed_doctypes = [
+	"PLT Press Event Inbox",
 	"PLT Identity Link",
 	"Platform Identity Deletion",
 	"PLT AI API",

@@ -22,3 +22,15 @@
   code: ansible_bridge
   scope: press_tr package
   definition_tr: Bu paket Press'in Ansible geri çağrısını yeni Ansible sürümüne bağlar.
+- term_tr: İş durumu
+  code: job_status
+  scope: press_tr module
+  definition_tr: Bu modül Press kayıtlarının durum olaylarını imzalı kanala gönderir.
+- term_tr: İzlenen iş durumu
+  code: ptr_job_status_state
+  doctype: PTR Job Status State
+  definition_tr: Bu kayıt son gözlenen durumu ve izleme durumunu tutar.
+- term_tr: İş durumu giden kutusu
+  code: ptr_job_status_outbox
+  doctype: PTR Job Status Outbox
+  definition_tr: Bu kayıt gönderilecek olayın değişmez kopyasını tutar.

@@ -31,22 +31,21 @@ class BranchCommandTests(unittest.TestCase):
         self.git("init", "-q", "-b", "backend")
         self.git("config", "user.name", "karacaismail")
         self.git("config", "user.email", "35493655+karacaismail@users.noreply.github.com")
-        (self.root / "backend").mkdir()
-        self.target = self.root / "backend" / "sample.py"
+        self.target = self.root / "sample.py"
         self.target.write_text("legacy = True\n")
         self.git("add", ".")
         self.git("commit", "-qm", "Deneme tabanını oluştur")
         self.git("switch", "-qc", "fix/sample")
         (self.tools / "apply_renames.py").write_text(
             "import sys\nfrom pathlib import Path\n"
-            "path = Path('backend/sample.py')\n"
+            "path = Path('sample.py')\n"
             "if '--check-modules' in sys.argv:\n"
             "    raise SystemExit(int('legacy' in path.read_text()))\n"
             "path.write_text(path.read_text().replace('legacy', 'current'))\n"
         )
         (self.tools / "check_names.py").write_text(
             "from pathlib import Path\n"
-            "raise SystemExit(int('current' not in Path('backend/sample.py').read_text()))\n"
+            "raise SystemExit(int('current' not in Path('sample.py').read_text()))\n"
         )
         self.env["PYTHON"] = sys.executable
 
@@ -70,7 +69,7 @@ class BranchCommandTests(unittest.TestCase):
 
     def test_success_commits_once_and_repeats_without_commit(self):
         initial = self.git("rev-parse", "HEAD")
-        check = "from pathlib import Path; assert 'current' in Path('backend/sample.py').read_text()"
+        check = "from pathlib import Path; assert 'current' in Path('sample.py').read_text()"
         first = self.run_command(check)
         self.assertEqual(first.returncode, 0, first.stderr)
         self.assertEqual(self.git("log", "-1", "--format=%s"), MESSAGE)
@@ -133,7 +132,7 @@ class BranchCommandTests(unittest.TestCase):
 
     def test_test_side_effects_are_never_committed(self):
         initial = self.git("rev-parse", "HEAD")
-        outcome = self.run_command("from pathlib import Path; Path('backend/generated.py').touch()")
+        outcome = self.run_command("from pathlib import Path; Path('generated.py').touch()")
         self.assertNotEqual(outcome.returncode, 0)
         self.assertIn("changed", outcome.stderr.lower())
         self.assertEqual(self.git("rev-parse", "HEAD"), initial)

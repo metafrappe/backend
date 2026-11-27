@@ -86,7 +86,12 @@ required_apps = ["press"]
 # AJA-421: the setup step opens the "Recovery Reviewer" role only when it is missing.
 # The role is not a fixture: Frappe rewrites every fixture on each migrate (AJA-857).
 after_install = ["press_tr.press_identity.recovery.ensure_reviewer_role"]
-after_migrate = ["press_tr.press_identity.recovery.ensure_reviewer_role"]
+# G-8: Frappe imports Press fixtures before after_migrate, so the cleanup runs on every migrate.
+# Keep one list: a second after_migrate assignment would drop the steps above it.
+after_migrate = [
+	"press_tr.press_identity.recovery.ensure_reviewer_role",
+	"press_tr.fixture_cleanup.disable_cloud_defaults",
+]
 
 # Uninstallation
 # ------------
@@ -287,7 +292,11 @@ doc_events = {
 		"validate": "press_tr.press_identity.accounts.guard_reviewer_role",
 	},
 	# G-49: Press's own key format check never runs, so press_tr checks it on every Site save.
-	"Site": {"validate": "press_tr.backup_keys.validate_site_keys"},
+	# G-7: Press never calls Agent.complete_setup_wizard, so press_tr starts it once per new site.
+	"Site": {
+		"validate": "press_tr.backup_keys.validate_site_keys",
+		"on_update": "press_tr.setup_wizard.start_setup_wizard",
+	},
 }
 extend_doctype_class = {"Account Request": ["press_tr.press_identity.accounts.AccountRequestPolicy"]}
 

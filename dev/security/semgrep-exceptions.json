@@ -169,7 +169,7 @@
   "additionalReviews": [
     {
       "scope": "backend/apps/platform_core/platform_core",
-      "sha256": "933409f0be2011c370ede12cef029c787c04ed0885557ced1dd5f2ad9ae47cb0",
+      "sha256": "55b51a75c3f4d0e9b42bf6d974c05e536be107c9b7802f45bef759f5fb148edc",
       "reviewNote": "Digest refreshed on 27 November 2026 (AJA-1283). Since 92f8c277 four files changed: api/atonota_login.py, hooks.py, identity/atonota/decision_api.py and identity/atonota/verification_api.py. Each change replaces the product name with `atonota_login` in a comment, a docstring or the TASK_MARK text. No code path, permission check or finding line changed. All 36 findings were re-reviewed and stay approved.",
       "findings": [
         {
@@ -392,9 +392,11 @@
       "files": [
         "backend/apps/platform_core/platform_core/access/engine.py",
         "backend/apps/platform_core/platform_core/access/explain.py",
+        "backend/apps/platform_core/platform_core/access/files.py",
         "backend/apps/platform_core/platform_core/access/hooks.py",
         "backend/apps/platform_core/platform_core/access/link_search.py",
         "backend/apps/platform_core/platform_core/access/permission_log.py",
+        "backend/apps/platform_core/platform_core/access/realtime.py",
         "backend/apps/platform_core/platform_core/access/reports.py",
         "backend/apps/platform_core/platform_core/access/rules.py",
         "backend/apps/platform_core/platform_core/access/subject.py",

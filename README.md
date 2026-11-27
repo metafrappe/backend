@@ -5,6 +5,7 @@ Bu klasör platformun sunucu kodunu tutar. Karar sitesi deponun kökündedir. Ba
 - Ajan talimatları [AGENTS.md](AGENTS.md) dosyasındadır.
 - Seviye, sürümler ve kararlar [proje kaydındadır](PROJE-KAYDI.md).
 - Bileşenlerin ortak adları [sözleşmeler](docs/sozlesmeler.md) dosyasındadır.
+- Bu depo [MIT lisansı](LICENSE) ile paylaşılır.
 
 Kimlik markası Atonota'dır. Kullanıcılar uygulamalara “Atonota ile oturum aç” düğmesiyle girer. Atonota, Keycloak üzerinde çalışır.
 

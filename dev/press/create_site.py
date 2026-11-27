@@ -13,7 +13,7 @@ from frappe.utils import CallbackManager
 
 @contextmanager
 def protect_database_import_credentials():
-    # Frappe 16.50 passes its generated database password to the MariaDB CLI.
+    # Frappe 16.56 passes its generated database password to the MariaDB CLI.
     # Keep that password in a private option file for this development bootstrap.
     original = database.get_command
     with NamedTemporaryFile(mode="w", encoding="utf-8", prefix="press-db-", dir="/dev/shm") as options:

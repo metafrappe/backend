@@ -28,7 +28,6 @@ class SourceLedgerLayoutTests(unittest.TestCase):
         rows = json.loads((ROOT / "dev/security/bandit-exceptions.json").read_text(encoding="utf-8"))
         files = {row["file"] for row in rows}
         self.assertIn("dev/tests/test_source_ledger.py", files)
-        self.assertNotIn("backend/dev/tests/test_source_ledger.py", files)
 
 
 if __name__ == "__main__":

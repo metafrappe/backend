@@ -27,6 +27,9 @@ KEPT = (
     ("dev/security/.gitleaksignore", None, "old commit fingerprints"),
     # This test names the prefix it looks for.
     ("deploy/tests/test_repo_layout.py", None, "the test itself"),
+    # The G-128 Press evidence link is pinned to an old frappesetup commit, where the file sat
+    # under the old folder (AJA-1673).
+    ("dev/bin/check-source-ledger", 'PRESS_EVIDENCE_PATH = "backend/', "pinned old-repository evidence"),
 )
 # The docs/standartlar paths change in a later task (AJA-1587, "Sınır").
 KEPT_TEXT = ("backend/docs/standartlar",)

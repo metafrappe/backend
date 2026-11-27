@@ -71,15 +71,18 @@ class TurkeySetupDefaultsTests(unittest.TestCase):
         self.documents[doctype].update(values)
 
     def run_hook(self, event, *args, extensions=None):
-        with patch.object(sys, "path", [str(APP), *sys.path]), patch.dict(
-            sys.modules,
-            {
-                "frappe": self.frappe,
-                "frappe.core.doctype.system_settings.system_settings": SimpleNamespace(
-                    clear_system_settings_cache=self.clear_settings_cache,
-                ),
-                "frappe.translate": SimpleNamespace(set_default_language=self.set_language),
-            },
+        with (
+            patch.object(sys, "path", [str(APP), *sys.path]),
+            patch.dict(
+                sys.modules,
+                {
+                    "frappe": self.frappe,
+                    "frappe.core.doctype.system_settings.system_settings": SimpleNamespace(
+                        clear_system_settings_cache=self.clear_settings_cache,
+                    ),
+                    "frappe.translate": SimpleNamespace(set_default_language=self.set_language),
+                },
+            ),
         ):
             hooks = importlib.import_module("platform_core.hooks")
             methods = [
@@ -91,7 +94,7 @@ class TurkeySetupDefaultsTests(unittest.TestCase):
             module, name = methods[0].rsplit(".", 1)
             loaded = importlib.import_module(module)
             if extensions is not None:
-                # The real list waits for a product decision (G-48); tests use their own.
+                # Some tests replace the decided list (G-48, AJA-701) with their own.
                 loaded.ALLOWED_FILE_EXTENSIONS = extensions
             getattr(loaded, name)(*args)
 
@@ -205,22 +208,25 @@ class TurkeySetupDefaultsTests(unittest.TestCase):
         self.frappe.db.set_single_value.assert_not_called()
 
     def test_empty_whitelist_leaves_field_alone(self):
-        # The extension list waits for a decision. An empty list never clears a site value.
+        # An empty list never clears a site value.
         self.system["allowed_file_extensions"] = "CSV"
         self.run_hook("after_migrate", extensions=())
         self.assertEqual(self.system["allowed_file_extensions"], "CSV")
 
     def test_shipped_whitelist_matches_the_decision(self):
         # Orchestrator decision on 25 November 2026 (AJA-701). The decision may change later.
-        with patch.object(sys, "path", [str(APP), *sys.path]), patch.dict(
-            sys.modules,
-            {
-                "frappe": self.frappe,
-                "frappe.core.doctype.system_settings.system_settings": SimpleNamespace(
-                    clear_system_settings_cache=self.clear_settings_cache,
-                ),
-                "frappe.translate": SimpleNamespace(set_default_language=self.set_language),
-            },
+        with (
+            patch.object(sys, "path", [str(APP), *sys.path]),
+            patch.dict(
+                sys.modules,
+                {
+                    "frappe": self.frappe,
+                    "frappe.core.doctype.system_settings.system_settings": SimpleNamespace(
+                        clear_system_settings_cache=self.clear_settings_cache,
+                    ),
+                    "frappe.translate": SimpleNamespace(set_default_language=self.set_language),
+                },
+            ),
         ):
             module = importlib.import_module("platform_core.config.turkey_setup")
             self.assertEqual(module.ALLOWED_FILE_EXTENSIONS, ALLOWED_EXTENSIONS)

@@ -27,6 +27,7 @@ OPERATIONS_NOTES = (
 
 LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 CODE = re.compile(r"`([^`\n]+)`")
+SHELL_BLOCK = re.compile(r"```sh\n(.*?)```", re.S)
 TOP_FOLDERS = ("apps/", "contracts/", "deploy/", "dev/", "docs/", "e2e/", "identity/", "libs/")
 COMMIT = re.compile(r"\b[0-9a-f]{7,40}\b")
 OLD_PREFIX = re.compile(r"(?<![\w/.-])backend/[\w./-]*")
@@ -40,10 +41,10 @@ def relative_links(text):
 
 
 def code_paths(text):
-    """Repository paths in backticks. A command keeps only its first word."""
-    for span in CODE.findall(text):
-        word = span.split()[0]
-        if word.startswith(TOP_FOLDERS) or word.startswith("backend/"):
+    """Repository paths in backticks and in shell blocks, also inside commands."""
+    spans = CODE.findall(text) + SHELL_BLOCK.findall(text)
+    for word in " ".join(spans).split():
+        if word.startswith(TOP_FOLDERS) and "<" not in word:
             yield word
 
 
@@ -70,7 +71,7 @@ class HandoffNotes(unittest.TestCase):
             text = path.read_text()
             problems += [f"{name}: {word}" for word in OLD_PREFIX.findall(text)]
             for word in code_paths(text):
-                if not word.startswith("backend/") and not (ROOT / word).exists():
+                if not (ROOT / word).exists():
                     problems.append(f"{name}: {word}")
         self.assertEqual(problems, [])
 

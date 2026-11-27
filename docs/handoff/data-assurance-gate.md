@@ -31,7 +31,7 @@ Hetzner Almanya merkezli bir sunucu şirketidir. Türkiye'deki kişinin verisi H
 6. Hukuk sorumlusu bildirim servislerini de değerlendirir. Örneğin Google, Apple ve e-posta sağlayıcısı ayrı yurt dışı alıcılarıdır.
 7. Taraflar standart sözleşmeyi imzalarsa proje sahibi imza tarihini kayda yazar.
 8. Proje sahibi imzadan sonraki 5 iş günü içinde Kurula bildirim yapar.
-9. Proje sahibi kararı proje kaydına yazdırır. Karar boştaki ilk O numarasını alır. Örneğin O-57 artık kullanılıyor.
+9. Proje sahibi kararı proje kaydına yazdırır. Karar en büyük O numarasından sonraki numarayı alır. Proje sahibi proje kaydına ve açık PR'lara bakar.
 10. Hüseyin Cengiz AB kullanıcılarının verisini Hetzner'in AB veri merkezinde tutar.
 
 Bildirim yapılmazsa para cezası vardır. Ceza 50.000 TL ile 1.000.000 TL arasındadır.

@@ -12,6 +12,8 @@ Gerçek sunucu denemesi yapılmadı.
 
 Ayrıntı [karar notundadır](../../docs/decisions/0018-press-ansible-python314.md).
 
+Bu not Press'in sunucu kurma adımlarının tek kaynağıdır. Hazırlık ortamının geri kalan Press işi [hazırlık devir notundadır](../../docs/handoff/press-provisioning.md).
+
 ## Yerel kurulum denemesi
 
 Press, kurulumu iş kuyruğuna ekler. Kuyruk, arka planda çalışacak işleri tutar.
@@ -118,7 +120,7 @@ Kalan 101 görev “Pending” durumunda kaldı.
   ```
 
 - Ansible Core 2.21 güvenlik düzeltmesini Mayıs 2027'ye kadar alır. O tarihten önce sürüm yükseltilir.
-- Press kodundaki yerel geliştirme yaması ayrı bir iştir. Üretim imajında yama yoktur (O-18).
+- Press kodundaki yerel geliştirme yaması ayrı bir iştir (O-18). Üretim imajı ayrı ve açık bir yama dizisiyle derlenir (O-52).
 
 ## Geri alma
 

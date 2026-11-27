@@ -19,13 +19,21 @@ JENKINSFILES = ("backend.Jenkinsfile", "promote.Jenkinsfile", "web.Jenkinsfile")
 OLD_PREFIX = re.compile(r"(^|[^a-z_/.-])backend/")
 # The acceptance command of AJA-1587, without the paths it excludes itself.
 GREP_EXCLUDES = (":!*.md", ":!*.patch", ":!dev/naming", ":!brand-exclusions.txt")
-# Lines that keep the old prefix on purpose. Each entry has its reason.
-KEPT = {
+# Lines that keep the old prefix on purpose: (path, text on the line or None for every line, reason).
+KEPT = (
     # Gitleaks fingerprints name a commit and the path inside that commit. The commits belong to
-    # the old frappesetup history, where the files were under backend/. Changing the path would
-    # break the fingerprint.
-    "dev/security/.gitleaksignore": "old commit fingerprints",
-}
+    # the old frappesetup history, where the files were under the old folder. Changing the path
+    # would break the fingerprint.
+    ("dev/security/.gitleaksignore", None, "old commit fingerprints"),
+    # This test names the prefix it looks for.
+    ("deploy/tests/test_repo_layout.py", None, "the test itself"),
+    # The naming checker in dev/naming still reports paths with the old prefix. The sibling task
+    # changes dev/naming; the gate and its test follow it there (AJA-1587, "Sınır").
+    ("dev/ai_readiness/gate.py", 'path.removeprefix("backend/")', "dev/naming output"),
+    ("dev/ai_readiness/test_gate.py", '"path": f"backend/{APP}/hooks.py"', "dev/naming output"),
+    ("dev/ai_readiness/test_gate.py", 'args.root / "backend/apps/example.py"', "dev/naming output"),
+    ("dev/ai_readiness/test_gate.py", '"path": "backend/apps/example.py"', "dev/naming output"),
+)
 # The docs/standartlar paths change in a later task (AJA-1587, "Sınır").
 KEPT_TEXT = ("backend/docs/standartlar",)
 
@@ -88,15 +96,18 @@ class RepositoryPathTests(unittest.TestCase):
         left = []
         for line in result.stdout.splitlines():
             path = line.split(":", 1)[0]
-            if path in KEPT or any(text in line for text in KEPT_TEXT):
+            if any(path == kept and (text is None or text in line) for kept, text, _ in KEPT):
+                continue
+            if any(text in line for text in KEPT_TEXT):
                 continue
             left.append(line[:160])
         self.assertEqual(left, [], f"{len(left)} lines still use the backend/ prefix")
 
-    def test_kept_files_still_exist(self):
-        for path in KEPT:
-            with self.subTest(path=path):
-                self.assertTrue((ROOT / path).is_file())
+    def test_every_kept_line_still_exists(self):
+        for path, text, _ in KEPT:
+            with self.subTest(path=path, text=text):
+                content = (ROOT / path).read_text(encoding="utf-8")
+                self.assertTrue(text is None or text in content)
 
 
 if __name__ == "__main__":

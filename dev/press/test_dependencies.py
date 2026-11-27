@@ -5,12 +5,12 @@ import unittest
 from pathlib import Path
 
 PRESS_DEV = Path(__file__).resolve().parent
-REPO = PRESS_DEV.parents[2]
+REPO = PRESS_DEV.parents[1]
 
 
 class PressDependencyTest(unittest.TestCase):
     def test_test_environment_installs_declared_direct_dependencies(self):
-        metadata = (REPO / "backend/apps/press_tr/pyproject.toml").read_text()
+        metadata = (REPO / "apps/press_tr/pyproject.toml").read_text()
         optional = re.search(r"(?ms)^\[project\.optional-dependencies\]\s*\n(.*?)(?=^\[|\Z)", metadata)
         self.assertIsNotNone(optional)
         requirements = re.search(r"(?ms)^test\s*=\s*\[(.*?)\]", optional.group(1))

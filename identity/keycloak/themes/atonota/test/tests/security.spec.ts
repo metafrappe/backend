@@ -153,7 +153,7 @@ test('GV-2: templates never switch off escaping for user or realm data', () => {
 });
 
 test('file and folder names in this folder are English', () => {
-  // Project rule: new code names are English and ASCII (backend/AGENTS.md, section "Ad dili").
+  // Project rule: new code names are English and ASCII (AGENTS.md, section "Ad dili").
   // The list holds the Turkish words that were used as names here before.
   const turkish = /(^|[-_./])(akis|dil|eposta|erisilebilirlik|gorsel|hareket|odak|yerlesim|tema|deneme|referans|tunel|yatay|masaustu|giris|kayit|parola|hata|dogrulama|islem|kurulum|yolu)([-_./]|$)/;
   const names: string[] = [];

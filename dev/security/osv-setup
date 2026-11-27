@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Download the pinned OSV-Scanner and the open vulnerability database for the offline scans.
-# This is the only step that needs the network. The security gate (backend/dev/bin/security-audit,
+# This is the only step that needs the network. The security gate (dev/bin/security-audit,
 # "scans.py press-lock") and security-full then scan without it. The database must be at most
 # seven days old, so run this again at least once a week.
 # --if-stale downloads a database file only when it is missing or at least six days old. Jenkins

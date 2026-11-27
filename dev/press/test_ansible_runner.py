@@ -11,7 +11,7 @@ import unittest
 import ansible_test_env as env
 
 HARNESS = env.PRESS_DEV / "ansible_runner_harness.py"
-PRESS_TR = env.REPO / "backend/apps/press_tr"
+PRESS_TR = env.REPO / "apps/press_tr"
 
 
 def run_harness(scenario, bridge):

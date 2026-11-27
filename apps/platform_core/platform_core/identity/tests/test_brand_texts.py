@@ -1,6 +1,6 @@
 """The product name in messages and emails comes from the `identity_brand_name` setting (AJA-1061).
 
-backend/brand.env is the one source of the name. The deploy step writes it into the
+brand.env is the one source of the name. The deploy step writes it into the
 `identity_brand_name` site setting (AJA-1059 plan, section 2). These tests change the setting
 and check that the visible text changes with it. The brand values here are test values only.
 

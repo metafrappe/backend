@@ -1,7 +1,7 @@
 # Regenerate from the repository root:
 # uv pip compile --universal --python-version 3.14 --generate-hashes \
 #   --exclude-newer 2026-11-22T00:00:00Z --no-header --no-annotate \
-#   backend/dev/press/ansible-requirements.txt
+#   dev/press/ansible-requirements.txt
 ansible==14.6.0 \
     --hash=sha256:47cd013f4b6462f15b65485d09b713ae64697036733078f0623f636a94f5df45 \
     --hash=sha256:a9d06a68d73a06eb4651ac7ea0c3b0ad18ddffbdb4feb745855dea70e8891e75

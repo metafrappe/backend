@@ -671,7 +671,7 @@ def tool_sql_checks(targets, functions, sources, reexports, emit):
 
 DECISION_NUMBER = re.compile(r"^([0-9]{4})(?![0-9])")
 WEBSITE_HOOK = "website_user_allowed_methods"
-# Built-in methods permitted by section 5 of backend/docs/sozlesmeler.md.
+# Built-in methods permitted by section 5 of docs/sozlesmeler.md.
 WEBSITE_CORE_METHODS = {"frappe.auth.get_logged_user", "logout", "frappe.desk.search.search_link"}
 # These repository methods require a manager or a service identity.
 WEBSITE_PRIVILEGED_METHODS = {

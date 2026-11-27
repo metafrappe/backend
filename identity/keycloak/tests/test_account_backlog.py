@@ -1,4 +1,4 @@
-"""Gap backlog items 7, 8 and 11 (backend/docs/gap-backlog.md, kimlik-realm).
+"""Gap backlog items 7, 8 and 11 (docs/gap-backlog.md, kimlik-realm).
 
 7: an old refresh token is refused (contract section 2: the refresh token changes on every use).
 8: the passkey registration step is enabled; disabled providers are not shown on the login page.

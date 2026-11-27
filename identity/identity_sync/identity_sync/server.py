@@ -1,4 +1,4 @@
-"""Service HTTP endpoints. The contract is in `backend/contracts/identity_sync.openapi.yaml`.
+"""Service HTTP endpoints. The contract is in `contracts/identity_sync.openapi.yaml`.
 
 The server uses the Python standard-library `http.server` module and processes requests serially.
 

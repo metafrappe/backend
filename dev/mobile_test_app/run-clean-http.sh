@@ -2,7 +2,7 @@
 set -euo pipefail
 run_label="${1:?Choose a new test run label}"
 [[ "$run_label" =~ ^[a-z0-9-]+$ ]] || exit 2
-repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)"
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$repo_root"
 : "${PANE_PORT:?Set PANE_PORT to your Pane port base}"
 [[ "$PANE_PORT" =~ ^[1-9][0-9]{3,4}$ ]] && (( PANE_PORT <= 65526 )) || exit 2
@@ -23,7 +23,7 @@ print("MARIADB_ROOT_PASSWORD="+secrets.token_hex(24))
 print("ADMIN_PASSWORD="+secrets.token_hex(24))
 PY
 dock=(docker --context colima-factory)
-compose=("${dock[@]}" compose -p "$project" --env-file "$test_env" -f backend/dev/compose.tenant.yaml)
+compose=("${dock[@]}" compose -p "$project" --env-file "$test_env" -f dev/compose.tenant.yaml)
 cleanup() {
     "${dock[@]}" cp "$web:/home/frappe/frappe-bench/logs/mobile-http-review.log" "$review/$run_label-server.log" 2>/dev/null || true
     "${dock[@]}" stop -t 2 "$web" >/dev/null 2>&1 || true

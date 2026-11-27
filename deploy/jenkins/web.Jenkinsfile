@@ -1,15 +1,15 @@
-// Web delivery line of karacaismail/atonota-web. Design: backend/docs/dagitim/ortamlar.md.
+// Web delivery line of metafrappe/frontend. Design: docs/dagitim/ortamlar.md.
 //
-// Same shape as backend.Jenkinsfile: a push to atonota-web main builds one bundle, deploys it to
+// Same shape as backend.Jenkinsfile: a push to metafrappe/frontend main builds one bundle, deploys it to
 // alpha and checks alpha; beta waits for the button and moves the same bundle. rc and prod move
 // with the job "atonota-release/atonota-promote" (promote.Jenkinsfile).
 // The bundle is the built "dist" folder as a tar.gz with its SHA-256 in release.json.
 //
 // Jenkins setup (DevOps owner): Pipeline job "atonota-delivery/atonota-web" whose SCM is
-// karacaismail/frappesetup, branch */main, script path backend/deploy/jenkins/web.Jenkinsfile,
-// "GitHub hook trigger" on. The job checks out atonota-web itself, so a push to either repository
-// starts it. The "Skip unchanged" stage stops a run whose atonota-web commit already runs in alpha.
-// Credentials and plugins as in backend.Jenkinsfile (list: backend/docs/handoff/jenkins-credentials.md). Agents with label atonota-build need Node 24
+// metafrappe/backend, branch */main, script path deploy/jenkins/web.Jenkinsfile,
+// "GitHub hook trigger" on. The job checks out metafrappe/frontend itself, so a push to either repository
+// starts it. The "Skip unchanged" stage stops a run whose frontend commit already runs in alpha.
+// Credentials and plugins as in backend.Jenkinsfile (list: docs/handoff/jenkins-credentials.md). Agents with label atonota-build need Node 24
 // and the Playwright system packages.
 
 // DEPLOYING names the environment whose deployment has started. A failure before that point
@@ -17,8 +17,8 @@
 def deployAndCheck(String target) {
     env.DEPLOYING = target
     sshagent(credentials: ["atonota-deploy-ssh-${target}"]) {
-        sh "backend/deploy/bin/deploy ${target} release"
-        sh "backend/deploy/bin/health ${target} release"
+        sh "deploy/bin/deploy ${target} release"
+        sh "deploy/bin/health ${target} release"
     }
     env.DEPLOYING = ''
 }
@@ -30,7 +30,7 @@ def rollbackAfterFailure(String target) {
         return
     }
     sshagent(credentials: ["atonota-deploy-ssh-${target}"]) {
-        sh "backend/deploy/bin/rollback ${target} web --failed ${env.RELEASE_ID}"
+        sh "deploy/bin/rollback ${target} web --failed ${env.RELEASE_ID}"
     }
 }
 
@@ -38,15 +38,15 @@ def useStashes() {
     deleteDir()
     unstash 'deploy'
     unstash 'release'
-    sh "test \"\$(python3 -I backend/deploy/release.py field release/release.json commit)\" = '${env.WEB_COMMIT}'"
+    sh "test \"\$(python3 -I deploy/release.py field release/release.json commit)\" = '${env.WEB_COMMIT}'"
 }
 
 def promote(String target, String source) {
     useStashes()
     sshagent(credentials: ["atonota-deploy-ssh-${source}"]) {
-        sh "rm -rf source && backend/deploy/bin/fetch-current ${source} web source"
+        sh "rm -rf source && deploy/bin/fetch-current ${source} web source"
     }
-    sh "python3 -I backend/deploy/release.py promote-check release/release.json --target ${target} --source-record source/source-record.json"
+    sh "python3 -I deploy/release.py promote-check release/release.json --target ${target} --source-record source/source-record.json"
     deployAndCheck(target)
 }
 
@@ -72,9 +72,9 @@ pipeline {
                             def scmVars = checkout scm
                             env.DEPLOY_COMMIT = scmVars.GIT_COMMIT
                         }
-                        stash name: 'deploy', includes: 'backend/deploy/**'
+                        stash name: 'deploy', includes: 'deploy/**'
                         dir('web') {
-                            git url: 'https://github.com/karacaismail/atonota-web.git', branch: 'main'
+                            git url: 'https://github.com/metafrappe/frontend.git', branch: 'main'
                         }
                         script {
                             env.WEB_COMMIT = sh(returnStdout: true, script: 'git -C web rev-parse HEAD').trim()
@@ -89,8 +89,8 @@ pipeline {
                             sshagent(credentials: ["atonota-deploy-ssh-${source}"]) {
                                 running = sh(returnStdout: true, script: '''
                                     rm -rf alpha-web
-                                    if backend/deploy/bin/fetch-current alpha web alpha-web >/dev/null 2>&1; then
-                                        python3 -I backend/deploy/release.py field alpha-web/release.json commit
+                                    if deploy/bin/fetch-current alpha web alpha-web >/dev/null 2>&1; then
+                                        python3 -I deploy/release.py field alpha-web/release.json commit
                                     fi
                                 ''').trim()
                             }
@@ -99,7 +99,7 @@ pipeline {
                     }
                 }
                 // Each gate is its own stage. The list equals the table "Jenkins kapıları" in
-                // backend/docs/handoff/ci-security.md (test_jenkins_gates.py).
+                // docs/handoff/ci-security.md (test_jenkins_gates.py).
                 stage('Web dependencies') {
                     when { environment name: 'WEB_UNCHANGED', value: 'false' }
                     steps {
@@ -145,13 +145,13 @@ pipeline {
                 stage('Build release') {
                     when { environment name: 'WEB_UNCHANGED', value: 'false' }
                     steps {
-                        sh 'rm -rf release && backend/deploy/bin/build-web web release'
+                        sh 'rm -rf release && deploy/bin/build-web web release'
                         // The release carries the server scripts of this checkout; a promotion
                         // sends exactly this copy (docs/dagitim/ortamlar.md).
-                        sh 'python3 -I backend/deploy/release.py pack-deploy --commit "$DEPLOY_COMMIT" release'
+                        sh 'python3 -I deploy/release.py pack-deploy --commit "$DEPLOY_COMMIT" release'
                         script {
                             env.RELEASE_ID = sh(returnStdout: true,
-                                script: 'python3 -I backend/deploy/release.py field release/release.json release_id').trim()
+                                script: 'python3 -I deploy/release.py field release/release.json release_id').trim()
                         }
                         archiveArtifacts artifacts: 'release/**', fingerprint: true
                         stash name: 'release', includes: 'release/**'

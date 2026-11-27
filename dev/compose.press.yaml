@@ -19,8 +19,8 @@ services:
 
   web:
     build:
-      context: ../..
-      dockerfile: backend/dev/press/Dockerfile
+      context: ..
+      dockerfile: dev/press/Dockerfile
       target: development
     working_dir: /home/frappe/benches
     command: ["sleep", "infinity"]

@@ -3,7 +3,7 @@
 
 A release is built once. The manifest pins every image by digest and the web bundle by
 SHA-256. Every environment runs the same manifest; nothing is rebuilt between environments.
-Design: backend/docs/dagitim/ortamlar.md. Python 3.9+, standard library only.
+Design: docs/dagitim/ortamlar.md. Python 3.9+, standard library only.
 """
 
 import argparse
@@ -200,7 +200,7 @@ def check_same_release(archived, server):
 
 # Files a release carries beside its manifest (review 2, finding Ö8). Promotion sends exactly
 # these copies, so rc and prod run the compose files and scripts of the release commit, not the
-# newest main. Paths are relative to backend/deploy.
+# newest main. Paths are relative to deploy.
 DEPLOY_PATTERNS = (
     "compose/stack.yaml",
     "compose/edge.yaml",

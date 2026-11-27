@@ -1,9 +1,9 @@
-"""The Jenkins gates match backend/docs/handoff/ci-security.md, and the Jenkinsfiles hold no
+"""The Jenkins gates match docs/handoff/ci-security.md, and the Jenkinsfiles hold no
 scheduled trigger, no secret value and no server address.
 
 Each gate is its own stage named "Gate: ...". The table "Jenkins kapıları" in ci-security.md is the
 list of gates; this test keeps the two lists equal. Secrets come only from Jenkins credentials by
-name; the handoff note backend/docs/handoff/jenkins-credentials.md lists those names.
+name; the handoff note docs/handoff/jenkins-credentials.md lists those names.
 """
 
 import re
@@ -19,7 +19,7 @@ JENKINSFILES = sorted(path.name for path in JENKINS.glob("*.Jenkinsfile"))
 ENVIRONMENTS = sorted(path.stem for path in (DEPLOY / "environments").glob("*.env"))
 
 # Public code and tool hosts the line needs. No deployment server may appear in a Jenkinsfile:
-# deploy scripts read server addresses from backend/deploy/environments/*.env.
+# deploy scripts read server addresses from deploy/environments/*.env.
 ALLOWED_HOSTS = {"github.com", "ghcr.io", "osv-vulnerabilities.storage.googleapis.com"}
 HOST = re.compile(
     r"\b(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+"
@@ -201,7 +201,7 @@ class Secrets(unittest.TestCase):
         self.assertEqual(server_addresses("url 'https://jenkins.example.com/x'"), ["jenkins.example.com"])
         self.assertEqual(server_addresses("host 'alpha.tailnet-1.ts.net'"), ["alpha.tailnet-1.ts.net"])
         self.assertEqual(server_addresses("git url: 'https://github.com/x/y.git'"), [])
-        self.assertEqual(server_addresses("python3 -I backend/deploy/release.py field release/release.json"), [])
+        self.assertEqual(server_addresses("python3 -I deploy/release.py field release/release.json"), [])
 
     def test_secrets_come_from_named_credentials_listed_in_the_handoff_note(self):
         used = set()

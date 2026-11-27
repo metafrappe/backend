@@ -1,7 +1,7 @@
 """Tests for the Jenkins side: bin/ scripts with a fake ssh and scp, and rules of the Jenkinsfiles.
 
 The fake ssh writes its arguments to a log and runs nothing. These tests need only bash, so they
-also run on macOS. Design: backend/docs/dagitim/ortamlar.md.
+also run on macOS. Design: docs/dagitim/ortamlar.md.
 """
 
 import json
@@ -230,8 +230,8 @@ class Jenkinsfiles(unittest.TestCase):
         self.assertLess(stages.index("Checkout"), stages.index("Security tools"))
         self.assertEqual(stages.index("Security tools") + 1, stages.index("Gate: deploy tests"))
         block = text.split("stage('Security tools')", 1)[1].split("stage('Gate: ", 1)[0]
-        self.assertIn("sh 'backend/dev/security/osv-setup --if-stale'", block)
-        self.assertLess(text.index("osv-setup --if-stale"), text.index("backend/dev/bin/security-audit"))
+        self.assertIn("sh 'dev/security/osv-setup --if-stale'", block)
+        self.assertLess(text.index("osv-setup --if-stale"), text.index("dev/bin/security-audit"))
         # The setup comment (comments are stripped above) names what the agent needs.
         header = (JENKINS / "backend.Jenkinsfile").read_text().split("pipeline {", 1)[0]
         self.assertIn("curl", header)

@@ -14,9 +14,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-ROOT = Path(__file__).resolve().parents[3]
-STACK = ROOT / "backend/e2e/stack"
-PRODUCT_NAME = runpy.run_path(str(ROOT / "backend/deploy/brand.py"))["load_brand"]()["PRODUCT_NAME"]
+ROOT = Path(__file__).resolve().parents[2]
+STACK = ROOT / "e2e/stack"
+PRODUCT_NAME = runpy.run_path(str(ROOT / "deploy/brand.py"))["load_brand"]()["PRODUCT_NAME"]
 CONTAINER_ID = "0123456789ab"
 # setup() derives the URLs. The credential file supplies the two fake client values.
 PRESS_ENVIRONMENT = {
@@ -72,7 +72,7 @@ class StackTests(unittest.TestCase):
         for folder in ("first", "second"):
             backend = Path(self.temp.name) / folder / "backend"
             (backend / "dev").mkdir(parents=True)
-            for source in (ROOT / "backend/dev").glob("compose*.yaml"):
+            for source in (ROOT / "dev").glob("compose*.yaml"):
                 shutil.copyfile(source, backend / "dev" / source.name)
             for port in ("7150", "7270"):
                 with (
@@ -146,7 +146,7 @@ class StackTests(unittest.TestCase):
                 {"keycloak": "fs-keycloak-atonota:dev-7150", "event-sink": "fs-kimlik-realm-event-sink:dev"},
             ),
         ):
-            command = [*compose[:-1], str(ROOT / "backend/dev" / f"compose.{fragment}.yaml")]
+            command = [*compose[:-1], str(ROOT / "dev" / f"compose.{fragment}.yaml")]
             model = namespace["config"](command, environment)
             for service, image in expected.items():
                 self.assertEqual(model["services"][service]["image"], image)
@@ -546,7 +546,7 @@ class StackTests(unittest.TestCase):
 
     def test_resource_probe_uses_the_compose_redis_digest(self):
         namespace = runpy.run_path(str(STACK))
-        manifest = (ROOT / "backend/dev/compose.tenant.yaml").read_text()
+        manifest = (ROOT / "dev/compose.tenant.yaml").read_text()
         expected = re.search(r"redis:7\.4-alpine@sha256:[a-f0-9]{64}", manifest).group()
         calls = []
 
@@ -598,8 +598,8 @@ class StackTests(unittest.TestCase):
 
     def test_refuses_an_environment_file_that_git_could_track(self):
         candidates = (
-            ROOT / "backend/e2e/stack-candidate.env",
-            ROOT / "backend/e2e/tests/stack-candidate",
+            ROOT / "e2e/stack-candidate.env",
+            ROOT / "e2e/tests/stack-candidate",
         )
         for path in candidates:
             with self.subTest(path=path):
@@ -628,7 +628,7 @@ class StackTests(unittest.TestCase):
         return seen
 
     def test_staging_name_does_not_depend_on_the_target_name(self):
-        target = ROOT / "backend/e2e/.env.production"
+        target = ROOT / "e2e/.env.production"
         if target.exists() or target.is_symlink():
             self.skipTest("A developer file already uses this path.")
         self.addCleanup(target.unlink, missing_ok=True)
@@ -641,19 +641,19 @@ class StackTests(unittest.TestCase):
                 self.assertEqual(candidate.stat().st_mode & 0o777, 0o600)
 
     def test_first_run_creates_a_custom_ignored_target_and_removes_staging(self):
-        target = ROOT / "backend/e2e/.env.production"
+        target = ROOT / "e2e/.env.production"
         if target.exists() or target.is_symlink():
             self.skipTest("A developer file already uses this path.")
         self.addCleanup(target.unlink, missing_ok=True)
-        staging_before = set((ROOT / "backend/e2e").glob(".fs-stack-env.*"))
+        staging_before = set((ROOT / "e2e").glob(".fs-stack-env.*"))
         result = self.run_stack("config", E2E_ENV_FILE=str(target))
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(target.is_file())
         self.assertEqual(target.stat().st_mode & 0o777, 0o600)
-        self.assertEqual(set((ROOT / "backend/e2e").glob(".fs-stack-env.*")), staging_before)
+        self.assertEqual(set((ROOT / "e2e").glob(".fs-stack-env.*")), staging_before)
 
     def test_refuses_a_staging_path_that_git_could_track(self):
-        folder = ROOT / "backend/e2e" / ("staging-test-" + os.urandom(4).hex())
+        folder = ROOT / "e2e" / ("staging-test-" + os.urandom(4).hex())
         self.addCleanup(shutil.rmtree, folder, ignore_errors=True)
         folder.mkdir()
         target = folder / ".env"
@@ -665,13 +665,13 @@ class StackTests(unittest.TestCase):
 
     def test_staging_ignore_rule_is_narrow(self):
         namespace = runpy.run_path(str(STACK))
-        namespace["assert_ignored"](ROOT / "backend/e2e/.fs-stack-env.0123456789abcdef.tmp")
+        namespace["assert_ignored"](ROOT / "e2e/.fs-stack-env.0123456789abcdef.tmp")
         for near in (
-            "backend/e2e/.fs-stack-env.0123456789abcdef.tmp.md",
-            "backend/e2e/.fs-stack-env.notes.tmp",
-            "backend/e2e/docs/.fs-stack-env.0123456789abcdef.tmp",
+            "e2e/.fs-stack-env.0123456789abcdef.tmp.md",
+            "e2e/.fs-stack-env.notes.tmp",
+            "e2e/docs/.fs-stack-env.0123456789abcdef.tmp",
             "src/.fs-stack-env.0123456789abcdef.tmp",
-            "backend/e2e/.env.tmp-review.md",
+            "e2e/.env.tmp-review.md",
             "src/.env.tmp-review",
         ):
             with self.subTest(path=near):
@@ -679,7 +679,7 @@ class StackTests(unittest.TestCase):
                     namespace["assert_ignored"](ROOT / near)
 
     def test_git_ignore_check_cannot_be_redirected_by_git_variables(self):
-        path = ROOT / "backend/e2e/stack-candidate.env"
+        path = ROOT / "e2e/stack-candidate.env"
         self.addCleanup(path.unlink, missing_ok=True)
         foreign = Path(self.temp.name) / "foreign"
         # Reuse the stack's validated runner so the test adds no new process call site.
@@ -796,7 +796,7 @@ class StackTests(unittest.TestCase):
             {
                 "Config": {
                     "Labels": {
-                        "com.docker.compose.project.working_dir": str(ROOT / "backend/dev"),
+                        "com.docker.compose.project.working_dir": str(ROOT / "dev"),
                         "com.docker.compose.project.environment_file": str(label_path),
                     },
                     "Env": [f"KC_HTTP_PORT={port}"],

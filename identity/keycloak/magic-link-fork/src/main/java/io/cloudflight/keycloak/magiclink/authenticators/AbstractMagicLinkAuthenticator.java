@@ -4,7 +4,7 @@
  * keycloak-magic-link/src/main/java/io/cloudflight/keycloak/magiclink/authenticators/AbstractMagicLinkAuthenticator.java
  * Licensed under the Apache License, Version 2.0. The change notice is in magic-link-fork/NOTICE.
  * The upstream @author tag kept its name. Its e-mail address was left out: this repository holds
- * no personal e-mail addresses (backend/dev/tests/test_release_residue.py).
+ * no personal e-mail addresses (dev/tests/test_release_residue.py).
  *
  * Changes:
  * - action() does the same work for an existing and an unknown address: it always makes a key, a link

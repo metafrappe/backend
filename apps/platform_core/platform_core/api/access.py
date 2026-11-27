@@ -1,6 +1,6 @@
 """Access rule endpoints. The business rule is in the `platform_core.access` module.
 
-Contract: `backend/contracts/platform_core-access.openapi.yaml`.
+Contract: `contracts/platform_core-access.openapi.yaml`.
 """
 
 import frappe

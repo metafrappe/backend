@@ -1,9 +1,9 @@
 # Direct Python requirements of the Press production image (deploy/images/press.Dockerfile).
 # Source: Press v0.154.1 pyproject.toml after press-patches/0005-dependency-pins.patch, plus the
-# requirements of backend/apps/press_tr/pyproject.toml. Two packages are not listed here:
+# requirements of apps/press_tr/pyproject.toml. Two packages are not listed here:
 #   frappe-mcp  installed from a pinned Git commit with --no-deps (its pins conflict with Frappe 16;
 #               see press-pip-check.allowed)
-#   oidc_verify built from backend/libs/oidc_verify
+#   oidc_verify built from libs/oidc_verify
 # Every package of the frappe/erpnext base image is a constraint, so the lock never moves a
 # Frappe or ERPNext dependency. Regenerate press-requirements.lock.txt with the command written
 # at its top.

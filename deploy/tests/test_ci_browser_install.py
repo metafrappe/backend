@@ -7,7 +7,7 @@ session, like `sudo` with a pty does, so killing the attempt's process group alo
 does not reach it.
 
 Run from the repository root:
-    python3 -I -m unittest discover -s backend/deploy/tests
+    python3 -I -m unittest discover -s deploy/tests
 """
 
 import os

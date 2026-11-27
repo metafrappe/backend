@@ -9,7 +9,6 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 BACKEND = Path(__file__).resolve().parents[2]
-ROOT = BACKEND.parent
 LOAD_BRAND = runpy.run_path(str(BACKEND / "deploy/brand.py"))["load_brand"]
 FILES = (
     "docs/dagitim/ortamlar.md",
@@ -65,7 +64,7 @@ class BrandSettingsTest(unittest.TestCase):
         scanner = runpy.run_path(str(BACKEND / "deploy/tests/test_brand_hardcode.py"))
         for name in FILES:
             with self.subTest(file=name):
-                hits = scanner["find_hits"](ROOT, ["backend/" + name], LOAD_BRAND(), [])
+                hits = scanner["find_hits"](BACKEND, [name], LOAD_BRAND(), [])
                 self.assertEqual(hits, [])
 
     def test_tenant_login_uses_the_configured_product_name(self):

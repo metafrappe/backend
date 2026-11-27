@@ -1,8 +1,8 @@
 """Guest and foreign data tests of the reseller endpoints (G-169, G-170, AJA-899).
 
-Written before any code change (D-2). The security audit of `backend/dev/security/endpoints.py`
+Written before any code change (D-2). The security audit of `dev/security/endpoints.py`
 asks two named tests for each endpoint of `platform_core.api.reseller`. These tests send real
-requests through the WSGI application of Frappe (D-6) and run with `backend/dev/bin/test platform_core`.
+requests through the WSGI application of Frappe (D-6) and run with `dev/bin/test platform_core`.
 
 A tenant is its own Frappe site. The other reseller is the made-up tenant `OTHER_RESELLER`.
 All people and tenants are made up. Every address ends with `@example.test`.
@@ -34,7 +34,7 @@ OTHER_CUSTOMER = "baska-musteri-898.example.test"
 NEW_REQUEST = {"customer_name": "Örnek Müşteri 898", "contact_email": "ornek.898@example.test"}
 
 
-@unittest.skipIf(frappe is None, "Frappe is not installed: the HTTP tests run with backend/dev/bin/test")
+@unittest.skipIf(frappe is None, "Frappe is not installed: the HTTP tests run with dev/bin/test")
 class TestResellerEndpointSecurity(IntegrationTestCase):
 	@classmethod
 	def setUpClass(cls):

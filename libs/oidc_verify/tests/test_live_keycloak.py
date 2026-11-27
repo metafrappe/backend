@@ -1,7 +1,7 @@
 """Integration test against a live Keycloak instance.
 
 Verify a token issued by Keycloak. Skip the test if the environment variables are missing.
-Load the environment from backend/identity/keycloak/bin/kc-dev.sh, then run the test from this directory.
+Load the environment from identity/keycloak/bin/kc-dev.sh, then run the test from this directory.
 """
 
 import http.client

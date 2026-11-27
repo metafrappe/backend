@@ -70,7 +70,7 @@ class ProdCheckSecretTest(unittest.TestCase):
         (root / "tests").mkdir()
         shutil.copy2(SCRIPT, root / "bin" / "kc-dev.sh")
         shutil.copy2(DIRECTORY / ".env.example", root / ".env.example")
-        # The script reads the product name from backend/brand.env (AJA-1062).
+        # The script reads the product name from brand.env (AJA-1062).
         shutil.copy2(DIRECTORY.parents[1] / "brand.env", self.dir / "backend" / "brand.env")
         self.script = root / "bin" / "kc-dev.sh"
         self.root = root

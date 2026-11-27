@@ -15,6 +15,7 @@ from frappe.utils.password import remove_encrypted_password
 from press_tr.press_identity.accounts import save_authorized_document
 from press_tr.press_identity.identity import DELETED_IDENTITY_ISSUER, deleted_identity_subject, find_identity
 from press_tr.press_identity.oidc import reject
+from press_tr.press_identity.recovery import REVIEW_DOCTYPE
 
 PROFILE_FIELDS = (
 	"gender",
@@ -25,6 +26,9 @@ PROFILE_FIELDS = (
 COMMUNICATION_BODIES = ("content", "text_content")
 PRIVATE_CHILDREN = ("User Social Login", "User Email")
 RECORD_PAGE_SIZE = 100
+# press_tr's own records in the user_data_fields hook. Dedicated steps clean them:
+# the identity link keeps its row for the deletion record, and reviews keep their decision.
+OWN_HOOK_DOCTYPES = {"PTR Identity Link", REVIEW_DOCTYPE}
 
 
 def anonymize_linked_user(issuer: str, subject: str) -> bool:
@@ -57,6 +61,7 @@ def anonymize_linked_user(issuer: str, subject: str) -> bool:
 	frappe.db.commit()
 	link = find_identity(DELETED_IDENTITY_ISSUER, digest, for_update=True)
 	if link.user != placeholder:
+		redact_recovery_reviews(link.name)
 		redact_profile(profile, placeholder)
 	frappe.logger("press_tr").log(
 		logging.INFO, "Account anonymization finished in %.3f seconds", monotonic() - started
@@ -95,7 +100,7 @@ def redact_profile(profile, placeholder: str) -> None:
 	fields_by_type = {}
 	for spec in frappe.get_hooks("user_data_fields"):
 		doctype = spec["doctype"]
-		if doctype == "Invoice" or not frappe.db.exists("DocType", doctype):
+		if doctype == "Invoice" or doctype in OWN_HOOK_DOCTYPES or not frappe.db.exists("DocType", doctype):
 			continue
 		fields_by_type.setdefault(doctype, set()).update(spec.get("redact_fields", ()))
 		field = spec.get("filter_by")
@@ -183,6 +188,32 @@ def redact_profile(profile, placeholder: str) -> None:
 	for name in sorted(personal_files):
 		frappe.delete_doc("File", name, ignore_permissions=True, delete_permanently=True)
 	frappe.db.after_commit.add(lambda: clear_session_cache(user, ()))
+
+
+def redact_recovery_reviews(identity_link: str) -> None:
+	# G-52: clear the notes about the person. Status, reviewer and dates stay as the decision record.
+	fields = {
+		field
+		for spec in frappe.get_hooks("user_data_fields")
+		if spec["doctype"] == REVIEW_DOCTYPE
+		for field in spec.get("redact_fields", ())
+	}
+	if not fields:
+		return
+	for review in iter_named_rows(REVIEW_DOCTYPE, {"identity_link": identity_link}):
+		frappe.db.set_value(REVIEW_DOCTYPE, review.name, dict.fromkeys(fields), update_modified=False)
+		# The history keeps every change. Only the old and new values of cleared fields go.
+		for version in iter_named_rows(
+			"Version", {"ref_doctype": REVIEW_DOCTYPE, "docname": review.name}, ("data",)
+		):
+			data = frappe.parse_json(version.data)
+			changes = data.get("changed", [])
+			cleaned = [[change[0], None, None] if change[0] in fields else change for change in changes]
+			if cleaned != changes:
+				data["changed"] = cleaned
+				frappe.db.set_value(
+					"Version", version.name, "data", frappe.as_json(data), update_modified=False
+				)
 
 
 def get_personal_files(user: str, image: str | None) -> set[str]:

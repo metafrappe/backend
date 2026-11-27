@@ -134,6 +134,8 @@ services:
       tenant-db: {condition: service_healthy}
       tenant-redis-cache: {condition: service_healthy}
       tenant-redis-queue: {condition: service_healthy}
+    # pdf-render: Frappe reaches the PDF renderer here (G-146).
+    networks: [internal, pdf-render]
 
   tenant-socket:
     <<: *tenant
@@ -146,6 +148,8 @@ services:
     # Press açıksa iki kuyruk servisi toplam iki süreçtir. Bellek hesabı yukarıdadır.
     command: ["bench", "worker", "--queue", "short,default,long"]
     depends_on: [tenant-web]
+    # Queued print jobs make PDFs too, so the worker also reaches the renderer (G-146).
+    networks: [internal, pdf-render]
 
   # Frappe's own scheduler. The project owner approved it on the servers on
   # 26 November 2026 (D-16). The DevOps lead turns it on with COMPOSE_PROFILES=scheduler.
@@ -172,6 +176,25 @@ services:
     networks:
       internal: {}
       edge: {aliases: ["${ATONOTA_ENV:?}-tenant"]}
+
+  # PDF renderer (G-51, G-146): headless Chrome in its own container. Frappe reaches it with the
+  # site setting chromium_websocket_url instead of starting Chrome in the tenant container.
+  # The container has no env file, no volume and no published port. Its file system is read-only;
+  # Chrome writes only to the tmpfs. It joins only pdf-render, a network without a gateway, so it
+  # cannot reach the internet, the database, Redis or Keycloak. Only tenant-web and tenant-worker
+  # share that network. remote/apply never turns the profile on; the image and the site setting
+  # come in later work, so this service starts nothing on a server yet (deploy/tests/test_pdf_renderer.py).
+  pdf-renderer:
+    image: ${ATONOTA_IMAGE_PDF_RENDERER:-unset}
+    profiles: [pdf-renderer]
+    restart: unless-stopped
+    user: "1000:1000"
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,nodev,size=256m"]
+    shm_size: 256m
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    networks: [pdf-render]
 
   keycloak-db:
     image: postgres:17.12-alpine@sha256:f9cf3e1f0066f0eb0c48707d864f0ac5941e9ff454a072077d97a4d278d07d73
@@ -334,6 +357,8 @@ networks:
   press-identity: {internal: true}
   # identity-sync and press-frontend only, also without a gateway.
   identity-press: {internal: true}
+  # tenant-web, tenant-worker and pdf-renderer only, without a gateway (G-146).
+  pdf-render: {internal: true}
   # One edge network per environment (remote/apply creates it); the edge proxy joins each one.
   edge:
     name: atonota-edge-${ATONOTA_ENV:?}

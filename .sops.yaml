@@ -1,0 +1,7 @@
+# sops settings for server environment files (G-112). Design: docs/dagitim/secrets.md.
+# The recipient below is the public half of an example-only age key. Its private half was deleted
+# after the example file was encrypted, so deploy/secrets/example.sops.env cannot be opened.
+# Real recipients are public keys too; private age keys never enter this repository.
+creation_rules:
+  - path_regex: (^|/)deploy/secrets/[^/]+\.sops\.env$
+    age: age1ukg6n9rc4ta0h8lq5ups96dwywhndwjd45dzs5sut3mdpxqs6vxsv85xf4

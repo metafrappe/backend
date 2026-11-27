@@ -7,6 +7,7 @@
  "field_order": [
   "attempted_at",
   "user",
+  "session_id",
   "route",
   "provider",
   "account",
@@ -50,6 +51,14 @@
    "options": "User",
    "read_only": 1,
    "reqd": 1
+  },
+  {
+   "description": "SHA-256 of the optional client conversation header, shared with AI Action Log. Not a Keycloak session or an authorization identity. The raw header is never stored.",
+   "fieldname": "session_id",
+   "fieldtype": "Data",
+   "label": "Conversation Digest",
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "description": "Route used for completion, if applicable.",

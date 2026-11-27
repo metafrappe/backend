@@ -6,7 +6,7 @@ from typing import Literal, NotRequired, TypedDict
 
 import frappe
 
-from platform_core.model_gateway import api, connections, gateway, maintenance, policy
+from platform_core.model_gateway import api, connections, gateway, maintenance, policy, usage
 
 
 class CompletionMessage(TypedDict):
@@ -159,6 +159,15 @@ def _respond(call, *args, allow_api_key=False):
 		frappe.local.response.http_status_code = failure.status
 		fields = getattr(failure, "fields", None)
 		return {"error": failure.code, "fields": fields} if fields else {"error": failure.code}
+
+
+@frappe.whitelist(methods=["POST"])
+def usage_summary() -> usage.UsageSummary | ErrorResponse:
+	"""Read this tenant's monthly usage by user, account and currency."""
+	frappe.only_for(sorted(policy.MANAGERS))
+	if not frappe.has_permission("PLT AI Usage Log", "read"):
+		frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
+	return _respond(usage.summary)
 
 
 # Defer annotations so Frappe leaves JSON values to the gateway's strict validators.

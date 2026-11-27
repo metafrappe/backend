@@ -1012,3 +1012,5 @@ Support URL,Destek bağlantısı,PLT Help Topic
 Optional HTTPS URL or same-site relative path. Leave blank when unavailable.,HTTPS adresini veya site içindeki yolu yazın. Bağlantı yoksa alanı boş bırakın.,PLT Help Topic
 Help links must use HTTPS or a same-site relative path.,Yardım bağlantılarında HTTPS adresi veya site içindeki yol kullanılmalıdır.,
 A valid component identifier is required.,Geçerli bir bileşen kimliği yazın.,
+Conversation Digest,Konuşma izi,
+"SHA-256 of the optional client conversation header, shared with AI Action Log. Not a Keycloak session or an authorization identity. The raw header is never stored.","SHA-256, konuşma başlığından sabit uzunlukta bir iz üretir. Ham başlık saklanmaz. Alan Keycloak oturumu veya yetki bilgisi değildir. Araç günlüğü aynı izi kullanır.",

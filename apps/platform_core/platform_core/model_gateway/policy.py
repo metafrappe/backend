@@ -2,6 +2,7 @@
 
 import json
 import re
+from bisect import bisect_right
 from dataclasses import dataclass
 from urllib.parse import urlsplit
 
@@ -15,23 +16,50 @@ TOOL_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_-]{0,63}\Z")
 SENSITIVE = re.compile(
 	r"(?i)(?<![\w])(?:TR(?:[ -]?[0-9]){24}|"
 	r"(?:\+90[ .-]?|0[ .-]?)?\(?[2-5][0-9]{2}\)?(?:[ .-]?[0-9]){7}|"
-	r"[0-9](?:[ -]?[0-9]){9,10})(?![\w]|[ -][0-9])"
+	r"[0-9](?:[ -]?[0-9]){9,10})(?![\w])"
 	r"|[\w.+-]+@[\w.-]+\.[a-z]{2,}"
 )
-CARD = re.compile(r"(?<![\w])(?:[0-9][ -]?){12,18}[0-9](?![\w]|[ -][0-9])")
+NUMBER_RUN = re.compile(r"(?<![\w])[0-9](?:[ -]?[0-9])*(?![\w])")
 
 
-def _mask_card(match):
-	digits = [int(char) for char in match.group() if char.isdigit()]
+def _is_card_number(text):
+	digits = [int(char) for char in text if char.isdigit()]
 	checksum = sum(
 		(value * 2 - 9 if value > 4 else value * 2) if index % 2 else value
 		for index, value in enumerate(reversed(digits))
 	)
-	return "[REDACTED]" if checksum % 10 == 0 else match.group()
+	return 13 <= len(digits) <= 19 and checksum % 10 == 0
+
+
+def _mask_cards(text):
+	# Numbers next to a card can join one run of digit groups. Test every
+	# group-aligned span, so a card is found after or before another number.
+	spans = []
+	for run in NUMBER_RUN.finditer(text):
+		group = run.group()
+		separators = [item.start() for item in re.finditer(r"[ -]", group)]
+		starts = [0, *(index + 1 for index in separators)]
+		ends = [*separators, len(group)]
+		for start in starts:
+			# A card has at most 19 digits and 18 separators. Bound the work per start.
+			nearby = ends[bisect_right(ends, start) : bisect_right(ends, start + 37)]
+			valid = [end for end in nearby if _is_card_number(group[start:end])]
+			if valid:
+				spans.append((run.start() + start, run.start() + max(valid)))
+	parts = []
+	cursor = 0
+	for start, end in spans:
+		if start > cursor:
+			parts.extend((text[cursor:start], "[REDACTED]"))
+		elif not parts or parts[-1] != "[REDACTED]":
+			parts.append("[REDACTED]")
+		cursor = max(cursor, end)
+	parts.append(text[cursor:])
+	return "".join(parts)
 
 
 def _mask(text):
-	return SENSITIVE.sub("[REDACTED]", CARD.sub(_mask_card, text))
+	return SENSITIVE.sub("[REDACTED]", _mask_cards(text))
 
 
 def _mask_metadata(value):
@@ -43,8 +71,10 @@ def _mask_metadata(value):
 		return [_mask_metadata(item) for item in value]
 	if isinstance(value, str):
 		return _mask(value)
-	if type(value) is int and _mask(str(value)) != str(value):
-		raise Denied(403, "data_policy_denied")
+	if type(value) in (int, float):
+		text = format(value, "f") if type(value) is float else str(value)
+		if _mask(text) != text:
+			raise Denied(403, "data_policy_denied")
 	return value
 
 

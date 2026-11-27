@@ -8,6 +8,8 @@ import frappe
 from frappe.utils import now_datetime
 from pypika.functions import Cast
 
+from platform_core import conversation
+
 MILLION = Decimal("1000000")
 UNSETTLED = ("pending", "unknown", "upstream", "timeout", "invalid_response", "rejected")
 POTENTIALLY_BILLED = (*UNSETTLED, "success", "resolved")
@@ -27,10 +29,12 @@ def money_as_text(table, field):
 	return Cast(table[field], "CHAR").as_(field)
 
 
-def _usage(filters):
+def _usage(filters, *, ignore_permissions=True):
 	log = frappe.qb.DocType("PLT AI Usage Log")
 	fields = [
 		"name",
+		"user",
+		"account",
 		"input_tokens",
 		"output_tokens",
 		"usage_known",
@@ -44,7 +48,12 @@ def _usage(filters):
 	]
 	while True:
 		page = frappe.qb.get_query(
-			"PLT AI Usage Log", filters=filters, fields=fields, order_by="name asc", limit=USAGE_PAGE_SIZE
+			"PLT AI Usage Log",
+			filters=filters,
+			fields=fields,
+			order_by="name asc",
+			limit=USAGE_PAGE_SIZE,
+			ignore_permissions=ignore_permissions,
 		).run(as_dict=True)
 		yield from page
 		if len(page) < USAGE_PAGE_SIZE:
@@ -112,6 +121,7 @@ def begin(route, api, account, provider, model, *, cost, tokens, file_job=None, 
 			"name": uuid4().hex,
 			"attempted_at": now_datetime(),
 			"user": frappe.session.user,
+			"session_id": conversation.session_id(),
 			"route": route,
 			"provider": provider.name,
 			"account": account.name,

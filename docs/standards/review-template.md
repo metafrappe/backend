@@ -23,19 +23,39 @@ Commit, Git içindeki değişiklik kaydıdır. QA ve Committer aynı son commit'
 
 ## Standart akış
 
-Bu akış AJA-1548 kararından gelir. Her iş şu 7 adımla ilerler:
+Bu akış AJA-1548 ve AJA-2151 kararlarından gelir. Her iş şu 8 adımla ilerler:
 
 1. Geliştirici işi yerel dalda yapar. Dal güncel `origin/main` ucundan açılır.
 2. Geliştirici önce düşen testi yazar. Sonra kodu yazar.
 3. Geliştirici dalı GitHub'a gönderir. Sonra `main` dalına PR açar.
 4. GitHub CI koşar.
-5. QA ve Committer PR'ı kural uyum listesiyle inceler.
-6. İnceleme ve birleştirme ProPR'da yürür. PR'ı ProPR birleştirir.
-7. Hiçbir ajan `main` dalına doğrudan push etmez. Hiçbir ajan PR'ı GitHub düğmesiyle ya da `gh pr merge` ile birleştirmez.
+5. ProPR PR'ı inceler. Geliştirici ProPR bulgularını düzeltir. Ayrıntı aşağıdaki bölümdedir.
+6. QA ve Committer PR'ı kural uyum listesiyle inceler.
+7. İnceleme ve birleştirme ProPR'da yürür. PR'ı ProPR birleştirir.
+8. Hiçbir ajan `main` dalına doğrudan push etmez. Hiçbir ajan PR'ı GitHub düğmesiyle ya da `gh pr merge` ile birleştirmez.
 
 Birleştirme kapıları birleştirmenin parçasıdır. Ajan dalı kendisi birleştirirse bu kapılar koşmaz. Örneğin CI denetimi atlanır.
 
 Müşteri bu kararı 27 Kasım 2026 Cuma günü verdi.
+
+## QA'dan önce ProPR incelemesi
+
+Her PR, QA'dan önce ProPR yapay zekâ incelemesinden geçer. Sıra şöyledir:
+
+1. PR açılınca Committer ya da geliştirici PR'a `/review` yorumu yazar.
+2. ProPR incelemesi biter. İnceleme sonucu PR'da görünür.
+3. Geliştirici bulguları düzeltir. Düzeltmeyi aynı dala gönderir.
+4. QA bundan sonra başlar.
+
+QA, ProPR incelemesi bitmeden denemeye başlamaz. PR'da `/review` yorumu yoksa QA işi geliştiriciye geri verir.
+
+Geliştirici bir bulguyu düzeltmezse nedenini PR'a yazar. Örnek: "Bulgu yanlış, çünkü bu dosya test verisidir."
+
+QA incelemeye başlamadan önce şu maddeyi işaretler:
+
+- [ ] PR'a `/review` yorumu yazıldı ve ProPR incelemesi bitti.
+
+Müşteri bu kararı 28 Kasım 2026 Cumartesi günü verdi (AJA-2151).
 
 ## Yorum şablonu
 

@@ -392,6 +392,8 @@ def exchange_code(settings, code: str, code_verifier: str, redirect_uri: str) ->
 			},
 			headers={"Accept": "application/json"},
 			timeout=EXCHANGE_TIMEOUT,
+			# G-146, O-58: the token endpoint is pinned; a redirect is a failure.
+			allow_redirects=False,
 		)
 	except requests.RequestException as error:
 		raise ExchangeFailedError("request failed") from error

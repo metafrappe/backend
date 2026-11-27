@@ -16,6 +16,8 @@ before_request = [
 	"platform_core.shell.native_metadata.guard_website_rpc_before_request",
 	# G-53: users without the Platform Operator role go from /app and /desk to the panel.
 	"platform_core.config.desk_policy.before_request",
+	# G-146: Frappe paths that fetch a user-supplied address use the shared guard.
+	"platform_core.net.frappe_egress.install",
 ]
 on_session_creation = ["platform_core.identity.session_policy.on_session_creation"]
 # Keep the idle clock across site cache clears. Frappe matches prefixes.
@@ -71,6 +73,8 @@ after_install = [
 	# G-53: Desk notices off, the panel is the home page.
 	"platform_core.config.desk_policy.apply",
 ]
+# G-146: a webhook that a patch fires during migrate runs inline and uses the shared guard.
+before_migrate = ["platform_core.net.frappe_egress.install"]
 after_migrate = [
 	"platform_core.identity.session_policy.apply",
 	"platform_core.mobile.store.seed_sequence",
@@ -346,4 +350,8 @@ extend_doctype_class = {
 	"Role Profile": ["platform_core.access.tenant_admin.GuardedRoleProfile"],
 }
 # A Prepared Report queued before a rule existed is refused when its job starts.
-before_job = ["platform_core.access.reports.refuse_prepared_report_job"]
+before_job = [
+	"platform_core.access.reports.refuse_prepared_report_job",
+	# G-146: webhooks and thumbnails also run in background jobs.
+	"platform_core.net.frappe_egress.install",
+]

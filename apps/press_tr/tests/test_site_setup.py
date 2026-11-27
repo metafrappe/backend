@@ -85,6 +85,7 @@ class FakePress:
 		self.frappe.db.get_value.side_effect = self.get_value
 		self.frappe.get_doc = Mock(side_effect=self.get_doc)
 		self.frappe.enqueue_doc = Mock(side_effect=self.enqueue_doc)
+		self.frappe.log_error = Mock()
 		self.agent = Mock(side_effect=self.make_agent)
 
 	def get_value(self, doctype, name, fields=None, for_update=False, as_dict=False):
@@ -94,6 +95,8 @@ class FakePress:
 		if doctype == "Agent Job":
 			return self.jobs[0] if self.jobs else None
 		record = {"Team": self.team, "User": self.user}[doctype]
+		if record is None:
+			return None
 		return SimpleNamespace(**{field: record[field] for field in fields})
 
 	def get_doc(self, doctype, name):
@@ -179,6 +182,19 @@ class TestSiteActivationPatch(unittest.TestCase):
 		press.commit()
 		self.assertEqual(press.queue, [])
 		self.assertEqual(press.agent_calls, [])
+
+	def test_missing_team_or_user_keeps_the_site_active(self):
+		for missing in ("team", "user"):
+			with self.subTest(missing=missing):
+				press, queue_setup_wizard = self.load()
+				setattr(press, missing, None)
+				queue_setup_wizard("tenant.example.test", "Active")
+				press.commit()
+				self.assertEqual(press.site["status"], "Active")
+				self.assertEqual(press.queue, [])
+				self.assertEqual(press.agent_calls, [])
+				press.frappe.log_error.assert_called_once()
+				self.assertIn("tenant.example.test", str(press.frappe.log_error.call_args))
 
 	def test_setup_wizard_arguments_match_g42(self):
 		press, queue_setup_wizard = self.load()

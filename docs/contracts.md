@@ -708,3 +708,49 @@ Parça metni yalnız iş sürerken tutulur. Bekleyen metin için iki süre sın�
 | `platform_core.api.model.file_job_status` | POST | İşin sahibi ya da yönetici | Parça planını, tahmini maliyeti ve parça durumlarını gösterir. Parça metnini dönmez. |
 | `platform_core.api.model.start_file_job` | POST | İşin sahibi ya da yönetici | Planlanmış işin parçalarını kuyruğa koyar. Her parça ücretli olabilir. |
 | `platform_core.api.model.retry_file_chunk` | POST | İşin sahibi ya da yönetici | Başarısız tek parçayı yeniden kuyruğa koyar. |
+
+## 12. Uygulama modülü listesi (G-103)
+
+Arayüz, siteye kurulu uygulamaları girişten sonra bu adresten okur.
+
+`GET /api/method/platform_core.api.app_modules.get_manifest`
+
+Sunucu, sitenin geçerli oturum çerezini ister. İstek alanı gerekmez.
+Sunucu yanıtı `Cache-Control: private, no-store` ile gönderir.
+Frappe, aşağıdaki veriyi yanıtın `message` alanına koyar.
+
+```json
+{
+  "message": {
+    "version": 1,
+    "apps": [
+      {
+        "name": "sample",
+        "screens": [{"id": "overview", "title": "Overview"}],
+        "help_topics": [{"id": "start", "title": "Getting started"}],
+        "tools": [{"name": "sample_list"}]
+      }
+    ]
+  }
+}
+```
+
+Sunucu yalnız o sitede kurulu uygulamaları ada göre sıralar.
+Tanım yoksa ilgili liste boş gelir.
+
+- Uygulama, ekranları `hooks.py` dosyasındaki `app_module_screens` listesine yazar.
+- Uygulama, yardım konularını `app_module_help_topics` listesine yazar.
+- Her listede `id` ve `title` boş olmayan metinlerdir.
+- Her `id`, kendi listesinde benzersiz olmalıdır.
+- Ekran ve yardım başlıkları, giriş yapan herkese açık olmalıdır.
+- Sunucu, araç adlarını mevcut `ai_tools` kaydından alır.
+- Sunucu, kullanıcının rolüne açık olan uygulama araçlarını listeler.
+- Veri okuma ve araç çalıştırma izinlerini ilgili sunucu uçları denetler.
+
+Arayüz paketi ortak renk, yazı ve boşluk değerlerini
+`@platform/design-tokens` paketinden alır. Bu ortak değerler tasarım tokenı olarak anılır.
+Örneğin düğme rengi, paketin kendi renk kodu yerine ortak ana eylem değerini kullanır.
+
+Bu ucun OpenAPI tanımı `contracts/platform_core-app-modules.openapi.yaml` dosyasındadır.
+
+[Arayüz devir notu](handoff/app-module-manifest.md)

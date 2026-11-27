@@ -118,6 +118,7 @@ website_user_allowed_methods = [
 	"platform_core.api.auth.list_login_providers",
 	"platform_core.api.auth.list_linked_accounts",
 	"platform_core.api.shell.get_bootstrap",
+	"platform_core.api.app_modules.get_manifest",
 	"platform_core.api.collection.group_summary",
 	"platform_core.api.meta.get_doctype",
 	# G-138: field help reuses the shell metadata check. The coverage report is for the System Manager.

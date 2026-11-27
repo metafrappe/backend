@@ -32,6 +32,7 @@ from .test_server import (
 
 PROVIDERS = "/v1/login-providers"
 LINKED = "/v1/linked-accounts"
+UNLINK = "/v1/linked-accounts/unlink"
 OTHER_USER = "99999999-9999-4999-8999-999999999999"
 OTHER_ORG_ID = "33333333-3333-4333-8333-333333333333"
 # Values that must never leave the service. The fake Keycloak returns all of them.
@@ -281,6 +282,152 @@ class LinkedAccountsTest(LoginReadCase):
         self.post_linked()
 
         self.assertEqual(self.keycloak_writes(), [])
+
+
+class UnlinkAccountTest(LoginReadCase):
+    """A member removes one own platform link (AJA-473). The last way to sign in is never removed."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        kc = self.stack.keycloak
+        kc.link_account(SUBJECT, "google", "ayse.ornek@elsewhere.example.test")
+        kc.link_account(SUBJECT, "tenant1-sso", "ayse@tenant1.example")
+        # A link to a platform outside the tenant's list. It does not count as a way in.
+        kc.link_account(SUBJECT, "tenant2-sso", "ayse@tenant2.example")
+
+    def post_unlink(self, payload: object = None, token: str = SESSION_TOKEN) -> tuple[int, object]:
+        body = {"subject": SUBJECT, "provider": "google"} if payload is None else payload
+        return self.post_json(UNLINK, body, token)
+
+    def linked_aliases(self, subject: str = SUBJECT) -> list[str]:
+        return [str(row["identityProvider"]) for row in self.stack.keycloak.federated.get(subject, [])]
+
+    def test_member_removes_one_link_and_gets_the_new_list(self) -> None:
+        with self.assertLogs("identity_sync", level="INFO") as logs:
+            status, body = self.post_unlink()
+
+        self.assertEqual(status, 200)
+        self.assertEqual(
+            body,
+            {
+                "providers": [
+                    {"alias": "google", "display_name": "Google", "linked": False},
+                    {"alias": "tenant1-sso", "display_name": "Tenant One SSO", "linked": True},
+                ],
+                "local_sign_in_methods": 0,
+            },
+        )
+        self.assertEqual(self.linked_aliases(), ["tenant1-sso", "tenant2-sso"])
+        audit = "\n".join(logs.output)
+        self.assertIn("operation=unlink_account", audit)
+        self.assertIn("azp=site-tenant1-service", audit)
+        self.assertIn("outcome=executed", audit)
+        for personal in (SUBJECT, "ayse", "elsewhere", "google"):
+            self.assertNotIn(personal, audit)
+
+    def test_the_last_way_to_sign_in_is_kept(self) -> None:
+        self.post_unlink()
+
+        with self.assertLogs("identity_sync", level="INFO") as logs:
+            reply = self.post_unlink({"subject": SUBJECT, "provider": "tenant1-sso"})
+
+        self.assertEqual(reply, (409, {"error": "last_sign_in_method"}))
+        self.assertIn("tenant1-sso", self.linked_aliases())
+        self.assertIn("outcome=last_sign_in_method", "\n".join(logs.output))
+
+    def test_a_local_credential_counts_as_a_way_in(self) -> None:
+        self.post_unlink()
+        self.stack.keycloak.add_credential(SUBJECT, "password", "My password")
+
+        status, _body = self.post_unlink({"subject": SUBJECT, "provider": "tenant1-sso"})
+
+        self.assertEqual(status, 200)
+        self.assertEqual(self.linked_aliases(), ["tenant2-sso"])
+
+    def test_a_second_factor_alone_is_not_a_way_in(self) -> None:
+        self.post_unlink()
+        self.stack.keycloak.add_credential(SUBJECT, "otp", "Authenticator")
+
+        reply = self.post_unlink({"subject": SUBJECT, "provider": "tenant1-sso"})
+
+        self.assertEqual(reply, (409, {"error": "last_sign_in_method"}))
+
+    def test_a_link_outside_the_tenant_list_is_not_a_way_in(self) -> None:
+        # Only `tenant1-sso` and the outside `tenant2-sso` stay. The outside link does not count.
+        self.post_unlink()
+
+        self.assertEqual(self.post_unlink({"subject": SUBJECT, "provider": "tenant1-sso"})[0], 409)
+
+    def test_a_platform_that_is_not_linked_changes_nothing(self) -> None:
+        self.stack.keycloak.add_identity_provider("github", display_name="GitHub")
+
+        status, body = self.post_unlink({"subject": SUBJECT, "provider": "github"})
+
+        self.assertEqual(status, 200)
+        self.assertIn({"alias": "github", "display_name": "GitHub", "linked": False}, body["providers"])
+        self.assertEqual(self.keycloak_writes(), [])
+
+    def test_a_platform_outside_the_tenant_list_is_refused(self) -> None:
+        # Another tenant's platform, a hidden one and an unknown one get the same answer.
+        for alias in ("tenant2-sso", "facebook", "unknown"):
+            with self.subTest(alias=alias):
+                reply = self.post_unlink({"subject": SUBJECT, "provider": alias})
+                self.assertEqual(reply, (400, {"error": "bad_request"}))
+        self.assertEqual(self.keycloak_writes(), [])
+        self.assertIn("tenant2-sso", self.linked_aliases())
+
+    def test_member_of_another_tenant_is_forbidden(self) -> None:
+        self.stack.keycloak.link_account(OTHER_USER, "google", "ikinci@elsewhere.example.test")
+        self.stack.keycloak.add_credential(OTHER_USER, "password")
+
+        reply = self.post_unlink({"subject": OTHER_USER, "provider": "google"})
+
+        self.assertEqual(reply, (403, {"error": "forbidden"}))
+        self.assertEqual(self.linked_aliases(OTHER_USER), ["google"])
+
+    def test_unknown_user_gets_the_same_answer_as_a_stranger(self) -> None:
+        unknown = self.post_unlink({"subject": "00000000-0000-4000-8000-000000000000", "provider": "google"})
+        stranger = self.post_unlink({"subject": OTHER_USER, "provider": "google"})
+
+        self.assertEqual(unknown, (403, {"error": "forbidden"}))
+        self.assertEqual(unknown, stranger)
+
+    def test_other_tenant_cannot_unlink_a_member_of_this_tenant(self) -> None:
+        self.assertEqual(self.post_unlink(token=OTHER_SITE_TOKEN), (403, {"error": "forbidden"}))
+        self.assertIn("google", self.linked_aliases())
+
+    def test_only_tenant_site_clients_may_call(self) -> None:
+        for token in (OPERATOR_TOKEN, PREVIEW_TOKEN, PRESS_TOKEN):
+            with self.subTest(token=token):
+                self.assertEqual(self.post_unlink(token=token), (403, {"error": "forbidden"}))
+        self.assertEqual(self.call("POST", UNLINK, b'{"subject": "x", "provider": "google"}')[0], 401)
+        self.assertIn("google", self.linked_aliases())
+
+    def test_bad_request_bodies(self) -> None:
+        for payload in (
+            {},
+            {"subject": SUBJECT},
+            {"provider": "google"},
+            {"subject": SUBJECT, "provider": ""},
+            {"subject": SUBJECT, "provider": "Google"},
+            {"subject": SUBJECT, "provider": "a/b"},
+            {"subject": SUBJECT, "provider": 5},
+            {"subject": "a/b", "provider": "google"},
+            {"subject": SUBJECT, "provider": "google", "user": "x"},
+            [SUBJECT, "google"],
+        ):
+            with self.subTest(payload=payload):
+                self.assertEqual(self.post_unlink(payload), (400, {"error": "bad_request"}))
+        self.assertEqual(self.keycloak_writes(), [])
+
+    def test_get_is_not_allowed(self) -> None:
+        self.assertEqual(self.call("GET", UNLINK, None, self.bearer(SESSION_TOKEN))[0], 405)
+
+    def test_keycloak_failure_is_an_upstream_failure(self) -> None:
+        kc = self.stack.keycloak
+        kc.on("DELETE", f"{kc.admin}/users/{SUBJECT}/federated-identity/google", (500, None))
+
+        self.assertEqual(self.post_unlink(), (502, {"error": "upstream_failed"}))
 
 
 class CatalogCacheTest(unittest.TestCase):

@@ -76,6 +76,7 @@ ROWS = (
     # `atonota_login` reads (AJA-459). Each tenant reads its own platform list, so the other tenant gets 200.
     Row("login providers", "GET", "/v1/login-providers", None, SITE, 200, AGENT, 200),
     Row("linked accounts", "POST", "/v1/linked-accounts", {"subject": SUBJECT}, SITE, 200, AGENT, 403),
+    Row("unlink account", "POST", "/v1/linked-accounts/unlink", {"subject": SUBJECT, "provider": "google"}, SITE, 200, AGENT, 403),
     # Last: the right client of this row deletes the sample user that the rows above read.
     Row("account deletion", "POST", "/v1/account-deletions", None, PRESS, 200, SITE, 403),
 )
@@ -104,6 +105,8 @@ class MatrixCase(unittest.TestCase):
         keycloak.add_session(SUBJECT, SID)
         keycloak.serve_directory()
         keycloak.on("GET", f"{keycloak.admin}/users", (200, []))
+        # The unlink row names this platform. The sample user has no link to it, so nothing changes.
+        keycloak.add_identity_provider("google", display_name="Google")
         self.now = float(NOW)
 
     def serve(self, verifier) -> None:

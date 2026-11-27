@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "terms_acceptance.schema.json",
+  "title": "Terms acceptance record",
+  "description": "One record for each acceptance of a binding text (AJA-1776). A new acceptance writes a new record. An old record is never changed or deleted by the product. The record keeps the language of the text that the user saw.",
+  "type": "object",
+  "x-append-only": true,
+  "additionalProperties": false,
+  "required": ["acceptance_id", "terms_id", "terms_version", "shown_locale", "user", "accepted_at"],
+  "properties": {
+    "acceptance_id": {"type": "string", "minLength": 1, "description": "Unique id of this record."},
+    "terms_id": {"type": "string", "minLength": 1, "description": "Id of the binding text. Example: terms-of-use."},
+    "terms_version": {"type": "string", "minLength": 1, "description": "Version of the text that was shown. A new text gets a new version."},
+    "shown_locale": {"type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$", "description": "Language of the text on the screen at the moment of acceptance. If the user changed the language during sign-up, this is the last shown language."},
+    "user": {"type": "string", "minLength": 1, "description": "Keycloak subject (sub) of the user who accepted."},
+    "accepted_at": {"type": "string", "format": "date-time", "description": "Moment of acceptance in UTC, ISO 8601."}
+  },
+  "examples": [
+    {
+      "acceptance_id": "acc-0001",
+      "terms_id": "terms-of-use",
+      "terms_version": "2026-11-01",
+      "shown_locale": "tr",
+      "user": "00000000-0000-4000-8000-000000000001",
+      "accepted_at": "2026-11-27T09:30:00Z"
+    }
+  ]
+}

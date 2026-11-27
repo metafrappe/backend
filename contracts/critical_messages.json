@@ -1,0 +1,74 @@
+{
+  "$comment": "Critical message keys (AJA-1776). Every key must exist in every language in locales.json. The contract test checks the keycloak and backend places. The atonota-web test checks the ui places. A backend place names the Frappe English source text, because Frappe uses that text as the key.",
+  "messages": [
+    {
+      "key": "auth.sign_in_failed",
+      "purpose": "The email or the password is wrong.",
+      "used_in": [
+        {"surface": "keycloak", "theme": "login", "message_key": "invalidUserMessage"},
+        {"surface": "backend", "app": "apps/platform_core/platform_core", "source": "Sign-in failed. Check your e-mail and password.", "context": "platform_core.identity"}
+      ]
+    },
+    {
+      "key": "auth.account_locked",
+      "purpose": "Too many wrong attempts locked the account for a while. The text matches auth.sign_in_failed on purpose, so it does not tell whether the account exists.",
+      "used_in": [
+        {"surface": "keycloak", "theme": "login", "message_key": "accountTemporarilyDisabledMessage"}
+      ]
+    },
+    {
+      "key": "auth.account_disabled",
+      "purpose": "An administrator closed the account.",
+      "used_in": [
+        {"surface": "keycloak", "theme": "login", "message_key": "accountDisabledMessage"}
+      ]
+    },
+    {
+      "key": "auth.sign_in_expired",
+      "purpose": "The sign-in attempt timed out or was already used.",
+      "used_in": [
+        {"surface": "keycloak", "theme": "login", "message_key": "expiredCodeMessage"},
+        {"surface": "backend", "app": "apps/platform_core/platform_core", "source": "This sign-in attempt is unknown, expired or already used. Please try again.", "context": "platform_core.identity"}
+      ]
+    },
+    {
+      "key": "auth.session_expired",
+      "purpose": "The session ended. The user must sign in again.",
+      "used_in": [
+        {"surface": "backend", "app": "apps/platform_core/platform_core", "source": "Log in to access this resource.", "context": "shell.session"},
+        {"surface": "ui", "repo": "atonota-web", "file": "src/api/error-messages.json", "message_key": "session_expired"}
+      ]
+    },
+    {
+      "key": "auth.service_unavailable",
+      "purpose": "The sign-in service does not answer. The user tries again later.",
+      "used_in": [
+        {"surface": "backend", "app": "apps/platform_core/platform_core", "source": "The sign-in service is not available. Try again later.", "context": "platform_core.identity"},
+        {"surface": "ui", "repo": "atonota-web", "file": "src/api/error-messages.json", "message_key": "unavailable"}
+      ]
+    },
+    {
+      "key": "billing.payment_failed",
+      "purpose": "The payment did not go through. No money was taken.",
+      "used_in": [
+        {"surface": "ui", "repo": "atonota-web", "file": "src/api/error-messages.json", "message_key": "payment_failed"}
+      ]
+    },
+    {
+      "key": "account.password_reset_email",
+      "purpose": "The password reset email reaches the user in the user's language.",
+      "used_in": [
+        {"surface": "keycloak", "theme": "email", "message_key": "passwordResetSubject"},
+        {"surface": "keycloak", "theme": "email", "message_key": "atResetIntro"}
+      ]
+    },
+    {
+      "key": "account.email_verification_email",
+      "purpose": "The email verification message reaches the user in the user's language.",
+      "used_in": [
+        {"surface": "keycloak", "theme": "email", "message_key": "emailVerificationSubject"},
+        {"surface": "keycloak", "theme": "email", "message_key": "atVerifyIntro"}
+      ]
+    }
+  ]
+}

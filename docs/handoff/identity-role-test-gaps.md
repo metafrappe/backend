@@ -1,7 +1,7 @@
 # Oturum ve rol testlerinin devri
 
 AJA-72 mevcut kodun testlerini tamamlar. Bu iş dört gereksinimi bütünüyle kapatmaz.
-Sistem mimarı kapsamı AJA-163 görevinde doğruladı. Karar O-65 olarak kaydedildi.
+Sistem mimarı kapsamı AJA-163 görevinde doğruladı. Karar O-67 olarak kaydedildi.
 A Takımı PO kalan işleri AJA-165 görevinde ayırır.
 
 ## G-43: Oturum ve parola kuralları

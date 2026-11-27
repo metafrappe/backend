@@ -27,7 +27,7 @@ Bu testler gerçek Keycloak sunucusuyla giriş yapıldığını kanıtlamaz.
    Bu kural G-53 içindir. Kullanıcının mevcut oturumu açık kalmalıdır.
    Kullanıcı türü ve roller değişmemelidir.
 
-Oturum sınırı testleri mevcut `test_session_boundary_contract.py` dosyasında korunmuştur.
+Oturum sınırı testleri yeni `test_session_boundary_contract.py` dosyasındadır.
 Dosya `apps/platform_core/platform_core/identity/tests/` klasöründedir.
 
 - Kullanıcı 3599 saniye boşta kalınca oturum açık kalır.

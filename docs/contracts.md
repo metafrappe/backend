@@ -320,6 +320,27 @@ Takvim günü ile an iki ayrı türdür:
 
 Sözleşme testi `apps/platform_core/platform_core/tests/test_shell_contract.py` dosyasındaki `TestLocaleContract` sınıfıdır. Test şema kopyasını denetler. Kopya `apps/platform_core/platform_core/tests/shell_contract_components.json` dosyasıdır. Kopya `generate_snapshot.py` ile üretilir.
 
+### Takvim günü ve an
+
+Takvim günü ile an ayrı türdür. Kod `platform_core/time_values.py` dosyasındadır (AJA-1769).
+
+- Takvim günü saatsiz bir tarihtir. Örneğin teslim günü bir takvim günüdür.
+- Takvim günü saat dilimiyle kaymaz. `2026-03-29` her saat diliminde `2026-03-29` kalır.
+- API takvim gününü `YYYY-MM-DD` biçiminde verir. Saat ya da fark içeren değer takvim günü sayılmaz.
+- An, zamanda tek bir noktadır. Örneğin kapanış anı bir andır.
+- Sunucu anı UTC olarak saklar. Saklanan değer `+00:00` farkını taşır.
+- Dışarıdan gelen an ISO 8601 biçiminde olur ve saat dilimi farkını taşır. Farksız değeri sunucu reddeder.
+- API kapanış anını üç alanla verir:
+  - `closes_at` alanı UTC değeridir.
+  - `time_zone` alanı okurun saat dilimidir. Örneğin `Europe/Istanbul`.
+  - `closes_at_local` alanı aynı anı okurun saatiyle ve farkıyla verir.
+- Bildirim metni `closes_at_local` değerinin aynısını yazar. Böylece API ve bildirim aynı anı gösterir.
+- Yaz saati geçişinde bazı saatler hiç yaşanmaz. Örneğin 29 Mart 2026 Pazar günü Londra'da 01:30 yoktur. Sunucu bu saati reddeder.
+- Bazı saatler iki kez yaşanır. Örneğin 25 Ekim 2026 Pazar günü Londra'da 01:30 iki kezdir.
+- Yerel saat iki kez yaşanıyorsa yazan taraf `fold` değerini verir. `fold=0` ilk saattir. `fold=1` ikinci saattir.
+- `fold` verilmezse sunucu yazmayı reddeder. Böylece saklanan an tek kalır.
+- Saat dilimi dilden ve pazardan ayrıdır. Dil seçmek saat dilimini değiştirmez.
+
 ### Website User için yöntem izin listesi
 
 - Website User yalnız izin listesindeki yöntemleri çağırabilir. Öteki her yöntem 403 döner. Kural `/api/method`, `/api/v1/method`, `/api/v2/method` ve `cmd` biçimlerinin hepsine uygulanır.

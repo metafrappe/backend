@@ -4,6 +4,13 @@ fail_fast: false
 
 
 repos:
+  # Secret scan of the staged change (G-112). Version matches dev/security/tool-versions.env.
+  # Connect it with dev/bin/install-secret-hook; never change core.hooksPath.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:

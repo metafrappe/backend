@@ -1,0 +1,19 @@
+{
+  "advisory_id": "",
+  "component": "",
+  "severity": "",
+  "known_exploited": null,
+  "deployed_version": "",
+  "affected_range": "",
+  "feature_enabled": "",
+  "attack_precondition": "",
+  "fixed_version": "",
+  "decision": "",
+  "rationale": "",
+  "evidence": {
+    "version": "",
+    "configuration": ""
+  },
+  "decided_by": "",
+  "decided_on": ""
+}

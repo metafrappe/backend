@@ -1,0 +1,114 @@
+{
+  "note": "Watched advisory sources for G-142. Check every feed for each component. Add a component here before writing a record for it.",
+  "sources": [
+    {
+      "component": "frappe",
+      "name": "Frappe Framework",
+      "repository": "https://github.com/frappe/frappe",
+      "advisory_feeds": [
+        "https://github.com/frappe/frappe/security/advisories",
+        "https://github.com/advisories?query=repo%3Afrappe%2Ffrappe",
+        "https://nvd.nist.gov/vuln/search#/nvd/home?keyword=frappe&resultType=records"
+      ],
+      "release_notes": "https://github.com/frappe/frappe/releases"
+    },
+    {
+      "component": "erpnext",
+      "name": "ERPNext",
+      "repository": "https://github.com/frappe/erpnext",
+      "advisory_feeds": [
+        "https://github.com/frappe/erpnext/security/advisories",
+        "https://github.com/advisories?query=repo%3Afrappe%2Ferpnext",
+        "https://nvd.nist.gov/vuln/search#/nvd/home?keyword=erpnext&resultType=records"
+      ],
+      "release_notes": "https://github.com/frappe/erpnext/releases"
+    },
+    {
+      "component": "hrms",
+      "name": "Frappe HR (HRMS)",
+      "repository": "https://github.com/frappe/hrms",
+      "advisory_feeds": [
+        "https://github.com/frappe/hrms/security/advisories",
+        "https://github.com/advisories?query=repo%3Afrappe%2Fhrms",
+        "https://nvd.nist.gov/vuln/search#/nvd/home?keyword=frappe%20hrms&resultType=records"
+      ],
+      "release_notes": "https://github.com/frappe/hrms/releases"
+    },
+    {
+      "component": "press",
+      "name": "Press",
+      "repository": "https://github.com/frappe/press",
+      "advisory_feeds": [
+        "https://github.com/frappe/press/security/advisories",
+        "https://github.com/advisories?query=repo%3Afrappe%2Fpress",
+        "https://nvd.nist.gov/vuln/search#/nvd/home?keyword=frappe%20press&resultType=records"
+      ],
+      "release_notes": "https://github.com/frappe/press/releases"
+    },
+    {
+      "component": "agent",
+      "name": "Press Agent",
+      "repository": "https://github.com/frappe/agent",
+      "advisory_feeds": [
+        "https://github.com/frappe/agent/security/advisories",
+        "https://github.com/advisories?query=repo%3Afrappe%2Fagent",
+        "https://nvd.nist.gov/vuln/search#/nvd/home?keyword=frappe%20agent&resultType=records"
+      ],
+      "release_notes": "https://github.com/frappe/agent/releases"
+    },
+    {
+      "component": "crm",
+      "name": "Frappe CRM",
+      "repository": "https://github.com/frappe/crm",
+      "advisory_feeds": [
+        "https://github.com/frappe/crm/security/advisories",
+        "https://github.com/advisories?query=repo%3Afrappe%2Fcrm",
+        "https://nvd.nist.gov/vuln/search#/nvd/home?keyword=frappe%20crm&resultType=records"
+      ],
+      "release_notes": "https://github.com/frappe/crm/releases"
+    },
+    {
+      "component": "helpdesk",
+      "name": "Helpdesk",
+      "repository": "https://github.com/frappe/helpdesk",
+      "advisory_feeds": [
+        "https://github.com/frappe/helpdesk/security/advisories",
+        "https://github.com/advisories?query=repo%3Afrappe%2Fhelpdesk",
+        "https://nvd.nist.gov/vuln/search#/nvd/home?keyword=frappe%20helpdesk&resultType=records"
+      ],
+      "release_notes": "https://github.com/frappe/helpdesk/releases"
+    },
+    {
+      "component": "keycloak",
+      "name": "Keycloak",
+      "repository": "https://github.com/keycloak/keycloak",
+      "advisory_feeds": [
+        "https://github.com/keycloak/keycloak/security/advisories",
+        "https://github.com/advisories?query=repo%3Akeycloak%2Fkeycloak",
+        "https://nvd.nist.gov/vuln/search#/nvd/home?keyword=keycloak&resultType=records"
+      ],
+      "release_notes": "https://github.com/keycloak/keycloak/releases"
+    },
+    {
+      "component": "hocuspocus",
+      "name": "Hocuspocus",
+      "repository": "https://github.com/ueberdosis/hocuspocus",
+      "advisory_feeds": [
+        "https://github.com/ueberdosis/hocuspocus/security/advisories",
+        "https://github.com/advisories?query=repo%3Aueberdosis%2Fhocuspocus",
+        "https://nvd.nist.gov/vuln/search#/nvd/home?keyword=hocuspocus&resultType=records"
+      ],
+      "release_notes": "https://github.com/ueberdosis/hocuspocus/releases"
+    },
+    {
+      "component": "frontend-dependencies",
+      "name": "Frontend npm dependencies (package lock files)",
+      "repository": "https://github.com/metafrappe/frontend",
+      "advisory_feeds": [
+        "https://github.com/advisories?query=ecosystem%3Anpm",
+        "https://osv.dev/list?ecosystem=npm"
+      ],
+      "release_notes": "https://github.com/advisories?query=ecosystem%3Anpm"
+    }
+  ]
+}

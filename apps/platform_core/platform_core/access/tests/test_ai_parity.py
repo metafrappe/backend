@@ -152,6 +152,11 @@ class TestRecordRuleParity(AccessRuleTestCase):
 		self.assertNotIn(LEVEL_1_FIELD, tool_result["structuredContent"]["document"])
 		self.assertEqual(self.new_log(tool="plt_get_document", target_name=own).decision, "allowed")
 		self.assert_denied(by_field, "field_not_permitted")
+		log = self.new_log(tool="plt_list_documents", target_doctype=DOCTYPE)
+		self.assertIsNotNone(log)
+		self.assertEqual(log.decision, "denied")
+		self.assertEqual(log.deny_reason, "field_not_permitted")
+		self.assertEqual(log.user, EMPLOYEE_1)
 
 	def test_hr_reads_the_level_1_field_of_every_record(self):
 		client = self.ai_login(HR)

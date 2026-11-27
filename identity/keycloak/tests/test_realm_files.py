@@ -30,7 +30,7 @@ class RealmFileTest(unittest.TestCase):
         # D-4, O-51: the brand name comes from a variable. The value is PRODUCT_NAME in backend/brand.env (test_realm_backlog).
         self.assertEqual(self.realm["displayName"], "${IDENTITY_BRAND_NAME}")
         self.assertTrue(self.realm["internationalizationEnabled"])
-        self.assertEqual(self.realm["defaultLocale"], "tr")
+        self.assertEqual(self.realm["defaultLocale"], "en")
         self.assertEqual(set(self.realm["supportedLocales"]), {"tr", "en"})
 
     def test_login_and_email_use_project_theme(self):

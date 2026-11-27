@@ -4,6 +4,8 @@ Beklenen değerler docs/sozlesmeler.md 2. bölümünden alındı. Testler bin/kc
 Keycloak yoksa testler atlanır ve not_run sayılır.
 """
 
+import base64
+import hashlib
 import hmac
 import unittest
 import urllib.parse
@@ -134,7 +136,8 @@ class RealmSettingsTest(unittest.TestCase):
         self.assertEqual(r["displayName"], get_environment_value("IDENTITY_BRAND_NAME"))
         # Review 1, minor finding 2: the passkey window shows the brand, not the "${...}" placeholder.
         self.assertEqual(r["webAuthnPolicyPasswordlessRpEntityName"], get_environment_value("IDENTITY_BRAND_NAME"))
-        self.assertEqual(r["defaultLocale"], "tr")
+        # Karar 44: dil seçilmezse ekran İngilizce açılır (AJA-1777).
+        self.assertEqual(r["defaultLocale"], "en")
         self.assertEqual(set(r["supportedLocales"]), {"tr", "en"})
         self.assertEqual(r["loginTheme"], "atonota")
         self.assertEqual(r["emailTheme"], "atonota")
@@ -231,6 +234,18 @@ class RealmSettingsTest(unittest.TestCase):
         })
         response = get_without_redirect(f"{get_environment_value('KC_PUBLIC_URL')}/realms/platform/protocol/openid-connect/auth?{query}")
         assert_refused_without_pkce(self, response)
+
+    def test_login_page_without_language_choice_is_english(self):
+        # AJA-1777: the browser sends no Accept-Language header and no locale cookie. Karar 44: the page opens in English.
+        challenge = base64.urlsafe_b64encode(hashlib.sha256(b"aja1777-dil-denetimi-dogrulayici-0000000000").digest()).rstrip(b"=").decode()
+        query = urllib.parse.urlencode({
+            "client_id": "site-tenant1", "response_type": "code", "scope": "openid", "state": "s",
+            "redirect_uri": f"{get_environment_value('ATONOTA_SITE_TENANT1_URL')}/api/method/platform_core.api.auth.keycloak_callback",
+            "code_challenge": challenge, "code_challenge_method": "S256",
+        })
+        response = get_without_redirect(f"{get_environment_value('KC_PUBLIC_URL')}/realms/platform/protocol/openid-connect/auth?{query}")
+        self.assertEqual(response.status, 200, safe_detail(response))
+        self.assertRegex(response.body.decode("utf-8"), r'<html[^>]*\slang="en"')
 
     def test_email_goes_through_mailpit(self):
         self.assertEqual(self.realm["smtpServer"]["host"], get_environment_value("ATONOTA_SMTP_HOST"))

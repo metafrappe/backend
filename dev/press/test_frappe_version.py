@@ -28,19 +28,60 @@ class FrappeVersionTest(unittest.TestCase):
             install.splitlines(),
         )
 
-    def test_frappe_build_survives_site_less_press_hooks(self):
-        # Frappe 16.56 imports every app's hooks after it writes the assets.
-        # Press hooks need a site, so the installer must check the asset manifest instead.
-        install = (PRESS_DEV / "install.sh").read_text(encoding="utf-8").splitlines()
-        self.assertIn("bench build --app frappe || test -f sites/assets/assets.json", install)
+    def test_frappe_build_does_not_mask_build_failures(self):
+        # Frappe 16.56 imports every app's hooks after writing assets; Press hooks need a site.
+        # Verify no app defines build hooks, run bundle + translations directly, and validate assets.json.
+        install_path = PRESS_DEV / "install.sh"
+        subprocess.run(["bash", "-n", str(install_path)], check=True, capture_output=True, text=True)
+        install = install_path.read_text(encoding="utf-8")
+        self.assertNotIn("|| test -f sites/assets/assets.json", install)
+        self.assertNotRegex(install, r"bench build --app frappe\s*\|\|")
+
+        hook_guard = re.search(
+            r"grep -qE '\^\[\[:space:\]\]\*after_\(app_\)\?build\[\[:space:\]\]\*\(\\\+\?=|:\)'",
+            install,
+        )
+        self.assertIsNotNone(hook_guard, "install.sh must guard against after_build/after_app_build hooks")
+        self.assertIn("apps/*/*/hooks.py", install)
+
+        bundle_step = re.search(
+            r"\(cd sites && \.\./env/bin/python -c \".*frappe\.bundler import bundle; "
+            r"bundle\('production', apps='frappe'\); "
+            r"from frappe\.gettext\.translate import compile_translations; "
+            r"compile_translations\('frappe'\)\"\)(?!\s*\|\|)",
+            install,
+        )
+        self.assertIsNotNone(
+            bundle_step,
+            "install.sh must run frappe.bundler.bundle and compile_translations for frappe without masking errors",
+        )
+
+        manifest_check = re.search(
+            r"env/bin/python -c \".*json\.load\(open\('sites/assets/assets\.json'.*'desk\.bundle\.js', 'desk\.bundle\.css'",
+            install,
+        )
+        self.assertIsNotNone(
+            manifest_check,
+            "install.sh must validate sites/assets/assets.json as JSON containing desk bundles",
+        )
+        self.assertLess(hook_guard.start(), bundle_step.start())
+        self.assertLess(bundle_step.start(), manifest_check.start())
 
     def test_documents_name_only_the_pinned_release(self):
-        old = re.compile(r"(?<![\d.])16\.(?!56(?:\.0)?(?![\d.]))\d+(?:\.\d+)?")
+        major, minor, patch = FRAPPE_VERSION.split(".")
+        minor_release = f"{major}.{minor}"
+        old = re.compile(
+            rf"(?<![\d.]){re.escape(major)}\.(?!{re.escape(minor)}(?:\.{re.escape(patch)})?(?![\d.]))\d+(?:\.\d+)?"
+        )
         for name in VERSIONED_FILES:
             with self.subTest(file=name):
                 text = (PRESS_DEV / name).read_text(encoding="utf-8")
-                self.assertIn("16.56", text)
-                self.assertEqual(old.findall(text), [], f"{name} names another Frappe 16 release")
+                self.assertIn(minor_release, text)
+                self.assertEqual(
+                    old.findall(text),
+                    [],
+                    f"{name} names another Frappe {major} release",
+                )
 
     @unittest.skipUnless(
         os.environ.get("PRESS_TEST_COMPOSE_PROJECT"), "Set PRESS_TEST_COMPOSE_PROJECT for the live bench"

@@ -92,6 +92,40 @@ class TestIdentity(AiTestCase):
 
 		self.assertEqual(response.status_code, 401)
 
+	def test_token_for_another_target_is_rejected(self):
+		# G-59: the token is bound to the audience it was issued for. A record that names another
+		# target (for example after the site's agent audience changed) does not set a user.
+		from platform_core.ai import agent_token
+
+		client = self.login(USER_A)
+		token = self.issue_token(client)
+		key = agent_token._key(token)
+		record = frappe.cache.get_value(key, use_local_cache=False)
+		frappe.cache.set_value(key, {**record, "audience": "press-service"}, expires_in_sec=60)
+
+		response = self.rpc(self.anonymous(), "tools/list", token=token)
+
+		self.assertEqual(response.status_code, 401)
+		log = self.last_log(deny_reason="token_wrong_audience")
+		self.assertEqual((log.user, log.decision), (USER_A, "denied"))
+
+	def test_token_keeps_no_long_lived_key(self):
+		# G-82: the agent service gets no API key for the user. The server keeps only the digest
+		# of the token, and only for the token's 300 seconds.
+		from platform_core.ai import agent_token
+
+		client = self.login(USER_A)
+		before = frappe.db.get_value("User", USER_A, ["api_key", "api_secret"])
+		token = self.issue_token(client)
+
+		self.assertEqual(frappe.db.get_value("User", USER_A, ["api_key", "api_secret"]), before)
+		raw_keys = frappe.cache.get_keys("*" + token + "*")
+		self.assertEqual(list(raw_keys), [])
+		ttl = frappe.cache.ttl(frappe.cache.make_key(agent_token._key(token)))
+		self.assertTrue(0 < ttl <= agent_token.TTL_SECONDS, ttl)
+		record = frappe.cache.get_value(agent_token._key(token), use_local_cache=False)
+		self.assertNotIn(token, repr(record))
+
 	def test_token_call_budget_is_enforced(self):
 		client = self.login(USER_A)
 		token = self.issue_token(client)

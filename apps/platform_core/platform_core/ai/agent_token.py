@@ -27,11 +27,15 @@ def _key(token: str, suffix: str = "") -> str:
 	return "yz_agent_token:" + hashlib.sha256(token.encode()).hexdigest() + suffix
 
 
+def _audience() -> str:
+	return frappe.conf.get("ai_agent_audience") or DEFAULT_AUDIENCE
+
+
 def issue() -> dict:
 	"""Issue a new token from a human session. The token is visible only in this response."""
 	access.require_human("auth", tool="issue_agent_token")
 	token = PREFIX + secrets.token_urlsafe(32)
-	audience = frappe.conf.get("ai_agent_audience") or DEFAULT_AUDIENCE
+	audience = _audience()
 	record = {"user": frappe.session.user, "sid": frappe.session.sid, "audience": audience}
 	frappe.cache.set_value(_key(token), record, expires_in_sec=TTL_SECONDS)
 	frappe.cache.set(frappe.cache.make_key(_key(token, ":calls")), MAX_CALLS, ex=TTL_SECONDS)
@@ -96,6 +100,11 @@ def authenticate_request() -> None:
 		raise frappe.PermissionError(
 			_("Send either a session cookie or an agent token, not both.", context=CONTEXT)
 		)
+	# G-59: the token is valid only for the target it was issued for.
+	if record.get("audience") != _audience():
+		_log_denied(record, "token_wrong_audience")
+		frappe.cache.delete_value(_key(token))
+		return
 	if not _session_alive(record["sid"], record["user"]):
 		_log_denied(record, "session_ended")
 		frappe.cache.delete_value(_key(token))

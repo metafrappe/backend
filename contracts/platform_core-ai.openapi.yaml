@@ -627,6 +627,7 @@ components:
         - token_call_limit
         - token_call_state_lost
         - token_expired
+        - token_wrong_audience
         - unknown_tool
         - preview_required
         - purge_failed

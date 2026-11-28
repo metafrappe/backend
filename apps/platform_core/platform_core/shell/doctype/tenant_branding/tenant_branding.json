@@ -1,0 +1,64 @@
+{
+ "actions": [],
+ "creation": "2026-11-28 08:00:00.000000",
+ "description": "Tenant visual branding settings managed by the Tenant Admin role: logo and validated hex brand colors.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "logo_section",
+  "logo",
+  "colors_section",
+  "primary_color",
+  "accent_color"
+ ],
+ "fields": [
+  {
+   "fieldname": "logo_section",
+   "fieldtype": "Section Break",
+   "label": "Logo"
+  },
+  {
+   "description": "Uploaded raster logo image path for this tenant site.",
+   "fieldname": "logo",
+   "fieldtype": "Attach Image",
+   "label": "Logo"
+  },
+  {
+   "fieldname": "colors_section",
+   "fieldtype": "Section Break",
+   "label": "Colors"
+  },
+  {
+   "default": "#1F6F5C",
+   "description": "Primary brand color as a six-digit hex code such as #1F6F5C.",
+   "fieldname": "primary_color",
+   "fieldtype": "Color",
+   "label": "Primary Color",
+   "reqd": 1
+  },
+  {
+   "default": "#B35C1E",
+   "description": "Optional accent brand color as a six-digit hex code such as #B35C1E.",
+   "fieldname": "accent_color",
+   "fieldtype": "Color",
+   "label": "Accent Color"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-11-28 08:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Shell",
+ "name": "Tenant Branding",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "read": 1,
+   "role": "Tenant Admin",
+   "write": 1
+  }
+ ],
+ "states": [],
+ "track_changes": 1
+}

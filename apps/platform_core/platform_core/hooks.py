@@ -70,6 +70,8 @@ after_install = [
 	"platform_core.access.tenant_admin.ensure_permissions",
 	# G-53: Desk notices off, the panel is the home page.
 	"platform_core.config.desk_policy.apply",
+	# G-97: initial single records for Tenant Settings and Tenant Branding.
+	"platform_core.shell.tenant_settings_setup.ensure",
 ]
 after_migrate = [
 	"platform_core.identity.session_policy.apply",
@@ -80,6 +82,7 @@ after_migrate = [
 	"platform_core.setup.panel_roles.ensure",
 	"platform_core.access.tenant_admin.ensure_permissions",
 	"platform_core.config.desk_policy.apply",
+	"platform_core.shell.tenant_settings_setup.ensure",
 ]
 
 # G-41: the setup wizard overwrites some defaults, so the Türkiye defaults run after it.

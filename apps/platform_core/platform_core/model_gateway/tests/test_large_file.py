@@ -749,3 +749,183 @@ class ExpiryTests(unittest.TestCase):
 
 if __name__ == "__main__":
 	unittest.main()
+
+
+class ServerTextTests(unittest.TestCase):
+	"""The PDF becomes ordered chunk rows on the server, before any provider call (AJA-2502)."""
+
+	def test_prepare_turns_the_pdf_into_ordered_chunks_within_the_limit(self):
+		# Two pages of 350 bytes fit one chunk of this context. Three pages do not.
+		pages = ["one " * 70 + "1", "", "three " * 58 + "3", "four " * 70, "five " * 70]
+		job = PreparingJob()
+		reader = SimpleNamespace(pages=[FakePage(text) for text in pages])
+		source = SimpleNamespace(get_full_path=lambda: "/fixture/file.pdf")
+		targets = [_target("api-1", "acc-1", _model(1100))]
+		ocr = Mock(return_value="scan " * 70)
+		with (
+			patch.object(large_file, "_job", return_value=job),
+			patch.object(large_file, "PdfReader", return_value=reader),
+			patch.object(large_file.frappe, "get_doc", return_value=source),
+			patch.object(large_file.frappe, "get_hooks", return_value=["fixture.ocr"]),
+			patch.object(large_file.frappe, "get_attr", return_value=ocr),
+			patch.object(large_file.frappe, "conf", {}),
+			patch.object(large_file.frappe, "db", _store_db(job)),
+			patch.object(large_file.gateway, "route_targets", return_value=("fixture-route", targets)),
+			patch.object(adapters, "complete") as send,
+		):
+			large_file.prepare_job("job-1")
+		send.assert_not_called()
+		self.assertEqual(job.status, "planned")
+		self.assertTrue(job.saved)
+		ocr.assert_called_once_with("/fixture/file.pdf", 1, reader.pages[1])
+		self.assertGreater(len(job.chunks), 1)
+		self.assertEqual(job.chunk_count, len(job.chunks))
+		self.assertEqual([chunk.chunk_index for chunk in job.chunks], list(range(len(job.chunks))))
+		# Pages are numbered from 1 and follow each other without a gap or a jump back.
+		self.assertEqual(job.chunks[0].first_page, 1)
+		self.assertEqual(job.chunks[-1].last_page, len(pages))
+		for before, after in zip(job.chunks, job.chunks[1:], strict=False):
+			self.assertIn(after.first_page, {before.last_page, before.last_page + 1})
+		texts = [ocr.return_value if not text else text for text in pages]
+		self.assertEqual("\n".join(chunk.content for chunk in job.chunks), "\n".join(texts))
+		for chunk in job.chunks:
+			# The whole request body and the output limit fit the model context of 1100.
+			request = large_file.messages(job.instruction, chunk.content)
+			payload = json.dumps([request, [], None], ensure_ascii=False).encode("utf-8")
+			self.assertLessEqual(len(payload) + job.output_limit, 1100)
+			self.assertEqual(chunk.byte_count, len(chunk.content.encode("utf-8")))
+
+
+class ChunkDispatchTests(unittest.TestCase):
+	"""Chunks go through the real gateway path with a fake provider (AJA-2502)."""
+
+	base = "https://provider.example.test"
+
+	def _accounts(self, names, full=()):
+		accounts = {
+			name: SimpleNamespace(
+				name=name,
+				enabled=1,
+				has_monthly_budget=int(name in full),
+				monthly_budget=1 if name in full else 0,
+				currency="USD",
+			)
+			for name in names
+		}
+		model = _model(4000)
+		targets = []
+		for name in names:
+			target = _target(f"api-{name}", name, model)
+			target.api.modified = "initial"
+			target.api.requests_per_minute = 0
+			target.api.tokens_per_minute = 0
+			target.api.oauth_token_url = ""
+			target.api.oauth_client_id = ""
+			targets.append(gateway.Target(target.api, accounts[name], target.provider, model))
+		return accounts, targets
+
+	def _run(self, job, names, full=(), data_policy="masked"):
+		accounts, targets = self._accounts(names, full)
+		apis = {target.api.name: target for target in targets}
+		route = SimpleNamespace(
+			name="fixture-route",
+			data_policy=data_policy,
+			selection_mode="weighted",
+			required_capabilities="[]",
+			cost_currency="USD",
+		)
+		store = {chunk.name: chunk for chunk in job.chunks}
+		reserved, sent = [], []
+
+		def set_value(doctype, name, values, *rest, **kwargs):
+			target = job if doctype == large_file.JOB else store[name]
+			for key, value in values.items():
+				setattr(target, key, value)
+
+		def lock_row(doctype, name, fields):
+			if doctype == "PLT AI Account":
+				return accounts[name]
+			if doctype == "PLT AI API":
+				return apis[name].api
+			return SimpleNamespace(enabled=1)
+
+		def begin(route_name, api, account, provider, model, **kwargs):
+			reserved.append((account.name, kwargs["chunk_index"]))
+			return f"log-{len(reserved)}"
+
+		def provider(endpoint, model_id, messages, limit, **kwargs):
+			sent.append((endpoint.name, messages))
+			return {"text": f"answer from {endpoint.name}", "usage": {"input": 1, "output": 1}}
+
+		db = Mock()
+		db.set_value.side_effect = set_value
+		db.transaction_writes = 0
+		cache = Mock()
+		cache.get.return_value = None
+		with (
+			patch.object(large_file, "_job", return_value=job),
+			patch.object(large_file, "_lock_chunk", side_effect=lambda name: store[name]),
+			patch.object(large_file.frappe, "db", db),
+			patch.object(large_file.frappe, "cache", cache),
+			patch.object(large_file.frappe, "session", SimpleNamespace(user="fixture@example.test")),
+			patch.object(large_file.frappe, "conf", {"model_gateway_endpoints": {self.base: "external"}}),
+			patch.object(gateway.policy, "require_user"),
+			patch.object(gateway, "route_targets", return_value=(route, targets)),
+			patch.object(gateway, "_target", side_effect=lambda api, model: apis[api]),
+			patch.object(gateway.Target, "endpoint", lambda target: SimpleNamespace(name=target.api.name)),
+			patch.object(gateway, "scoped_lock"),
+			patch.object(gateway, "lock_row", side_effect=lock_row),
+			patch.object(gateway, "_set_health"),
+			patch.object(gateway.secrets, "randbits", side_effect=range(1000)),
+			patch.object(
+				ledger, "remaining", side_effect=lambda account: 0 if account.name in full else None
+			),
+			patch.object(ledger, "api_quota", return_value=True),
+			patch.object(ledger, "site_quota", return_value=True),
+			patch.object(ledger, "begin", side_effect=begin),
+			patch.object(ledger, "is_pending", return_value=True),
+			patch.object(ledger, "finish"),
+			patch.object(adapters, "complete", side_effect=provider),
+		):
+			large_file.run_job("job-1")
+		return reserved, sent
+
+	def test_chunks_spread_over_accounts_and_skip_the_full_account(self):
+		job = FakeJob(["queued"] * 8)
+		reserved, sent = self._run(job, ["account-full", "account-b", "account-c"], full={"account-full"})
+		self.assertEqual([chunk.status for chunk in job.chunks], ["done"] * 8)
+		self.assertEqual(job.status, "completed")
+		used = {name for name, _messages in sent}
+		self.assertNotIn("api-account-full", used)
+		self.assertEqual(used, {"api-account-b", "api-account-c"})
+		self.assertNotIn("account-full", {account for account, _index in reserved})
+		for chunk in job.chunks:
+			self.assertTrue(chunk.result.startswith("answer from api-account-"))
+			self.assertNotIn("account-full", chunk.result)
+
+	def test_chunks_are_sent_and_answered_in_their_order(self):
+		job = FakeJob(["queued"] * 5)
+		reserved, sent = self._run(job, ["account-b", "account-c"])
+		self.assertEqual([index for _account, index in reserved], [0, 1, 2, 3, 4])
+		self.assertEqual([messages[1]["content"] for _api, messages in sent], [f"text {i}" for i in range(5)])
+		for chunk, (api, _messages) in zip(job.chunks, sent, strict=True):
+			self.assertEqual(chunk.result, f"answer from {api}")
+
+	def test_personal_data_is_masked_before_the_chunk_leaves(self):
+		job = FakeJob(["queued"])
+		job.chunks[0].content = "Contact ali.veli@example.com or 0532 123 45 67 about the invoice."
+		_reserved, sent = self._run(job, ["account-b"])
+		self.assertEqual(len(sent), 1)
+		outgoing = json.dumps(sent[0][1], ensure_ascii=False)
+		self.assertNotIn("ali.veli@example.com", outgoing)
+		self.assertNotIn("0532 123 45 67", outgoing)
+		self.assertEqual(sent[0][1][1]["content"], "Contact [REDACTED] or [REDACTED] about the invoice.")
+		self.assertIsNone(job.chunks[0].content)
+
+	def test_chunk_is_not_sent_when_the_route_does_not_allow_masked_data_out(self):
+		job = FakeJob(["queued"])
+		job.chunks[0].content = "Contact ali.veli@example.com about the invoice."
+		reserved, sent = self._run(job, ["account-b"], data_policy="local_only")
+		self.assertEqual((reserved, sent), ([], []))
+		self.assertEqual((job.chunks[0].status, job.chunks[0].failure_code), ("failed", "data_policy_denied"))
+		self.assertIsNone(job.chunks[0].content)

@@ -435,6 +435,22 @@ Proje sahibi 22 Kasım 2026 Pazar günü şöyle yazdı: “Herşeyi onaylıyoru
   - Eklerin listesi ve test adımları [devir notundadır](docs/handoff/press-tr-extension-test.md).
   - Bu karar önce O-54 numarasını taşıyordu. O-54 ile O-61 arasındaki numaralar başka kararlara verildi. Karar 25 Kasım 2026 Çarşamba günü O-62 oldu.
 
+- **O-71. G-83 yerel geçit tanımı canlı kurulum kanıtı değildir.**
+  - Karar 23 Kasım 2026 Pazartesi günü AJA-85 için yazıldı.
+  - Mimari görüş AJA-111 görevinde alındı.
+  - MVP'de ayrı sunucu ajan döngüsü kurulmaz. Model çağrısını mevcut geçit yapar.
+  - Ayrı ajan servisi MVP sonrasında kurulur. PostgreSQL ve Redis kurulumu açık kalır.
+  - Ortak konuşma verisi kiracı veritabanına taşınmaz.
+  - Hetzner veri konumunu Hüseyin Cengiz sunucuda doğrular.
+  - G-88 bağlamı mevcut MCP çağrısında taşınır. Bağlam ek yetki vermez.
+  - Sunucu bütün bağlam kayıtlarının okuma iznini denetler.
+  - Her yazma ayrı önizleme ve insan onayı ister.
+  - Panel, dar ekran ve klavye parçası kapsam dışı: atonota-web.
+  - Devir notu `docs/handoff/ai-service-setup.md` dosyasındadır.
+  - Bu karar hedef sözleşmedir. G-88 uygulaması ortak test kilidini bekler.
+  - Ara teslim kanıtı `docs/handoff/ai-service-setup-status.md` dosyasındadır.
+  - Bu karar önce O-56 numarasını taşıyordu. O-56 ile O-70 arasındaki numaralar başka kararlara verildi. Karar 28 Kasım 2026 Cumartesi günü AJA-2436 taşımasında O-71 oldu.
+
 ## Karar sitesine işlenecek farklar
 
 Backend kararları karar sitesinin bazı maddelerini değiştirdi. Site ayrı bir işte, kendi denetimleriyle güncellenir. Farklar şunlardır:

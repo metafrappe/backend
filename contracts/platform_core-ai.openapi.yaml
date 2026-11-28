@@ -67,6 +67,14 @@ paths:
         A write tool opens a proposal and returns the `approval_required` status.
         A tool error is not an HTTP error. A tool error is a result that carries `isError: true`.
         Every call and every denial is written to an "AI Action Log" record.
+        Planned (G-88), not implemented yet: the server does not read _meta today.
+        tools/call accepts optional params._meta.page_context. The context is an untrusted
+        page hint, never an authorization grant or an implicit tool argument. The server
+        validates every referenced record before running the tool or opening a proposal.
+        A denied context denies the entire call and is logged. Successful results acknowledge
+        the validated hint in _meta.page_context. Context carries identifiers only, not record
+        contents, filters or approval flags. It is not stored in the proposal or action log.
+        Each write still requires its own preview, digest and separate human approval.
       security:
         - humanSession: []
         - agentToken: []
@@ -549,7 +557,33 @@ components:
           enum: [initialize, server/discover, ping, tools/list, tools/call, notifications/initialized]
         params:
           type: object
-          description: "Carries `name` and `arguments` for `tools/call`."
+          description: "Carries name, arguments and optional _meta.page_context for tools/call."
+          properties:
+            _meta:
+              type: object
+              properties:
+                page_context:
+                  $ref: "#/components/schemas/PageContext"
+
+    PageContext:
+      type: object
+      additionalProperties: false
+      required: [doctype]
+      description: >
+        Planned (G-88), not implemented yet.
+        A list page names its DocType. A record page also names its saved document.
+        selected_names contains at most 200 unique document names in the same DocType.
+        Every record needs read permission. Unknown or forbidden references reject the call.
+        The client must refresh this hint when the page or selection changes.
+        Omitting page_context preserves the existing call behavior; explicit null is invalid.
+      properties:
+        doctype: {type: string, minLength: 1, maxLength: 140}
+        name: {type: string, minLength: 1, maxLength: 140}
+        selected_names:
+          type: array
+          maxItems: 200
+          uniqueItems: true
+          items: {type: string, minLength: 1, maxLength: 140}
 
     JsonRpcResponse:
       type: object
@@ -573,6 +607,12 @@ components:
       description: MCP tool result.
       required: [content, isError]
       properties:
+        _meta:
+          type: object
+          description: Planned (G-88). Present only when a successful call supplied page_context.
+          properties:
+            page_context:
+              $ref: "#/components/schemas/PageContext"
         content:
           type: array
           items:

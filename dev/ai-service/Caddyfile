@@ -1,0 +1,11 @@
+{
+	admin off
+	auto_https disable_redirects
+}
+
+https://test-platform-core.localhost {
+	tls internal
+	reverse_proxy tenant-web:8000 {
+		header_up X-Frappe-Site-Name test-platform-core.localhost
+	}
+}

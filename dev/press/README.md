@@ -2,7 +2,7 @@
 
 Bu kurulum ayrı bir yerel Press sitesi açar. Press, kiracı sitelerini yönetir.
 
-Frappe v16.50.0 ve Press v0.154.1 kullanılır.
+Frappe v16.56.0 ve Press v0.154.1 kullanılır.
 Paylaşılan yerel Press imajında Python sürümü 3.14.8.
 Yeni kurulumun Python yolu `install.sh` dosyasında yazılıdır.
 Uyum yamaları yalnız yerel Press denemesi içindir.
@@ -83,6 +83,6 @@ bash backend/dev/press/install_runtime_oidc.sh /path/to/release-wheels /path/to/
 Betik `PRESS_OIDC_WHEEL_SHA256` değişkenini okur. Bu değeri güvenilir sürüm bildiriminden alın.
 Testte `PRESS_TEST_CLEAN_SOURCE` değerine temiz Press kaynak klasörünü yazın.
 
-Frappe 16.50 içe aktarım sırasında site parolasını komut satırına ekler.
+Frappe 16.56 içe aktarım sırasında site parolasını komut satırına ekler.
 Yerel kurulum betiği yalnız içe aktarım boyunca bu çağrıyı sarar.
 MariaDB parolayı geçici dosyadan okur. Üretim kurulumu bu betiği kullanmaz.

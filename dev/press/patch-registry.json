@@ -1,7 +1,7 @@
 {
   "sha256": {
     "dev/press/patch-py314.sh": "d616f78807b99a2ec1a3f66eacba8f7964578253e6ba52d83a366fdbb35fded6",
-    "dev/press/uv-overrides.txt": "aac173eff1f49682a0c552fd07caca8d937fd92643f6f9e096eef0cd5d7ed6ca"
+    "dev/press/uv-overrides.txt": "4650ba6c2f58cb47693b43522f5187b770d6a9bb7ca3bcc65c4a29a64814f659"
   },
   "patches": [
     {

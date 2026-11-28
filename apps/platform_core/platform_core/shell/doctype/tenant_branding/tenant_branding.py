@@ -1,7 +1,7 @@
 """G-97 part 1 (AJA-2551): Tenant Branding single DocType controller.
 
-Validates hex color tokens and same-site raster logo paths server-side so CSS or
-script injection values can never be stored.
+Validates hex color tokens and public same-site raster logo paths server-side so
+CSS injection, script URLs, path traversal and private file references are rejected.
 """
 
 import posixpath
@@ -12,7 +12,8 @@ from frappe import _
 from frappe.model.document import Document
 
 HEX_COLOR_PATTERN = re.compile(r"#[0-9a-fA-F]{6}")
-ALLOWED_LOGO_PREFIXES = ("/files/", "/private/files/")
+# Brand logos are shared across all tenant users, so only public /files/ paths with strict ASCII characters are accepted.
+LOGO_PATH_PATTERN = re.compile(r"/files/[A-Za-z0-9._/-]+")
 ALLOWED_LOGO_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".webp", ".gif"})
 
 
@@ -34,22 +35,20 @@ def validate_hex_color(value: object, label: str, *, required: bool = False) -> 
 def validate_logo_path(value: object) -> None:
 	if value is None or value == "":
 		return
-	if not isinstance(value, str):
-		frappe.throw(_("Logo must be a same-site uploaded raster image path."), frappe.ValidationError)
-	if value != value.strip() or any(ord(ch) < 32 for ch in value):
-		frappe.throw(_("Logo must be a same-site uploaded raster image path."), frappe.ValidationError)
-	if "\\" in value or "?" in value or "#" in value:
-		frappe.throw(_("Logo must be a same-site uploaded raster image path."), frappe.ValidationError)
-	if not value.startswith(ALLOWED_LOGO_PREFIXES):
-		frappe.throw(_("Logo must be a same-site uploaded raster image path."), frappe.ValidationError)
-	if ".." in value.split("/"):
-		frappe.throw(_("Logo must be a same-site uploaded raster image path."), frappe.ValidationError)
-	_root, ext = posixpath.splitext(value.lower())
+	if not isinstance(value, str) or not LOGO_PATH_PATTERN.fullmatch(value):
+		frappe.throw(_("Logo must be a public uploaded raster image path."), frappe.ValidationError)
+	normalized = posixpath.normpath(value)
+	if normalized != value or not normalized.startswith("/files/") or ".." in value.split("/"):
+		frappe.throw(_("Logo must be a public uploaded raster image path."), frappe.ValidationError)
+	_root, ext = posixpath.splitext(normalized.lower())
 	if ext not in ALLOWED_LOGO_EXTENSIONS:
 		frappe.throw(
 			_("Logo must be a PNG, JPEG, WebP or GIF image."),
 			frappe.ValidationError,
 		)
+	# Public brand logos must reference an existing public File record on this site (exception to G-3).
+	if not frappe.db.exists("File", {"file_url": normalized, "is_private": 0, "is_folder": 0}):
+		frappe.throw(_("Logo file does not exist on this site."), frappe.ValidationError)
 
 
 class TenantBranding(Document):

@@ -112,6 +112,9 @@ ai_write_closed_doctypes = [
 	# G-169: only the Platform Operator changes reseller links, never a generic AI write.
 	"Reseller Customer Link",
 	"Reseller Customer Request",
+	# G-97: tenant settings sync to System Settings and branding holds CSS/logo tokens.
+	"Tenant Settings",
+	"Tenant Branding",
 ]
 # Website User method allow list (docs/sozlesmeler.md). Identity adds only the method a portal user calls.
 website_user_allowed_methods = [

@@ -88,8 +88,14 @@ class TestSessionPolicy(FrappeAPITestCase):
 	def test_shorter_tenant_idle_timeout_is_preserved_and_enforced(self):
 		# G-97 / AJA-2551 finding 1 & 2: a shorter tenant timeout applies to cookie sessions and survives migrate.
 		previous = frappe.db.get_single_value("System Settings", "session_expiry")
-		self.addCleanup(frappe.db.set_single_value, "System Settings", "session_expiry", previous)
+
+		def restore():
+			frappe.db.set_single_value("System Settings", "session_expiry", previous)
+			frappe.db.commit()  # nosemgrep: frappe-test-commit
+
+		self.addCleanup(restore)
 		frappe.db.set_single_value("System Settings", "session_expiry", "00:15")
+		frappe.db.commit()  # nosemgrep: frappe-test-commit
 		frappe.clear_cache()
 
 		session_policy.apply()

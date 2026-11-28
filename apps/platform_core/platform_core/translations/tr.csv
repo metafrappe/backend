@@ -1037,8 +1037,8 @@ Configured mail domain for this tenant site. Managed by the platform and read-on
 Outgoing Email Account,Giden e-posta hesabı,Tenant Settings
 Configured outgoing mail account address for this tenant site. Managed by the platform and read-only here.,Bu kiracı sitesinin giden e-posta hesabı. Platform tarafından yönetilir ve burada salt okunurdur.,Tenant Settings
 Email Domain and Outgoing Email Account are read-only.,E-posta alan adı ve giden e-posta hesabı salt okunurdur.,
-Session Expiry must use hours:minutes format such as 04:00.,Oturum süresi 04:00 gibi saat:dakika biçiminde olmalıdır.,
-Session Expiry must be between 00:01 and 170:00.,Oturum süresi 00:01 ile 170:00 arasında olmalıdır.,
+Session Expiry must use hours:minutes format such as 00:30.,Oturum süresi 00:30 gibi saat:dakika biçiminde olmalıdır.,
+Session Expiry must be between 00:01 and 01:00.,Oturum süresi 00:01 ile 01:00 arasında olmalıdır.,
 Select a supported time zone.,Desteklenen bir saat dilimi seçin.,
 Select a supported language.,Desteklenen bir dil seçin.,
 Select a supported date format.,Desteklenen bir tarih biçimi seçin.,
@@ -1053,5 +1053,6 @@ Primary brand color as a six-digit hex code such as #1F6F5C.,#1F6F5C gibi altı 
 Accent Color,Vurgu rengi,Tenant Branding
 Optional accent brand color as a six-digit hex code such as #B35C1E.,#B35C1E gibi isteğe bağlı altı haneli onaltılık vurgu rengi.,Tenant Branding
 {0} must be a six-digit hex color such as #12ab34.,{0} değeri #12ab34 gibi altı haneli onaltılık renk kodu olmalıdır.,
-Logo must be a same-site uploaded raster image path.,Logo aynı siteye yüklenmiş bir görsel dosyası yolu olmalıdır.,
+Logo must be a public uploaded raster image path.,Logo siteye herkese açık yüklenmiş bir görsel dosyası yolu olmalıdır.,
+Logo file does not exist on this site.,Logo dosyası bu sitede bulunamadı.,
 "Logo must be a PNG, JPEG, WebP or GIF image.","Logo PNG, JPEG, WebP veya GIF görseli olmalıdır.",

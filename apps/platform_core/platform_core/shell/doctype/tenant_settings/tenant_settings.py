@@ -54,45 +54,66 @@ ALLOWED_NUMBER_FORMATS = frozenset(
 		"#,###",
 	}
 )
-SESSION_EXPIRY_PATTERN = re.compile(r"\d{1,3}:\d{2}")
-MAX_SESSION_EXPIRY_MINUTES = 170 * 60
+# Strict ASCII digits only: rejects Unicode digits such as Arabic-Indic numerals.
+SESSION_EXPIRY_PATTERN = re.compile(r"[0-9]{1,3}:[0-9]{2}")
+# O-25 (Decision 19): tenant idle timeout ceiling is 1 hour (01:00).
+MAX_SESSION_EXPIRY_MINUTES = 60
+DEFAULT_SESSION_EXPIRY = "01:00"
 
 
 def read_only_email_values() -> tuple[str, str]:
 	"""Read only the public outgoing mail domain and sender address, never credentials."""
 	# System email identifiers shown read-only to the tenant admin (exception to G-3).
-	account = frappe.db.get_value(
+	accounts = frappe.get_all(
 		"Email Account",
-		{"default_outgoing": 1, "enable_outgoing": 1},
-		["email_id", "domain"],
-		as_dict=True,
-	) or frappe.db.get_value(
+		filters={"default_outgoing": 1, "enable_outgoing": 1},
+		fields=["email_id", "domain"],
+		order_by="name asc",
+		limit=1,
+	) or frappe.get_all(
 		"Email Account",
-		{"enable_outgoing": 1},
-		["email_id", "domain"],
-		as_dict=True,
+		filters={"enable_outgoing": 1},
+		fields=["email_id", "domain"],
+		order_by="name asc",
+		limit=1,
 	)
+	account = accounts[0] if accounts else None
 	email_account = (account.get("email_id") or "") if account else ""
 	domain_ref = (account.get("domain") or "") if account else ""
 	if domain_ref:
 		email_domain = frappe.db.get_value("Email Domain", domain_ref, "domain_name") or domain_ref
 	else:
-		email_domain = frappe.db.get_value("Email Domain", {}, "domain_name") or ""
+		domains = frappe.get_all(
+			"Email Domain",
+			fields=["domain_name"],
+			order_by="domain_name asc, name asc",
+			limit=1,
+		)
+		email_domain = (domains[0].get("domain_name") or "") if domains else ""
 	return str(email_domain), str(email_account)
+
+
+def parse_session_expiry_minutes(value: object) -> int | None:
+	"""Return total minutes for a valid ASCII hh:mm duration within the O-25 ceiling, else None."""
+	if not isinstance(value, str) or not SESSION_EXPIRY_PATTERN.fullmatch(value):
+		return None
+	hours_str, minutes_str = value.split(":")
+	hours, minutes = int(hours_str), int(minutes_str)
+	total_minutes = hours * 60 + minutes
+	if minutes >= 60 or total_minutes < 1 or total_minutes > MAX_SESSION_EXPIRY_MINUTES:
+		return None
+	return total_minutes
 
 
 def validate_session_expiry(value: object) -> None:
 	if not isinstance(value, str) or not SESSION_EXPIRY_PATTERN.fullmatch(value):
 		frappe.throw(
-			_("Session Expiry must use hours:minutes format such as 04:00."),
+			_("Session Expiry must use hours:minutes format such as 00:30."),
 			frappe.ValidationError,
 		)
-	hours_str, minutes_str = value.split(":")
-	hours, minutes = int(hours_str), int(minutes_str)
-	total_minutes = hours * 60 + minutes
-	if minutes >= 60 or total_minutes < 1 or total_minutes > MAX_SESSION_EXPIRY_MINUTES:
+	if parse_session_expiry_minutes(value) is None:
 		frappe.throw(
-			_("Session Expiry must be between 00:01 and 170:00."),
+			_("Session Expiry must be between 00:01 and 01:00."),
 			frappe.ValidationError,
 		)
 
@@ -120,7 +141,14 @@ class TenantSettings(Document):
 
 	def validate(self):
 		expected_domain, expected_account = read_only_email_values()
-		if (self.email_domain or "") != expected_domain or (self.email_account or "") != expected_account:
+		domain_value = "" if self.email_domain is None else self.email_domain
+		account_value = "" if self.email_account is None else self.email_account
+		if (
+			not isinstance(domain_value, str)
+			or not isinstance(account_value, str)
+			or domain_value != expected_domain
+			or account_value != expected_account
+		):
 			frappe.throw(
 				_("Email Domain and Outgoing Email Account are read-only."),
 				frappe.PermissionError,
@@ -128,14 +156,18 @@ class TenantSettings(Document):
 		self.email_domain = expected_domain
 		self.email_account = expected_account
 
-		if self.language not in ALLOWED_LANGUAGES or not frappe.db.exists("Language", self.language):
+		if (
+			not isinstance(self.language, str)
+			or self.language not in ALLOWED_LANGUAGES
+			or not frappe.db.exists("Language", self.language)
+		):
 			frappe.throw(_("Select a supported language."), frappe.ValidationError)
 		validate_time_zone(self.time_zone)
-		if self.date_format not in ALLOWED_DATE_FORMATS:
+		if not isinstance(self.date_format, str) or self.date_format not in ALLOWED_DATE_FORMATS:
 			frappe.throw(_("Select a supported date format."), frappe.ValidationError)
-		if self.time_format not in ALLOWED_TIME_FORMATS:
+		if not isinstance(self.time_format, str) or self.time_format not in ALLOWED_TIME_FORMATS:
 			frappe.throw(_("Select a supported time format."), frappe.ValidationError)
-		if self.number_format not in ALLOWED_NUMBER_FORMATS:
+		if not isinstance(self.number_format, str) or self.number_format not in ALLOWED_NUMBER_FORMATS:
 			frappe.throw(_("Select a supported number format."), frappe.ValidationError)
 		validate_session_expiry(self.session_expiry)
 
@@ -148,4 +180,5 @@ class TenantSettings(Document):
 		if self.language:
 			set_default_language(self.language)
 		clear_system_settings_cache()
+		frappe.local.system_settings = None
 		invalidate_permissions()

@@ -52,13 +52,7 @@
  "module": "Shell",
  "name": "Tenant Branding",
  "owner": "Administrator",
- "permissions": [
-  {
-   "read": 1,
-   "role": "Tenant Admin",
-   "write": 1
-  }
- ],
+ "permissions": [],
  "states": [],
  "track_changes": 1
 }

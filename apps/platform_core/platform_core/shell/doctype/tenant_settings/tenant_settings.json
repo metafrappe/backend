@@ -115,13 +115,7 @@
  "module": "Shell",
  "name": "Tenant Settings",
  "owner": "Administrator",
- "permissions": [
-  {
-   "read": 1,
-   "role": "Tenant Admin",
-   "write": 1
-  }
- ],
+ "permissions": [],
  "states": [],
  "track_changes": 1
 }

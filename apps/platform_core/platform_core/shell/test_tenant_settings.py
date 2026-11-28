@@ -412,12 +412,15 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 
 		# Run the real after_migrate hooks in the exact order hooks.py declares them.
 		frappe.set_user("Administrator")
-		for hook in (
-			"platform_core.identity.session_policy.apply",
-			"platform_core.config.turkey_setup.apply",
-			"platform_core.shell.tenant_settings_setup.ensure",
-		):
-			frappe.get_attr(hook)()
+		for hook in frappe.get_hooks("after_migrate"):
+			if hook.endswith(
+				(
+					".session_policy.apply",
+					".turkey_setup.apply",
+					".tenant_settings_setup.ensure",
+				)
+			):
+				frappe.get_attr(hook)()
 		frappe.db.commit()  # nosemgrep: frappe-test-commit
 
 		for field, expected in saved.items():
@@ -435,8 +438,9 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		frappe.db.set_single_value("System Settings", "session_expiry", "170:00")
 		frappe.db.set_single_value(TENANT_SETTINGS, "session_expiry", "170:00")
-		frappe.get_attr("platform_core.identity.session_policy.apply")()
-		frappe.get_attr("platform_core.shell.tenant_settings_setup.ensure")()
+		for hook in frappe.get_hooks("after_migrate"):
+			if hook.endswith((".session_policy.apply", ".tenant_settings_setup.ensure")):
+				frappe.get_attr(hook)()
 		self.assertEqual(frappe.db.get_single_value("System Settings", "session_expiry"), "01:00")
 		self.assertEqual(frappe.db.get_single_value(TENANT_SETTINGS, "session_expiry"), "01:00")
 

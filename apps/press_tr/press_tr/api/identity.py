@@ -16,6 +16,8 @@ from press_tr.press_identity.oidc import issuer as configured_issuer
 from press_tr.press_identity.service import require_service
 
 IDENTITY_PAGE_SIZE = 500
+# Press Role titles are Data fields.
+MAX_ROLE_TITLE = 140
 # MariaDB offsets support unsigned 64-bit integers.
 MAX_IDENTITY_START = (1 << 64) - 1
 
@@ -51,8 +53,13 @@ def ensure_team(
 	email_verified: bool,
 	organization_id: str,
 	organization_name: str | None = None,
+	press_role: Any = None,
 ) -> dict[str, str | bool]:
 	require_service(issuer)
+	if "press_role" in frappe.form_dict and not (
+		isinstance(press_role, str) and press_role.strip() and len(press_role) <= MAX_ROLE_TITLE
+	):
+		raise_invalid_role()
 	organization_id = claim({"organization_id": organization_id}, "organization_id")
 	title = organization_name if organization_name is not None else organization_id
 	title = claim({"organization_name": title}, "organization_name")
@@ -68,7 +75,7 @@ def ensure_team(
 			lock.release()
 
 	try:
-		result = provision_team(issuer, subject, email, email_verified, organization_id, title)
+		result = provision_team(issuer, subject, email, email_verified, organization_id, title, press_role)
 	except (frappe.QueryDeadlockError, frappe.QueryTimeoutError):
 		release_lock()
 		raise Conflict(_("Another request is updating this organization. Try again.", context="press_tr"))
@@ -83,21 +90,52 @@ def ensure_team(
 
 
 def provision_team(
-	issuer: str, subject: str, email: str, email_verified: bool, organization_id: str, title: str
+	issuer: str,
+	subject: str,
+	email: str,
+	email_verified: bool,
+	organization_id: str,
+	title: str,
+	press_role: str | None = None,
 ):
 	doc = lock_team(organization_id)
+	# Resolve the role before any write, so an invalid role adds no user or member.
+	role = team_role(doc, press_role) if press_role is not None else None
 	link = bind_identity({"iss": issuer, "sub": subject, "email": email, "email_verified": email_verified})
 	if doc is None:
 		return {"team": create_team(link.user, title, organization_id), "created": True}
 	owner_disabled = not frappe.db.get_value("User", doc.user, "enabled")
 	if not any(member.user == link.user for member in doc.team_members):
 		# Provisioning uses the recorded owner context without opening a session.
+		# This verified service already checked the team, so Press skips its dashboard checks.
 		with as_press_user(doc.user, allow_disabled=owner_disabled):
-			doc.create_user_for_member(email=link.user)
+			doc.create_user_for_member(
+				email=link.user, press_roles=[role] if role else None, skip_validations=True
+			)
 	result = {"team": doc.name, "created": False}
 	if owner_disabled:
 		result["owner_disabled"] = True
 	return result
+
+
+class InvalidTeamRole(frappe.ValidationError):
+	http_status_code = 400
+
+
+def raise_invalid_role():
+	frappe.throw(_("Send the title of a role of this team.", context="press_tr"), InvalidTeamRole)
+
+
+def team_role(doc, title: str) -> str:
+	# The role must belong to the organization's own team. A new team has no roles yet.
+	if doc is None:
+		raise_invalid_role()
+	roles = frappe.get_all("Press Role", {"team": doc.name, "title": title}, ["name", "title"])
+	# MariaDB compares titles without case, so compare the stored title exactly.
+	names = [role.name for role in roles if role.title == title]
+	if len(names) != 1:
+		raise_invalid_role()
+	return names[0]
 
 
 class InvalidTeamSelector(frappe.ValidationError):

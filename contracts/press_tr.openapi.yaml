@@ -122,6 +122,11 @@ paths:
                 organization_name:
                   type: string
                   description: Display name used only when Press creates the team. The organization identifier is used if omitted.
+                press_role:
+                  type: string
+                  minLength: 1
+                  maxLength: 140
+                  description: Title of a Press Role of the organization's team. Press gives this role to the member only when it adds the member. Without it the member gets no role.
       responses:
         "200":
           description: Press team name and whether this request created the team.
@@ -142,6 +147,8 @@ paths:
                       owner_disabled:
                         type: boolean
                         description: True when the recorded team owner is disabled.
+        "400":
+          description: The role is not a role of the organization's team. Press adds no user or member.
         "403":
           description: Service identity or user binding was rejected.
         "409":

@@ -141,3 +141,6 @@ Email address of the account to recover.,Kurtarılacak hesabın e-posta adresi.,
 The request was received. The answer does not show whether an account exists.,İstek alındı. Yanıt hesabın var olup olmadığını göstermez.,press_tr.openapi
 The request had extra fields.,İstekte fazladan alan vardı.,press_tr.openapi
 Recovery request limit reached.,Kurtarma isteği sınırına ulaşıldı.,press_tr.openapi
+Send the title of a role of this team.,Bu takımın bir rolünün adını gönderin.,press_tr
+"Title of a Press Role of the organization's team. Press gives this role to the member only when it adds the member. Without it the member gets no role.",Kuruluşun takımındaki bir Press rolünün adı. Press bu rolü üyeye yalnız üyeyi eklerken verir. Ad gelmezse üye rol almaz.,press_tr.openapi
+The role is not a role of the organization's team. Press adds no user or member.,Bu rol kuruluşun takımına ait değil. Press kullanıcı ve üye eklemez.,press_tr.openapi

@@ -42,8 +42,17 @@ test "$(git -C apps/frappe rev-parse HEAD)" = 49789a1711d4dde2be9c6888efe3565146
 test "$(git -C apps/press rev-parse HEAD)" = 7a4384d5eec9f0f0dce4124e9dd48b106e51222f
 
 bash /opt/press-local/scripts/patch-py314.sh
-# Frappe 16.56 imports every app's hooks after writing assets. Site-less Press hooks fail there.
-bench build --app frappe || test -f sites/assets/assets.json
+# Frappe 16.56 imports every app's hooks after writing assets; Press hooks need a site.
+# Verify no app declares build hooks, then run bundle and translation compilation directly.
+for hooks in apps/*/*/hooks.py; do
+	test -f "$hooks"
+	if grep -qE '^[[:space:]]*after_(app_)?build[[:space:]]*(\+?=|:)' "$hooks"; then
+		echo "Unexpected build hook in $hooks" >&2
+		exit 1
+	fi
+done
+(cd sites && ../env/bin/python -c "import frappe, frappe.commands; frappe.init(''); from frappe.bundler import bundle; bundle('production', apps='frappe'); from frappe.gettext.translate import compile_translations; compile_translations('frappe')")
+env/bin/python -c "import json, os, sys; bundles = json.load(open('sites/assets/assets.json', encoding='utf-8')); sys.exit(not (isinstance(bundles, dict) and all(isinstance(bundles.get(name), str) and bundles[name].startswith('/assets/frappe/') and os.path.isfile('sites' + bundles[name]) for name in ('desk.bundle.js', 'desk.bundle.css'))))"
 # The site-less Press after_build hook can fail after emitting the dashboard.
 bench build --app press || test -f apps/press/press/public/dashboard/index.html
 

@@ -18,12 +18,16 @@ Run without Frappe:
 from __future__ import annotations
 
 import ast
+import importlib.util
 import io
 import re
+import sys
 import tempfile
 import tokenize
+import types
 import unittest
 from pathlib import Path
+from unittest import mock
 
 APPS = Path(__file__).resolve().parents[2] / "apps"
 MARKER = "# ignore-permissions:"
@@ -422,6 +426,238 @@ class DetectorTest(unittest.TestCase):
 				encoding="utf-8",
 			)
 			self.assertEqual(gate_problems(root), ["app/module.py:1 [missing-reason]"])
+
+	def test_conditional_finally_restore_is_caught(self):
+		cases = {
+			"if": (
+				"# ignore-permissions: internal write.\n"
+				"doc.flags.ignore_permissions = True\n"
+				"try:\n"
+				"\tdoc.save()\n"
+				"finally:\n"
+				"\tif should_restore:\n"
+				"\t\tdoc.flags.ignore_permissions = previous\n"
+			),
+			"for": (
+				"# ignore-permissions: internal write.\n"
+				"doc.flags.ignore_permissions = True\n"
+				"try:\n"
+				"\tdoc.save()\n"
+				"finally:\n"
+				"\tfor _item in items:\n"
+				"\t\tdoc.flags.ignore_permissions = previous\n"
+			),
+			"except": (
+				"# ignore-permissions: internal write.\n"
+				"doc.flags.ignore_permissions = True\n"
+				"try:\n"
+				"\tdoc.save()\n"
+				"finally:\n"
+				"\ttry:\n"
+				"\t\tcleanup()\n"
+				"\texcept RuntimeError:\n"
+				"\t\tdoc.flags.ignore_permissions = previous\n"
+			),
+			"match": (
+				"# ignore-permissions: internal write.\n"
+				"doc.flags.ignore_permissions = True\n"
+				"try:\n"
+				"\tdoc.save()\n"
+				"finally:\n"
+				"\tmatch state:\n"
+				'\t\tcase "done":\n'
+				"\t\t\tdoc.flags.ignore_permissions = previous\n"
+			),
+		}
+		for name, source in cases.items():
+			with self.subTest(block=name):
+				self.assertEqual(scan_source(source), [(2, "missing-finally")])
+
+	def test_subscript_flag_assignment_is_caught_and_restored(self):
+		unrestored = 'doc.flags["ignore_permissions"] = True\ndoc.save()\n'
+		self.assertEqual(
+			scan_source(unrestored),
+			[(1, "missing-finally"), (1, "missing-reason")],
+		)
+		missing_finally = (
+			"# ignore-permissions: internal write.\n"
+			'doc.flags["ignore_permissions"] = True\n'
+			"doc.save()\n"
+		)
+		self.assertEqual(scan_source(missing_finally), [(2, "missing-finally")])
+		valid_subscript = (
+			'previous = doc.flags.get("ignore_permissions")\n'
+			"# ignore-permissions: internal write.\n"
+			'doc.flags["ignore_permissions"] = True\n'
+			"try:\n"
+			"\tdoc.save()\n"
+			"finally:\n"
+			'\tdoc.flags["ignore_permissions"] = previous\n'
+		)
+		self.assertEqual(scan_source(valid_subscript), [])
+		valid_mixed_restore = (
+			"previous = doc.flags.ignore_permissions\n"
+			"# ignore-permissions: internal write.\n"
+			'doc.flags["ignore_permissions"] = True\n'
+			"try:\n"
+			"\tdoc.save()\n"
+			"finally:\n"
+			"\tdoc.flags.ignore_permissions = previous\n"
+		)
+		self.assertEqual(scan_source(valid_mixed_restore), [])
+		stays_true = (
+			"# ignore-permissions: internal write.\n"
+			'doc.flags["ignore_permissions"] = True\n'
+			"try:\n"
+			"\tdoc.save()\n"
+			"finally:\n"
+			'\tdoc.flags["ignore_permissions"] = True\n'
+		)
+		self.assertEqual(
+			scan_source(stays_true),
+			[(2, "missing-finally"), (6, "missing-finally"), (6, "missing-reason")],
+		)
+
+	def test_truthy_constant_ignore_permissions_is_caught(self):
+		truthy_calls = (
+			"doc.save(ignore_permissions=1)\n"
+			'doc.insert(ignore_permissions="yes")\n'
+		)
+		self.assertEqual(
+			scan_source(truthy_calls),
+			[(1, "missing-reason"), (2, "missing-reason")],
+		)
+		truthy_flags = (
+			"doc.flags.ignore_permissions = 1\n"
+			'doc.flags["ignore_permissions"] = 1\n'
+		)
+		self.assertEqual(
+			scan_source(truthy_flags),
+			[
+				(1, "missing-finally"),
+				(1, "missing-reason"),
+				(2, "missing-finally"),
+				(2, "missing-reason"),
+			],
+		)
+		falsy = (
+			"doc.save(ignore_permissions=0)\n"
+			"doc.save(ignore_permissions=None)\n"
+			"doc.flags.ignore_permissions = 0\n"
+			'doc.flags["ignore_permissions"] = False\n'
+		)
+		self.assertEqual(scan_source(falsy), [])
+
+
+class _FakeFlags(dict):
+	def __getattr__(self, name: str):
+		return self.get(name)
+
+	def __setattr__(self, name: str, value) -> None:
+		self[name] = value
+
+
+class _FakeExceptionDoc:
+	def __init__(self, *, initial_ignore_permissions, fail_on_save: bool = False):
+		self.name = "EIDP-0001"
+		self.kind = "grant"
+		self.provider_alias = "acme-entra"
+		self.issuer = "https://login.microsoftonline.com/tenant/v2.0"
+		self.organization = "acme"
+		self.supersedes = None
+		self.reason = "The provider omits email_verified."
+		self.provider_document = "https://docs.example/provider"
+		self.expires_on = None
+		self.requested_by = "owner@example.test"
+		self.approved_by = None
+		self.approved_on = None
+		self.approval_principal = None
+		self.allowed_domains = []
+		self.flags = _FakeFlags()
+		if initial_ignore_permissions is not None:
+			self.flags.ignore_permissions = initial_ignore_permissions
+		self.save_calls: list[bool] = []
+		self._fail_on_save = fail_on_save
+
+	def get(self, field: str, default=None):
+		return getattr(self, field, default)
+
+	def save(self, *, ignore_permissions: bool = False):
+		self.save_calls.append(ignore_permissions)
+		if ignore_permissions:
+			self.flags.ignore_permissions = True
+		if self._fail_on_save:
+			raise RuntimeError("save failed")
+		return self
+
+
+def _load_enterprise_membership(doc: _FakeExceptionDoc):
+	frappe_mod = types.ModuleType("frappe")
+	frappe_mod._ = lambda text, context=None: text
+	frappe_mod.ValidationError = type("ValidationError", (Exception,), {})
+	frappe_mod.PermissionError = type("PermissionError", (Exception,), {})
+	frappe_mod.session = types.SimpleNamespace(user="security@example.test", data={})
+	frappe_mod.only_for = lambda role: None
+	frappe_mod.get_doc = lambda doctype, name: doc
+	frappe_mod.get_all = lambda *args, **kwargs: []
+	frappe_mod.whitelist = lambda *args, **kwargs: (lambda fn: fn)
+
+	def _throw(message, exc=None):
+		raise (exc or frappe_mod.ValidationError)(message)
+
+	frappe_mod.throw = _throw
+
+	utils_mod = types.ModuleType("frappe.utils")
+	utils_mod.get_datetime = lambda value: value
+	utils_mod.get_system_timezone = lambda: "UTC"
+	utils_mod.now_datetime = lambda: None
+	frappe_mod.utils = utils_mod
+
+	pkg_root = types.ModuleType("platform_core")
+	pkg_identity = types.ModuleType("platform_core.identity")
+	rules_mod = types.ModuleType("platform_core.identity.enterprise_rules")
+	rules_mod.APPROVAL_PRINCIPAL = "human_session"
+	rules_mod.EnterpriseRuleError = type("EnterpriseRuleError", (Exception,), {})
+	rules_mod.check_record = lambda record: record
+	pkg_identity.enterprise_rules = rules_mod
+	pkg_root.identity = pkg_identity
+
+	stubs = {
+		"frappe": frappe_mod,
+		"frappe.utils": utils_mod,
+		"platform_core": pkg_root,
+		"platform_core.identity": pkg_identity,
+		"platform_core.identity.enterprise_rules": rules_mod,
+	}
+	module_path = APPS / "platform_core/platform_core/identity/enterprise_membership.py"
+	spec = importlib.util.spec_from_file_location("_test_enterprise_membership", module_path)
+	assert spec is not None and spec.loader is not None
+	with mock.patch.dict(sys.modules, stubs):
+		module = importlib.util.module_from_spec(spec)
+		spec.loader.exec_module(module)
+	return module, stubs
+
+
+class EnterpriseMembershipApproveFlagTest(unittest.TestCase):
+	def test_approve_restores_ignore_permissions_on_returned_doc(self):
+		for previous in (False, None):
+			with self.subTest(previous=previous):
+				doc = _FakeExceptionDoc(initial_ignore_permissions=previous)
+				module, stubs = _load_enterprise_membership(doc)
+				with mock.patch.dict(sys.modules, stubs):
+					returned = module.approve(doc.name, principal="human_session")
+				self.assertIs(returned, doc)
+				self.assertEqual(doc.save_calls, [True])
+				self.assertEqual(returned.flags.ignore_permissions, previous)
+
+	def test_approve_restores_ignore_permissions_when_save_raises(self):
+		doc = _FakeExceptionDoc(initial_ignore_permissions=False, fail_on_save=True)
+		module, stubs = _load_enterprise_membership(doc)
+		with mock.patch.dict(sys.modules, stubs):
+			with self.assertRaisesRegex(RuntimeError, "save failed"):
+				module.approve(doc.name, principal="human_session")
+		self.assertEqual(doc.save_calls, [True])
+		self.assertFalse(doc.flags.ignore_permissions)
 
 
 if __name__ == "__main__":

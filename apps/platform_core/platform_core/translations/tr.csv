@@ -831,6 +831,7 @@ MCP call allowance unavailable.,MCP çağrı sınırı denetlenemiyor.,platform_
 No permission to read this document type.,Bu kayıt türünü okuma izniniz yok.,
 No permission to search this document type.,Bu kayıt türünde arama izniniz yok.,
 The collection summary parameters are invalid.,Koleksiyon özeti için girilen bilgiler geçersiz.,shell.collection
+The collection list parameters are invalid.,Koleksiyon listesi için girilen bilgiler geçersiz.,shell.collection
 Connection Status,Bağlantı durumu,PLT AI API
 Result of the latest live connection check. The system sets it; a changed credential or address resets it to not_checked.,Son canlı bağlantı denemesinin sonucu. Değeri sistem yazar. Anahtar ya da adres değişince değer not_checked olur.,PLT AI API
 Connection Checked At,Bağlantı denemesi zamanı,PLT AI API

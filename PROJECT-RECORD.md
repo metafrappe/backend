@@ -435,6 +435,19 @@ Proje sahibi 22 Kasım 2026 Pazar günü şöyle yazdı: “Herşeyi onaylıyoru
   - Eklerin listesi ve test adımları [devir notundadır](docs/handoff/press-tr-extension-test.md).
   - Bu karar önce O-54 numarasını taşıyordu. O-54 ile O-61 arasındaki numaralar başka kararlara verildi. Karar 25 Kasım 2026 Çarşamba günü O-62 oldu.
 
+- **O-73. Liste ucu bir sayfada en çok 20 satır döndürür (G-150).** Karar 25 Kasım 2026 Çarşamba günü alındı.
+  - Uç `platform_core.api.collection.list_records` adını taşır.
+  - İstek daha büyük sayfa isterse sunucu sayfayı 20 satırda keser. İstek hata almaz.
+  - Frappe kendi başına üst sınır koymaz. Team B Architect bunu AJA-168 görevinde gösterdi.
+  - 20 sayısı Frappe liste görünümünün varsayılan sayfa boyutudur. Panel de bu boyutla ister. Bu yüzden normal istek değişmez.
+  - Uç izinler için `frappe.get_list` kullanır. Uç istenen, süzülen ve sıralanan her alanın okuma iznini ayrıca denetler.
+  - Alt tablo yalnız tek üst kaydın içinde okunur. İstek `parent`, `parenttype` ve `parentfield` süzgecini vermelidir. Eksik süzgeç 417 alır.
+  - Kullanıcı üst türü, üst kaydı ve tablo alanını okuyamıyorsa istek 403 alır.
+  - Dil ve sayfalama testleri mevcut Frappe yollarını kullanır. Tarih biçimi için dil ayarı önceliklidir. Dil ayarı boşsa site ayarı geçerlidir. Sayı biçimini site ayarı belirler.
+  - Kullanıcıya gösterilen ileti `_()` içinden geçer. `dev/check_translations.py` bu kuralı denetler (G-73).
+  - Yerel sorgu planı henüz alınmadı. Adımlar [devir notundadır](docs/handoff/locale-pagination.md).
+  - Bu karar eski depoda O-64 numarasını taşıyordu. O-63 ile O-72 arasındaki numaralar başka kararlara verildi. Karar 28 Kasım 2026 Cumartesi günü taşınırken O-73 oldu (AJA-2447).
+
 ## Karar sitesine işlenecek farklar
 
 Backend kararları karar sitesinin bazı maddelerini değiştirdi. Site ayrı bir işte, kendi denetimleriyle güncellenir. Farklar şunlardır:

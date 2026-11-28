@@ -443,6 +443,24 @@ class GateTests(unittest.TestCase):
         self.assertEqual(finding["line"], 2)
         self.assertEqual(finding["severity"], "warning")
 
+    def test_naming_checker_scans_gate_root_when_root_is_repository(self):
+        # The backend repository root is the Git top level. The checker must scan it, not its parent.
+        subprocess.run(["git", "-C", str(self.root), "init", "--quiet"], check=True)
+        checker = COMMAND.parents[1] / "naming/check_names.py"
+        self.write("dev/naming/check_names.py", checker.read_text(encoding="utf-8"))
+        self.write("dev/naming/rename-map.json", "[]")
+        self.write("dev/bin/dev-resources", '#!/usr/bin/env python3\nprint("| Bağlam | Durum |")\n')
+        subprocess.run(["git", "-C", str(self.root), "add", "."], check=True)
+
+        gate_run = self.run_gate("--json")
+        self.assertEqual(gate_run.returncode, 0, gate_run.stdout)
+        payload = json.loads(gate_run.stdout)
+        self.assertEqual(payload["checks"]["naming"], "warn")
+        self.assertEqual(
+            [(finding["rule"], finding["path"]) for finding in payload["findings"]],
+            [("naming.source-text", "dev/bin/dev-resources")],
+        )
+
     def test_naming_enforce_blocks_only_four_rule_codes(self):
         policy_path = "dev/naming/enforcement.json"
         self.write(policy_path, (COMMAND.parents[2] / policy_path).read_text(encoding="utf-8"))
@@ -530,9 +548,9 @@ class GateTests(unittest.TestCase):
             parser.add_argument("--json", action="store_true", required=True)
             parser.add_argument("--include-source-text", action="store_true", required=True)
             args = parser.parse_args()
-            assert (args.root / "backend/apps/example.py").is_file()
+            assert (args.root / "apps/example.py").is_file()
             print(json.dumps([{
-                "path": "backend/apps/example.py", "line": 1,
+                "path": "apps/example.py", "line": 1,
                 "rule": "module-name", "message": "Invalid module name."
             }]))
             raise SystemExit(1)

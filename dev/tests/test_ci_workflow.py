@@ -30,7 +30,7 @@ GATES = {
     "dev-tests": ("python3.14 -B -m unittest discover -s dev/tests",),
     "naming": (
         "python3.14 -B -m unittest discover -s dev/naming/tests",
-        "python3.14 -B dev/naming/check_new_names.py",
+        'python3.14 -B dev/naming/check_new_names.py --base-ref "$BASE_SHA"',
     ),
     "deploy-tests": ("python3.14 -I -m unittest discover -s deploy/tests",),
     "press-ai": ("python3.14 -I -m unittest discover -s tools/press-ai/tests",),
@@ -168,6 +168,19 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(lock_problems(hashed), [])
         self.assertEqual(lock_problems("a==1.0\n"), ["a==1.0"])
         self.assertEqual(lock_problems("a>=1.0 --hash=sha256:" + "0" * 64 + "\n"), ["a>=1.0 --hash=sha256:" + "0" * 64])
+
+    def test_naming_gate_reads_the_target_baseline_from_the_target_commit(self):
+        # A pull request must not grow the reviewed baseline (AJA-1721, B1). The target commit comes
+        # from the event, never from pull request text, and git needs its history to read it.
+        job = self.jobs["naming"]
+        checkout = next(s for s in job["steps"] if s.get("uses", "").startswith("actions/checkout@"))
+        self.assertEqual(checkout["with"]["fetch-depth"], 0)
+        step = next(s for s in job["steps"] if "check_new_names.py" in s.get("run", ""))
+        self.assertEqual(
+            step["env"]["BASE_SHA"],
+            "${{ github.event.pull_request.base.sha || github.event.before }}",
+        )
+        self.assertNotIn("${{", step["run"])
 
     def test_aggregate_keeps_its_name_and_always_runs(self):
         aggregate = self.jobs[AGGREGATE]

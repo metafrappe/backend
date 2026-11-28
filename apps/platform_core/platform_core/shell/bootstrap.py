@@ -12,6 +12,7 @@ from frappe.utils import cint, get_system_timezone
 
 from platform_core.shell.cache import permission_version
 from platform_core.shell.serialization import digest
+from platform_core.shell.session_locale import get_locale
 
 BOOTSTRAP_CACHE_SECONDS = 60
 
@@ -97,26 +98,34 @@ def get_bootstrap(user: str) -> dict:
 	version = permission_version()
 	language = frappe.local.lang or frappe.get_cached_value("User", user, "language") or "en"
 	roles = sorted(frappe.get_roles(user))
-	key = _bootstrap_cache_key(version, language, roles)
+	# Language, market and currency are part of the key: two markets never share one response.
+	locale = get_locale(user)
+	key = _bootstrap_cache_key(version, language, roles, locale)
 	cached = frappe.cache.get_value(key, user=user, expires=True)
 	if cached is not None:
 		return cached
 
-	payload = _build_bootstrap(user, version, language, roles)
+	payload = _build_bootstrap(user, version, language, roles, locale)
 	# A concurrent permission commit can retire this generation while the build runs.
 	# Store only under the generation read before the build, never under the new one.
 	frappe.cache.set_value(key, payload, user=user, expires_in_sec=BOOTSTRAP_CACHE_SECONDS)
 	return payload
 
 
-def _bootstrap_cache_key(version: str, language: str, roles: list[str]) -> str:
+def _bootstrap_cache_key(version: str, language: str, roles: list[str], locale: dict) -> str:
 	scope = digest(
-		[language, roles, cint(frappe.conf.developer_mode), frappe.conf.get("shell_navigation_hosts")]
+		[
+			language,
+			roles,
+			locale,
+			cint(frappe.conf.developer_mode),
+			frappe.conf.get("shell_navigation_hosts"),
+		]
 	)
-	return f"platform_core:shell:bootstrap:v1:{version}:{scope}"
+	return f"platform_core:shell:bootstrap:v2:{version}:{scope}"
 
 
-def _build_bootstrap(user: str, version: str, language: str, roles: list[str]) -> dict:
+def _build_bootstrap(user: str, version: str, language: str, roles: list[str], locale: dict) -> dict:
 	context = SidebarContext.for_modules(get_navigable_modules(), user)
 	pages = [
 		page
@@ -166,6 +175,7 @@ def _build_bootstrap(user: str, version: str, language: str, roles: list[str]) -
 			"time_format": get_time_format(language),
 			"first_day_of_the_week": get_first_day_of_the_week(language),
 		},
+		"locale": locale,
 		"languages": enabled_languages(),
 		"workspaces": [
 			{
@@ -207,10 +217,11 @@ def workspace_target_allowed(page: dict, context) -> bool:
 
 
 def compact_bootstrap(payload: dict) -> dict:
-	"""Keep identity, formatting and languages without returning a broken navigation tree."""
+	"""Keep identity, formatting, locale and languages without returning a broken navigation tree."""
 	summary = {
 		"user": {**payload["user"], "roles": []},
 		"formatting": payload["formatting"],
+		"locale": payload["locale"],
 		"languages": payload["languages"],
 		"installed_apps": [],
 		"workspaces": [],

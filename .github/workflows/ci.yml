@@ -126,13 +126,15 @@ jobs:
         run: python3.14 -B -m unittest discover -s dev/tests
 
   # check_names.py still reports 1585 old findings (AJA-1588). dev/naming/baseline.json lists the
-  # reviewed old findings. The gate fails only for a finding that is not in that list.
+  # reviewed old findings. The gate fails for a finding that is not in that list. It also fails if
+  # the list grew against the target commit or still holds a fixed finding (AJA-1721).
   naming:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
@@ -140,7 +142,9 @@ jobs:
       - name: Naming tests
         run: python3.14 -B -m unittest discover -s dev/naming/tests
       - name: New naming findings
-        run: python3.14 -B dev/naming/check_new_names.py
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: python3.14 -B dev/naming/check_new_names.py --base-ref "$BASE_SHA"
 
   # Release manifest and remote script tests of the Jenkins deploy line. Stdlib and GNU tools only.
   deploy-tests:

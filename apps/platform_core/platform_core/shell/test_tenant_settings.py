@@ -44,7 +44,12 @@ TEST_USERS = (
 TEST_PASSWORD = "-".join(("Test", "Pass", "2551", "TenantSettings!"))
 TEST_EMAIL_DOMAIN = "kiraci.example.test"
 TEST_EMAIL_ACCOUNT_NAME = "TS Outgoing Test"
+TEST_EMAIL_ACCOUNT_ALT_NAME = "TS Outgoing Test Z"
 TEST_EMAIL_ID = "bildirim@kiraci.example.test"
+TEST_EMAIL_ID_ALT = "yedek@kiraci.example.test"
+
+PUBLIC_LOGO_URL = "/files/ts-tenant-logo-2551.png"
+PRIVATE_LOGO_URL = "/private/files/ts-secret-logo-2551.png"
 
 WRITABLE_SETTINGS_FIELDS = frozenset(
 	{
@@ -107,6 +112,7 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 		frappe.db.rollback()
 		cls._restore_system_settings()
 		cls._clean_email_records()
+		cls._clean_file_records()
 		for email, _roles in TEST_USERS:
 			if frappe.db.exists("User", email):
 				frappe.delete_doc("User", email, force=True)
@@ -119,6 +125,11 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 	@classmethod
 	def _restore_system_settings(cls):
 		frappe.db.set_single_value("System Settings", cls.saved_system_settings)
+		if frappe.db.exists("DocType", TENANT_SETTINGS):
+			frappe.db.set_single_value(
+				TENANT_SETTINGS,
+				{field: cls.saved_system_settings[field] for field in WRITABLE_SETTINGS_FIELDS},
+			)
 		for key, value in cls.saved_defaults.items():
 			if value is None:
 				frappe.db.delete("DefaultValue", {"defkey": key, "parent": "__default"})
@@ -127,19 +138,28 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 		from frappe.core.doctype.system_settings.system_settings import clear_system_settings_cache
 
 		clear_system_settings_cache()
+		frappe.local.system_settings = None
 
 	@staticmethod
 	def _clean_email_records():
-		if frappe.db.exists("Email Account", TEST_EMAIL_ACCOUNT_NAME):
-			frappe.delete_doc("Email Account", TEST_EMAIL_ACCOUNT_NAME, force=True)
+		for name in (TEST_EMAIL_ACCOUNT_NAME, TEST_EMAIL_ACCOUNT_ALT_NAME):
+			if frappe.db.exists("Email Account", name):
+				frappe.delete_doc("Email Account", name, force=True)
 		if frappe.db.exists("Email Domain", TEST_EMAIL_DOMAIN):
 			frappe.delete_doc("Email Domain", TEST_EMAIL_DOMAIN, force=True)
+
+	@staticmethod
+	def _clean_file_records():
+		for url in (PUBLIC_LOGO_URL, PRIVATE_LOGO_URL):
+			for name in frappe.get_all("File", filters={"file_url": url}, pluck="name"):
+				frappe.db.delete("File", {"name": name})
 
 	def setUp(self):
 		super().setUp()
 		frappe.set_user("Administrator")
 		self._restore_system_settings()
 		self._clean_email_records()
+		self._clean_file_records()
 		frappe.db.commit()  # nosemgrep: frappe-test-commit
 
 	def tearDown(self):
@@ -147,6 +167,7 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 		frappe.db.rollback()
 		self._restore_system_settings()
 		self._clean_email_records()
+		self._clean_file_records()
 		frappe.clear_cache()
 		frappe.db.commit()  # nosemgrep: frappe-test-commit
 		super().tearDown()
@@ -166,6 +187,7 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 			return make_request(client.open, args=(), kwargs=kwargs, site=self.site)
 		finally:
 			frappe.db.rollback()
+			frappe.local.system_settings = None
 
 	def login(self, user: str = ADMIN_USER):
 		client = get_test_client(use_cookies=True)
@@ -182,26 +204,40 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 	def meta_get(self, client, doctype: str):
 		return self.send(client, "GET", META_API, query={"doctype": doctype})
 
-	def _insert_outgoing_email(self):
-		# Insert directly via SQL-safe ORM with validation flags bypassed only for SMTP network checks.
-		domain = frappe.get_doc(
-			doctype="Email Domain",
-			domain_name=TEST_EMAIL_DOMAIN,
-			email_server="imap.example.test",
-			smtp_server="smtp.example.test",
-		)
-		domain.flags.in_test = True
-		domain.db_insert()
+	def _insert_outgoing_email(
+		self, *, account_name: str = TEST_EMAIL_ACCOUNT_NAME, email_id: str = TEST_EMAIL_ID
+	):
+		if not frappe.db.exists("Email Domain", TEST_EMAIL_DOMAIN):
+			domain = frappe.get_doc(
+				doctype="Email Domain",
+				domain_name=TEST_EMAIL_DOMAIN,
+				email_server="imap.example.test",
+				smtp_server="smtp.example.test",
+			)
+			domain.flags.in_test = True
+			domain.db_insert()
 		account = frappe.get_doc(
 			doctype="Email Account",
-			email_account_name=TEST_EMAIL_ACCOUNT_NAME,
-			email_id=TEST_EMAIL_ID,
+			email_account_name=account_name,
+			email_id=email_id,
 			domain=TEST_EMAIL_DOMAIN,
 			enable_outgoing=1,
 			default_outgoing=1,
 			smtp_server="smtp.example.test",
 		)
 		account.db_insert()
+		frappe.db.commit()  # nosemgrep: frappe-test-commit
+
+	def _insert_file_record(self, file_url: str, *, is_private: int = 0):
+		doc = frappe.get_doc(
+			doctype="File",
+			file_name=file_url.rsplit("/", 1)[-1],
+			file_url=file_url,
+			is_private=is_private,
+			is_folder=0,
+			folder="Home",
+		)
+		doc.db_insert()
 		frappe.db.commit()  # nosemgrep: frappe-test-commit
 
 	# --- AC 1: Tenant Settings schema ---
@@ -246,7 +282,7 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 			"date_format": "dd/mm/yyyy",
 			"time_format": "HH:mm:ss",
 			"number_format": "#,###.##",
-			"session_expiry": "04:00",
+			"session_expiry": "00:30",
 			"modified": modified,
 		}
 		response = self.resource(client, "PUT", TENANT_SETTINGS, TENANT_SETTINGS, body=updates)
@@ -272,7 +308,7 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 			TENANT_SETTINGS,
 			TENANT_SETTINGS,
 			body={
-				"session_expiry": "04:00",
+				"session_expiry": "00:30",
 				"enable_mcp": 1,
 				"allow_error_traceback": 1,
 				"modified": current.json["data"]["modified"],
@@ -282,12 +318,30 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 		self.assertEqual(frappe.db.get_single_value("System Settings", "enable_mcp"), before_mcp)
 		self.assertEqual(frappe.db.get_single_value("System Settings", "allow_error_traceback"), before_tb)
 
-	def test_tenant_settings_rejects_invalid_session_expiry_and_locale_values(self):
+	def test_tenant_settings_enforces_o25_ceiling_ascii_digits_and_rejects_bad_types(self):
 		client = self.login(ADMIN_USER)
 		before_expiry = frappe.db.get_single_value("System Settings", "session_expiry")
 		before_tz = frappe.db.get_single_value("System Settings", "time_zone")
 
-		for bad_expiry in ("00:00", "0:00", "abc", "-1:00", "01:60", "04:00:00", "999:00", "04:00; x"):
+		# O-25 ceiling is 01:00 (60 minutes). Unicode digits and longer timeouts are rejected.
+		bad_expiries = (
+			"00:00",
+			"0:00",
+			"01:01",
+			"02:00",
+			"04:00",
+			"170:00",
+			"\u0660\u0660:\u0663\u0660",
+			"\u0660\u0664:\u0660\u0660",
+			"abc",
+			"-1:00",
+			"01:60",
+			"00:30:00",
+			"00:30; x",
+			["00:30"],
+			{"v": "00:30"},
+		)
+		for bad_expiry in bad_expiries:
 			current = self.resource(client, "GET", TENANT_SETTINGS, TENANT_SETTINGS)
 			with self.subTest(session_expiry=bad_expiry):
 				resp = self.resource(
@@ -300,7 +354,7 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 				self.assertEqual(resp.status_code, 417)
 		self.assertEqual(frappe.db.get_single_value("System Settings", "session_expiry"), before_expiry)
 
-		for bad_tz in ("Mars/Olympus", "../etc/passwd", "Europe/Istanbul; x"):
+		for bad_tz in ("Mars/Olympus", "../etc/passwd", "Europe/Istanbul; x", ["UTC"]):
 			current = self.resource(client, "GET", TENANT_SETTINGS, TENANT_SETTINGS)
 			with self.subTest(time_zone=bad_tz):
 				resp = self.resource(
@@ -313,6 +367,79 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 				self.assertEqual(resp.status_code, 417)
 		self.assertEqual(frappe.db.get_single_value("System Settings", "time_zone"), before_tz)
 
+		# Finding 5: non-string values on allow-listed select fields must return 417, never 500.
+		for field, bad_value in (
+			("language", ["tr"]),
+			("language", {"code": "tr"}),
+			("date_format", ["dd.mm.yyyy"]),
+			("time_format", {"fmt": "HH:mm"}),
+			("number_format", ["#.###,##"]),
+		):
+			current = self.resource(client, "GET", TENANT_SETTINGS, TENANT_SETTINGS)
+			with self.subTest(field=field, value=bad_value):
+				resp = self.resource(
+					client,
+					"PUT",
+					TENANT_SETTINGS,
+					TENANT_SETTINGS,
+					body={field: bad_value, "modified": current.json["data"]["modified"]},
+				)
+				self.assertEqual(resp.status_code, 417)
+
+	# --- Finding 2: after_migrate hooks preserve saved tenant settings ---
+
+	def test_after_migrate_hooks_preserve_saved_tenant_settings_and_clamp_excessive_expiry(self):
+		client = self.login(ADMIN_USER)
+		current = self.resource(client, "GET", TENANT_SETTINGS, TENANT_SETTINGS)
+		self.assertEqual(current.status_code, 200)
+
+		saved = {
+			"language": "en-GB",
+			"time_zone": "Europe/London",
+			"date_format": "dd/mm/yyyy",
+			"time_format": "HH:mm:ss",
+			"number_format": "#,###.##",
+			"session_expiry": "00:15",
+		}
+		resp = self.resource(
+			client,
+			"PUT",
+			TENANT_SETTINGS,
+			TENANT_SETTINGS,
+			body={**saved, "modified": current.json["data"]["modified"]},
+		)
+		self.assertEqual(resp.status_code, 200)
+
+		# Run the real after_migrate hooks in the exact order hooks.py declares them.
+		frappe.set_user("Administrator")
+		for hook in (
+			"platform_core.identity.session_policy.apply",
+			"platform_core.config.turkey_setup.apply",
+			"platform_core.shell.tenant_settings_setup.ensure",
+		):
+			frappe.get_attr(hook)()
+		frappe.db.commit()  # nosemgrep: frappe-test-commit
+
+		for field, expected in saved.items():
+			with self.subTest(after_migrate_field=field):
+				self.assertEqual(frappe.db.get_single_value("System Settings", field), expected)
+				self.assertEqual(frappe.db.get_single_value(TENANT_SETTINGS, field), expected)
+		self.assertEqual(frappe.db.get_default("lang"), "en-GB")
+
+		read_after = self.resource(client, "GET", TENANT_SETTINGS, TENANT_SETTINGS)
+		self.assertEqual(read_after.status_code, 200)
+		for field, expected in saved.items():
+			self.assertEqual(read_after.json["data"].get(field), expected)
+
+		# An excessive session_expiry above the O-25 ceiling is clamped back to 01:00 on migrate.
+		frappe.set_user("Administrator")
+		frappe.db.set_single_value("System Settings", "session_expiry", "170:00")
+		frappe.db.set_single_value(TENANT_SETTINGS, "session_expiry", "170:00")
+		frappe.get_attr("platform_core.identity.session_policy.apply")()
+		frappe.get_attr("platform_core.shell.tenant_settings_setup.ensure")()
+		self.assertEqual(frappe.db.get_single_value("System Settings", "session_expiry"), "01:00")
+		self.assertEqual(frappe.db.get_single_value(TENANT_SETTINGS, "session_expiry"), "01:00")
+
 	# --- AC 3: Tenant Admin cannot access System Settings directly ---
 
 	def test_tenant_admin_cannot_read_or_write_system_settings_directly(self):
@@ -321,7 +448,7 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 
 		read_resp = self.resource(client, "GET", "System Settings", "System Settings")
 		write_resp = self.resource(
-			client, "PUT", "System Settings", "System Settings", body={"session_expiry": "05:00"}
+			client, "PUT", "System Settings", "System Settings", body={"session_expiry": "00:30"}
 		)
 		meta_resp = self.meta_get(client, "System Settings")
 
@@ -330,10 +457,12 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 		self.assertEqual(meta_resp.status_code, 403)
 		self.assertEqual(frappe.db.get_single_value("System Settings", "session_expiry"), before)
 
-	# --- AC 4: email_domain and email_account are read-only ---
+	# --- AC 4 & Finding 5: email_domain and email_account are read-only and deterministic ---
 
 	def test_tenant_admin_sees_email_fields_and_cannot_modify_them(self):
-		self._insert_outgoing_email()
+		# Insert two outgoing accounts in reverse order to verify deterministic selection (name asc).
+		self._insert_outgoing_email(account_name=TEST_EMAIL_ACCOUNT_ALT_NAME, email_id=TEST_EMAIL_ID_ALT)
+		self._insert_outgoing_email(account_name=TEST_EMAIL_ACCOUNT_NAME, email_id=TEST_EMAIL_ID)
 		client = self.login(ADMIN_USER)
 
 		read_resp = self.resource(client, "GET", TENANT_SETTINGS, TENANT_SETTINGS)
@@ -362,13 +491,13 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 			"PUT",
 			TENANT_SETTINGS,
 			TENANT_SETTINGS,
-			body={"session_expiry": "04:00", "modified": after.json["data"]["modified"]},
+			body={"session_expiry": "00:30", "modified": after.json["data"]["modified"]},
 		)
 		self.assertEqual(ok.status_code, 200)
 		self.assertEqual(ok.json["data"].get("email_domain"), TEST_EMAIL_DOMAIN)
 		self.assertEqual(ok.json["data"].get("email_account"), TEST_EMAIL_ID)
 
-	# --- AC 5 & AC 6: Tenant Branding schema, color validation and logo validation ---
+	# --- AC 5, AC 6 & Finding 3: Tenant Branding schema, color and strict logo validation ---
 
 	def test_tenant_branding_is_single_with_logo_and_color_fields(self):
 		self.assertTrue(frappe.db.exists("DocType", TENANT_BRANDING))
@@ -394,6 +523,8 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 		self.assertTrue(read_resp.json["data"].get("modified"))
 
 	def test_tenant_branding_accepts_valid_hex_colors_and_logo_and_rejects_invalid_values(self):
+		self._insert_file_record(PUBLIC_LOGO_URL, is_private=0)
+		self._insert_file_record(PRIVATE_LOGO_URL, is_private=1)
 		client = self.login(ADMIN_USER)
 		current = self.resource(client, "GET", TENANT_BRANDING, TENANT_BRANDING)
 		self.assertEqual(current.status_code, 200)
@@ -404,7 +535,7 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 			TENANT_BRANDING,
 			TENANT_BRANDING,
 			body={
-				"logo": "/files/tenant-logo.png",
+				"logo": PUBLIC_LOGO_URL,
 				"primary_color": "#12ab34",
 				"accent_color": "#B35C1E",
 				"modified": current.json["data"]["modified"],
@@ -413,7 +544,7 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 		self.assertEqual(valid.status_code, 200)
 		self.assertEqual(frappe.db.get_single_value(TENANT_BRANDING, "primary_color"), "#12ab34")
 		self.assertEqual(frappe.db.get_single_value(TENANT_BRANDING, "accent_color"), "#B35C1E")
-		self.assertEqual(frappe.db.get_single_value(TENANT_BRANDING, "logo"), "/files/tenant-logo.png")
+		self.assertEqual(frappe.db.get_single_value(TENANT_BRANDING, "logo"), PUBLIC_LOGO_URL)
 
 		invalid_colors = (
 			"k\u0131rm\u0131z\u0131; x",
@@ -451,6 +582,15 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 			"/files/logo.svg",
 			"/files/../secret.png",
 			"/files/logo.png?x=1",
+			"/files/\x7flogo.png",
+			"/files/\x00logo.png",
+			"/files/\x85logo.png",
+			"/files/%2e%2e/secret.png",
+			"/files/a);x.png",
+			"/files/a'b.png",
+			"/files/a b.png",
+			"/files/missing-file-2551.png",
+			PRIVATE_LOGO_URL,
 		)
 		for bad_logo in invalid_logos:
 			latest = self.resource(client, "GET", TENANT_BRANDING, TENANT_BRANDING)
@@ -463,7 +603,7 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 					body={"logo": bad_logo, "modified": latest.json["data"]["modified"]},
 				)
 				self.assertEqual(resp.status_code, 417)
-		self.assertEqual(frappe.db.get_single_value(TENANT_BRANDING, "logo"), "/files/tenant-logo.png")
+		self.assertEqual(frappe.db.get_single_value(TENANT_BRANDING, "logo"), PUBLIC_LOGO_URL)
 
 		# Optional accent_color and logo may be cleared.
 		latest = self.resource(client, "GET", TENANT_BRANDING, TENANT_BRANDING)
@@ -476,7 +616,7 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 		)
 		self.assertEqual(cleared.status_code, 200)
 
-	# --- AC 7: Only Tenant Admin reads and writes both DocTypes ---
+	# --- AC 7 & Finding 4: Only Tenant Admin reads/writes; AI generic writes closed ---
 
 	def test_unauthorized_users_and_guest_receive_403_on_both_doctypes(self):
 		guest = get_test_client(use_cookies=True)
@@ -521,3 +661,8 @@ class TestTenantSettingsAndBranding(IntegrationTestCase):
 					body={"doctype": doctype, "role": PLAIN_ROLE, "permissions": {"read": 1}},
 				)
 				self.assertEqual(resp.status_code, 403)
+
+	def test_tenant_settings_and_branding_are_closed_to_generic_ai_writes(self):
+		closed = frappe.get_hooks("ai_write_closed_doctypes")
+		self.assertIn(TENANT_SETTINGS, closed)
+		self.assertIn(TENANT_BRANDING, closed)

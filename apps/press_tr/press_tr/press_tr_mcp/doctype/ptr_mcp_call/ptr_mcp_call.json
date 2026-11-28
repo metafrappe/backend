@@ -1,0 +1,80 @@
+{
+  "doctype": "DocType",
+  "description": "History of calls to the press_tr MCP server. Each tool call and each refused request adds one row. Rows are never edited.",
+  "name": "PTR MCP Call",
+  "module": "Press TR MCP",
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "in_create": 1,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "tool",
+    "status",
+    "user",
+    "request_ip",
+    "arguments",
+    "error"
+  ],
+  "fields": [
+    {
+      "fieldname": "tool",
+      "label": "Tool",
+      "fieldtype": "Data",
+      "description": "Name of the MCP tool. A refused request is written as handler.",
+      "read_only": 1,
+      "in_list_view": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "description": "Preview: nothing changed. Done: the tool ran. Failed: the tool raised an error. Refused: the request was not allowed.",
+      "options": "Preview\nDone\nFailed\nRefused",
+      "read_only": 1,
+      "in_list_view": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "user",
+      "label": "User",
+      "fieldtype": "Link",
+      "description": "Account that sent the request.",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "request_ip",
+      "label": "Request IP",
+      "fieldtype": "Data",
+      "description": "Address the request came from.",
+      "read_only": 1
+    },
+    {
+      "fieldname": "arguments",
+      "label": "Arguments",
+      "fieldtype": "Code",
+      "description": "Tool arguments as JSON, cut at 2000 characters.",
+      "options": "JSON",
+      "read_only": 1
+    },
+    {
+      "fieldname": "error",
+      "label": "Error",
+      "fieldtype": "Small Text",
+      "description": "Error or refusal reason. Empty when the call succeeded.",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 0,
+      "create": 0,
+      "delete": 0,
+      "report": 1
+    }
+  ]
+}

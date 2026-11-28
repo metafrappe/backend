@@ -294,7 +294,9 @@ class McpServerTest(unittest.TestCase):
 		self.assertTrue(all(field.get("description") for field in doc["fields"]))
 		for permission in doc["permissions"]:
 			with self.subTest(role=permission["role"]):
-				self.assertFalse(permission.get("write") or permission.get("delete") or permission.get("create"))
+				self.assertFalse(
+					permission.get("write") or permission.get("delete") or permission.get("create")
+				)
 		self.assertIn("Press TR MCP", (APP / "press_tr/modules.txt").read_text().splitlines())
 
 

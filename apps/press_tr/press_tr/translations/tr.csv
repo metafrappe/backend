@@ -141,3 +141,30 @@ Email address of the account to recover.,Kurtarılacak hesabın e-posta adresi.,
 The request was received. The answer does not show whether an account exists.,İstek alındı. Yanıt hesabın var olup olmadığını göstermez.,press_tr.openapi
 The request had extra fields.,İstekte fazladan alan vardı.,press_tr.openapi
 Recovery request limit reached.,Kurtarma isteği sınırına ulaşıldı.,press_tr.openapi
+Press MCP is not enabled.,Press MCP açık değil.,press_tr
+Only the MCP service account may use this server.,Bu sunucuyu yalnız MCP servis hesabı kullanabilir.,press_tr
+The MCP service account must be a System User.,MCP servis hesabının türü “System User” olmalıdır.,press_tr
+The MCP service account needs the System Manager role.,MCP servis hesabının “System Manager” rolü olmalıdır.,press_tr
+This network may not use the MCP server.,Bu ağ MCP sunucusunu kullanamaz.,press_tr
+{0} {1} was not found.,{0} {1} bulunamadı.,press_tr
+The plan does not belong to this app.,Bu plan bu uygulamaya ait değil.,press_tr
+The subscription is not for a Marketplace app.,Bu abonelik bir Marketplace uygulaması için değil.,press_tr
+History of calls to the press_tr MCP server. Each tool call and each refused request adds one row. Rows are never edited.,press_tr MCP sunucusuna gelen çağrıların geçmişi. Her araç çağrısı bir satır ekler. Reddedilen her istek de bir satır ekler. Satırlar hiç düzenlenmez.,PTR MCP Call
+Tool,Araç,PTR MCP Call
+Name of the MCP tool. A refused request is written as handler.,MCP aracının adı. Reddedilen istek “handler” adıyla yazılır.,PTR MCP Call
+Status,Durum,PTR MCP Call
+Preview: nothing changed. Done: the tool ran. Failed: the tool raised an error. Refused: the request was not allowed.,“Preview” durumunda hiçbir şey değişmedi. “Done” durumunda araç çalıştı. “Failed” durumunda araç hata verdi. “Refused” durumunda isteğe izin verilmedi.,PTR MCP Call
+User,Kullanıcı,PTR MCP Call
+Account that sent the request.,İsteği gönderen hesap.,PTR MCP Call
+Request IP,İstek IP adresi,PTR MCP Call
+Address the request came from.,İsteğin geldiği adres.,PTR MCP Call
+Arguments,Bağımsız değişkenler,PTR MCP Call
+"Tool arguments as JSON, cut at 2000 characters.",Aracın bağımsız değişkenleri JSON biçimindedir. Metin 2000 karakterde kesilir.,PTR MCP Call
+Error,Hata,PTR MCP Call
+Error or refusal reason. Empty when the call succeeded.,Hata ya da ret nedeni. Çağrı başarılıysa alan boştur.,PTR MCP Call
+Commercial MCP server of press_tr.,press_tr'nin ticari MCP sunucusu.,press_tr.openapi
+"Streamable HTTP MCP server with eight tools for apps, plans, invoices and agent jobs. Only the configured service account may call it, and only from an allowed network. A tool that changes a site or billing returns only a preview unless confirm is true. Every call and every refused request is written to the PTR MCP Call history.","Akışlı HTTP ile çalışan bir MCP sunucusudur. Uygulamalar, planlar, faturalar ve agent işleri için sekiz araç sunar. Sunucuyu yalnız ayarlı servis hesabı çağırabilir. İstek yalnız izinli bir ağdan gelebilir. Siteyi ya da faturayı değiştiren araç “confirm” doğru değilse yalnız önizleme döndürür. Her çağrı ve reddedilen her istek PTR MCP Call geçmişine yazılır.",press_tr.openapi
+A JSON-RPC 2.0 MCP request.,Bir JSON-RPC 2.0 MCP isteği.,press_tr.openapi
+The JSON-RPC result of the MCP request.,MCP isteğinin JSON-RPC sonucu.,press_tr.openapi
+"Press MCP is off, the caller is not the service account, or the network is not allowed.","Press MCP kapalı, çağıran servis hesabı değil ya da ağa izin yok.",press_tr.openapi
+"The API key and secret of the separate MCP service account, sent as a Frappe token.",Ayrı MCP servis hesabının API anahtarı ve gizli değeri. İkisi Frappe token biçiminde gönderilir.,press_tr.openapi

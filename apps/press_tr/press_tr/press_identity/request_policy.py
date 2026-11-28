@@ -165,6 +165,9 @@ def reject_mismatched_command(path):
 
 
 def before_request():
+	# The Frappe website router ignores a trailing slash, so "/login/" still shows the login page.
+	# Strip it so the page rules below also catch that spelling. Press compares the raw path, so a
+	# slash spelling of a documented route stays closed (test_press_access.py covers both).
 	path = frappe.request.path.rstrip("/")
 	reject_mismatched_command(path)
 	if path == ACCOUNT_DELETION_PAGE:

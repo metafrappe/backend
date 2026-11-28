@@ -56,8 +56,8 @@ class TestSessionLocale(IntegrationTestCase):
 		frappe.db.set_default(key, None, parent)
 
 	@staticmethod
-	def restore_default(key, parent, value):
-		frappe.db.set_default(key, value, parent)
+	def restore_default(key, parent, previous):
+		frappe.db.set_default(key, previous, parent)
 
 	def set_languages(self, user_language, tenant_language):
 		frappe.db.set_value("User", self.user, "language", user_language)

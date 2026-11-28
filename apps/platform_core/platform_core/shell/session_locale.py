@@ -53,20 +53,20 @@ def get_locale(user: str) -> dict:
 	}
 
 
-def set_measurement_system(user: str, value: str) -> None:
+def set_measurement_system(user: str, system: str) -> None:
 	"""Write the user's own choice of measurement system to the user setting."""
-	if value not in MEASUREMENT_SYSTEMS:
+	if system not in MEASUREMENT_SYSTEMS:
 		frappe.throw(
 			frappe._("Choose metric or imperial.", context="platform_core.locale"), frappe.ValidationError
 		)
-	frappe.db.set_default("measurement_system", value, user)
+	frappe.db.set_default("measurement_system", system, user)
 
 
-def parse_language_tag(value) -> tuple[str, str, str | None] | None:
+def parse_language_tag(raw_tag) -> tuple[str, str, str | None] | None:
 	"""Split a language tag such as en-GB or en-gb into the tag, language and region."""
-	if not isinstance(value, str) or not value.strip():
+	if not isinstance(raw_tag, str) or not raw_tag.strip():
 		return None
-	parts = value.strip().replace("_", "-").split("-")
+	parts = raw_tag.strip().replace("_", "-").split("-")
 	normal = [parts[0].lower()]
 	for part in parts[1:]:
 		normal.append(part.title() if len(part) == 4 else part.upper())
@@ -78,28 +78,28 @@ def parse_language_tag(value) -> tuple[str, str, str | None] | None:
 
 
 def _language(user: str) -> tuple[str, str, str | None]:
-	for value in (
+	for raw_language in (
 		frappe.db.get_value("User", user, "language"),
 		frappe.db.get_single_value("System Settings", "language"),
 	):
-		if parsed := parse_language_tag(value):
+		if parsed := parse_language_tag(raw_language):
 			return parsed
 	return parse_language_tag(DEFAULT_LANGUAGE_TAG)
 
 
 def _time_zone(user: str) -> str:
 	site = get_system_timezone()
-	for value in (frappe.db.get_value("User", user, "time_zone"), site):
-		if _valid_time_zone(value):
-			return value
+	for candidate_zone in (frappe.db.get_value("User", user, "time_zone"), site):
+		if _valid_time_zone(candidate_zone):
+			return candidate_zone
 	return "UTC"
 
 
-def _valid_time_zone(value) -> bool:
-	if not isinstance(value, str) or not TIME_ZONE.match(value):
+def _valid_time_zone(zone_name) -> bool:
+	if not isinstance(zone_name, str) or not TIME_ZONE.match(zone_name):
 		return False
 	try:
-		ZoneInfo(value)
+		ZoneInfo(zone_name)
 	except (ValueError, KeyError, OSError):
 		return False
 	return True
@@ -121,8 +121,8 @@ def _measurement_system(user: str, region: str | None) -> str:
 	return "imperial" if region in IMPERIAL_REGIONS else "metric"
 
 
-def _code(value, pattern: re.Pattern) -> str | None:
-	if not isinstance(value, str):
+def _code(raw_code, pattern: re.Pattern) -> str | None:
+	if not isinstance(raw_code, str):
 		return None
-	code = value.strip().upper()
+	code = raw_code.strip().upper()
 	return code if pattern.match(code) else None

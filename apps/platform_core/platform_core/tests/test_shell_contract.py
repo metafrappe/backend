@@ -201,7 +201,7 @@ class TestLocaleContract(unittest.TestCase):
 		self.assertEqual(set(locale["properties"]), LOCALE_FIELDS)
 		self.assertIs(locale["additionalProperties"], False)
 		for name in LOCALE_FIELDS:
-			missing = {key: value for key, value in LOCALE_MIXED.items() if key != name}
+			missing = {key: setting for key, setting in LOCALE_MIXED.items() if key != name}
 			self.assertFalse(self.valid("Locale", missing), name)
 
 	def test_mixed_language_billing_and_currency_session_is_valid(self):
@@ -221,7 +221,7 @@ class TestLocaleContract(unittest.TestCase):
 		self.assertTrue(self.valid("Locale", {**LOCALE_EMPTY, "selected_market": None}))
 
 	def test_malformed_codes_are_rejected(self):
-		for name, value in (
+		for name, invalid_setting in (
 			("language_tag", "en_GB"),
 			("language_tag", "english"),
 			("language", "EN"),
@@ -235,18 +235,24 @@ class TestLocaleContract(unittest.TestCase):
 			("open_markets", ["TR", "TR"]),
 			("open_markets", "TR"),
 		):
-			self.assertFalse(self.valid("Locale", {**LOCALE_MIXED, name: value}), (name, value))
+			self.assertFalse(
+				self.valid("Locale", {**LOCALE_MIXED, name: invalid_setting}), (name, invalid_setting)
+			)
 
 	def test_calendar_date_has_no_time_zone(self):
 		self.assertTrue(self.valid("CalendarDate", "2026-11-27"))
-		for value in ("2026-11-27T00:00:00Z", "27.11.2026", "2026-11-27+03:00"):
-			self.assertFalse(self.valid("CalendarDate", value), value)
+		for calendar_text in ("2026-11-27T00:00:00Z", "27.11.2026", "2026-11-27+03:00"):
+			self.assertFalse(self.valid("CalendarDate", calendar_text), calendar_text)
 
 	def test_instant_carries_a_time_zone_offset(self):
-		for value in ("2026-11-27T09:30:00+03:00", "2026-11-27T06:30:00Z", "2026-11-27T06:30:00.125Z"):
-			self.assertTrue(self.valid("Instant", value), value)
-		for value in ("2026-11-27T09:30:00", "2026-11-27", "09:30:00+03:00"):
-			self.assertFalse(self.valid("Instant", value), value)
+		for instant_text in (
+			"2026-11-27T09:30:00+03:00",
+			"2026-11-27T06:30:00Z",
+			"2026-11-27T06:30:00.125Z",
+		):
+			self.assertTrue(self.valid("Instant", instant_text), instant_text)
+		for invalid_instant in ("2026-11-27T09:30:00", "2026-11-27", "09:30:00+03:00"):
+			self.assertFalse(self.valid("Instant", invalid_instant), invalid_instant)
 
 	def test_bootstrap_adds_locale_and_keeps_the_old_fields(self):
 		contract_path = os.environ.get("SHELL_TEST_OPENAPI")

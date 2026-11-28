@@ -57,7 +57,8 @@ class TestServerPagination(ShellHTTPFixture):
 
 	def test_child_list_is_paginated_for_the_selected_parent(self):
 		entries = [{"entry": f"Item {index:02}"} for index in range(ROW_COUNT)]
-		record = self.make_record("Paging parent", entries)
+		# Frappe adds a doctype key to each row it inserts, so pass copies and keep the expected rows.
+		record = self.make_record("Paging parent", [dict(entry) for entry in entries])
 		self.make_record("Other parent", [{"entry": "Other item"}])
 		frappe.db.commit()
 

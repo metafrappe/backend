@@ -130,6 +130,18 @@ def filter_rows(raw_filters: str | None, doctype: str, invalid=invalid_query) ->
 	return conditions
 
 
+def readable_levels(meta, user: str) -> set[int] | None:
+	"""Return the permission levels the user may read on the DocType; None means every level."""
+	if user == "Administrator":
+		return None
+	roles = set(frappe.get_roles(user))
+	return {
+		permission.permlevel
+		for permission in meta.get_permissions()
+		if permission.role in roles and permission.read and not permission.if_owner
+	}
+
+
 def check_readable(meta, user: str, fieldnames: list, invalid, parenttype: str | None = None) -> None:
 	"""Reject a malformed field name and deny a field the user cannot read.
 
@@ -142,16 +154,7 @@ def check_readable(meta, user: str, fieldnames: list, invalid, parenttype: str |
 		)
 	)
 	masked = {field.fieldname for field in meta.get_masked_fields()}
-	if user != "Administrator":
-		roles = set(frappe.get_roles(user))
-		permission_meta = frappe.get_meta(parenttype) if parenttype else meta
-		read_levels = {
-			permission.permlevel
-			for permission in permission_meta.get_permissions()
-			if permission.role in roles and permission.read and not permission.if_owner
-		}
-	else:
-		read_levels = None
+	read_levels = readable_levels(frappe.get_meta(parenttype) if parenttype else meta, user)
 
 	for fieldname in fieldnames:
 		if (
@@ -279,7 +282,10 @@ def child_scope(query: ListQuery, conditions: list[tuple], user: str) -> str:
 	):
 		invalid_list()
 	frappe.has_permission(parent, "read", user=user, throw=True)
-	check_readable(parent_meta, user, [parentfield], invalid_list)
+	# A table field is not a database column, so check_readable cannot check it. Check its level here.
+	read_levels = readable_levels(parent_meta, user)
+	if read_levels is not None and table.permlevel not in read_levels:
+		raise frappe.PermissionError
 	if not frappe.db.exists(parent, parent_name):
 		raise frappe.DoesNotExistError
 	frappe.has_permission(parent, "read", doc=parent_name, user=user, throw=True)

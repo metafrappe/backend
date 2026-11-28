@@ -69,7 +69,7 @@ jobs:
           git update-ref refs/heads/backend "$BASE_SHA"
           # The ai-readiness self tests create Git repositories. They expect the branch "main".
           git config --global init.defaultBranch main
-          python3.14 -m pip install uv==0.13.9
+          python3.14 -m pip install --require-hashes -r dev/requirements-ci-tools.txt
           source dev/security/tool-versions.env
           uv python install 3.12
           uvx --python 3.12 --exclude-newer "$TOOL_CUTOFF" "bandit@$BANDIT_VERSION" --version
@@ -118,7 +118,7 @@ jobs:
           python-version: '3.14'
       # Without these packages the contract and workflow tests skip and look green.
       - name: Install test dependencies
-        run: python3.14 -m pip install -r dev/requirements-contract-tests.txt
+        run: python3.14 -m pip install --require-hashes -r dev/requirements-contract-tests.txt
       - name: Prepare Docker context for Compose tests
         # test_e2e_stack.py uses this context name on Linux too.
         run: docker context create colima-factory --docker host=unix:///var/run/docker.sock
@@ -188,7 +188,7 @@ jobs:
       # Without these packages the OpenAPI tests skip and look green.
       - name: Install contract test dependencies
         run: |
-          python3.14 -m pip install -r dev/requirements-contract-tests.txt openapi-spec-validator==0.7.2
+          python3.14 -m pip install --require-hashes -r dev/requirements-openapi-tests.txt
           python3.14 -B -c 'import jsonschema, referencing, yaml, openapi_spec_validator'
       - name: OpenAPI tests
         run: |

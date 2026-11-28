@@ -1,0 +1,3 @@
+# The naming gate passes old findings that are listed in this file (SecOps finding B3, AJA-1721).
+# A change to the list needs a review by its owner.
+/dev/naming/baseline.json @karacaismail

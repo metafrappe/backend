@@ -314,7 +314,7 @@ def create_job(route, file, instruction, limit=1024):
 		raise frappe.PermissionError
 	if not (source.file_name or "").lower().endswith(".pdf"):
 		raise Denied(400, "unsupported_file")
-	# Internal record of an authorized request. Callers cannot set its fields directly.
+	# ignore-permissions: inserts internal file job after require_user, route authorization, and File read check; DocType is closed to direct writes.
 	job = frappe.get_doc(
 		{
 			"doctype": JOB,
@@ -381,6 +381,7 @@ def prepare_job(file_job):
 			"currency": result.currency,
 		}
 	)
+	# ignore-permissions: internal queue worker prepare_job saves the capped chunk plan on the server-owned file job.
 	job.save(ignore_permissions=True)
 	_commit()
 

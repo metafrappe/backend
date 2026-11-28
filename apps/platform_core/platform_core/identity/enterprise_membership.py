@@ -236,11 +236,12 @@ def approve(name: str, *, principal: str):
 	check_or_throw(enterprise_rules.check_record, to_record(doc))
 	_check_chain(doc)
 	doc.flags.enterprise_approval = True
-	# No role has write permission on this DocType; the record is immutable (design AJA-238).
-	# This line is the only writer of the approval fields. Before it runs, the approver holds
-	# `APPROVER_ROLE`, the endpoint has checked read permission and a human session, and the rules
-	# above have passed. `validate` still refuses any change other than the approval fields.
-	doc.save(ignore_permissions=True)  # nosemgrep: frappe-ignore-permissions
+	previous = doc.flags.ignore_permissions
+	try:
+		# ignore-permissions: no role has write permission on this immutable DocType (AJA-238); APPROVER_ROLE, read permission, human session, and validate guards enforce approval-only writes.
+		doc.save(ignore_permissions=True)  # nosemgrep: frappe-ignore-permissions
+	finally:
+		doc.flags.ignore_permissions = previous
 	return doc
 
 

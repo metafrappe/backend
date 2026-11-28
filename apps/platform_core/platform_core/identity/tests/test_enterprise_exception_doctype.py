@@ -97,6 +97,7 @@ class TestEnterpriseException(IntegrationTestCase):
 		self.assertEqual(doc.approved_by, SECURITY)
 		self.assertEqual(doc.approval_principal, "human_session")
 		self.assertTrue(doc.approved_on)
+		self.assertFalse(doc.flags.ignore_permissions)
 
 	def test_self_and_agent_approval_are_refused(self):
 		doc = self.request()

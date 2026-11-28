@@ -30,6 +30,7 @@ def require(roles: tuple[str, ...]) -> None:
 
 def list_customers() -> list[dict]:
 	require(READERS)
+	# ignore-permissions: reseller roles have no DocType permission on Reseller Customer Link; query is scoped to the serving reseller tenant.
 	rows = frappe.get_all(
 		LINK,
 		filters={"reseller_tenant": reseller_tenant()},
@@ -75,6 +76,7 @@ def request_customer(customer_name: str, contact_email: str) -> dict:
 		frappe.throw(_("Enter the customer name. It can have at most {0} characters.").format(MAX_NAME))
 	if not email or not validate_email_address(email):
 		frappe.throw(_("Enter a valid contact e-mail address."))
+	# ignore-permissions: Reseller Admin has no direct DocType create permission on Reseller Customer Request; server sets reseller_tenant, status, and requested_by.
 	doc = frappe.get_doc(
 		doctype=REQUEST,
 		reseller_tenant=reseller_tenant(),
@@ -91,10 +93,11 @@ def approve_customer_request(request: str) -> dict:
 	if not isinstance(request, str) or not frappe.db.exists(REQUEST, request):
 		frappe.throw(_("The customer request does not exist."), frappe.DoesNotExistError)
 	doc = frappe.get_doc(REQUEST, request, for_update=True)
+	doc.check_permission("write")
 	if doc.status != "Pending":
 		frappe.throw(_("Only a pending customer request can be approved."))
 	doc.status = "Approved"
 	doc.approved_by = frappe.session.user
 	doc.approved_on = now_datetime()
-	doc.save(ignore_permissions=True)
+	doc.save()
 	return {"name": doc.name, "status": doc.status}

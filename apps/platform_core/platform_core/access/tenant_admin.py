@@ -359,8 +359,10 @@ def set_role_permission(doctype: str, role: str, permissions: dict, permlevel=0,
 	doc.update({**key, **values})
 	# The caller's right was checked above. The guards of this module run on save.
 	if name:
+		# ignore-permissions: Tenant Admin lacks Custom DocPerm write permission; require_manager, _require_open, and guard_custom_docperm enforce scope.
 		doc.save(ignore_permissions=True)
 	else:
+		# ignore-permissions: Tenant Admin lacks Custom DocPerm create permission; require_manager, _require_open, and guard_custom_docperm enforce scope.
 		doc.insert(ignore_permissions=True)
 	validate_permissions_for_doctype(doctype)
 	frappe.clear_cache(doctype=doctype)
@@ -378,6 +380,7 @@ def remove_role_permission(doctype: str, role: str, permlevel=0, if_owner=0) -> 
 	name = frappe.db.get_value("Custom DocPerm", key)
 	if not name:
 		frappe.throw(_("The role has no permission row at this level."), frappe.DoesNotExistError)
+	# ignore-permissions: Tenant Admin lacks Custom DocPerm delete permission; require_manager, _require_open, and guard_custom_docperm enforce scope.
 	frappe.delete_doc("Custom DocPerm", name, ignore_permissions=True, force=True)
 	validate_permissions_for_doctype(doctype, for_remove=True)
 	frappe.clear_cache(doctype=doctype)
@@ -407,8 +410,13 @@ class GuardedRoleProfile:
 			if name == "Administrator" or any(not grantable_role(row.role) for row in user.roles):
 				skipped.append(name)
 				continue
+			previous = user.flags.ignore_permissions
+			# ignore-permissions: Tenant Admin lacks User write permission when syncing a guarded Role Profile; non-plain users are skipped and guard_user runs on save.
 			user.flags.ignore_permissions = True
-			user.save()
+			try:
+				user.save()
+			finally:
+				user.flags.ignore_permissions = previous
 		if skipped:
 			frappe.logger("platform_core.access").info(
 				"Role Profile %s: %s users kept their roles; a System Manager saves them.",

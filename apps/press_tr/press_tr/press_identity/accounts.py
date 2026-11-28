@@ -31,6 +31,7 @@ def guard_reviewer_role(doc, method=None) -> None:
 def save_authorized_document(doc) -> None:
 	previous = doc.flags.ignore_permissions
 	try:
+		# ignore-permissions: internal callers save only the linked account or site already authorized for disablement or anonymization.
 		doc.save(ignore_permissions=True)
 	finally:
 		doc.flags.ignore_permissions = previous

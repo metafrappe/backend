@@ -40,6 +40,7 @@ def open_review(email: str) -> None:
 		return
 	if frappe.db.exists(REVIEW_DOCTYPE, {"identity_link": link, "status": OPEN}):
 		return
+	# ignore-permissions: background job runs as Guest and inserts one Open recovery review only for an existing identity link with no open review.
 	frappe.get_doc(
 		{
 			"doctype": REVIEW_DOCTYPE,
@@ -85,6 +86,7 @@ def ensure_reviewer_role() -> None:
 	"""
 	if frappe.db.exists("Role", REVIEWER_ROLE):
 		return
+	# ignore-permissions: install and migrate hook inserts the fixed Recovery Reviewer role only when missing; not a request path.
 	frappe.get_doc(doctype="Role", role_name=REVIEWER_ROLE, desk_access=1, is_custom=1).insert(
 		ignore_permissions=True
 	)

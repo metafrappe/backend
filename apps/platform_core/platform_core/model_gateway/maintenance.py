@@ -201,7 +201,7 @@ def purge_usage_logs(*, dry_run: bool = False, names: list[str] | None = None) -
 
 def _delete_usage_batch(batch, now):
 	for name, _modified in batch:
-		# The System Manager check and locking query restrict this O-32 deletion.
+		# ignore-permissions: System Manager check and locking retention query restrict this O-32 permanent deletion of immutable usage logs.
 		frappe.delete_doc(  # nosemgrep: frappe-ignore-permissions
 			USAGE_LOG, name, ignore_permissions=True, ignore_missing=False, delete_permanently=True
 		)

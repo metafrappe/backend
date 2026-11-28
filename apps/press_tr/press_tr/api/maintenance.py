@@ -23,7 +23,7 @@ def cleanup_expired_sessions() -> dict[str, int]:
 				"Sessions", {"sid": sid}, "lastupdate", for_update=True, order_by=None
 			)
 			if not last_update or get_datetime(last_update) < threshold:
-				# System Manager maintenance can remove expired internal mappings.
+				# ignore-permissions: System Manager maintenance deletes expired internal PTR Keycloak Session mappings that grant no DocType permissions.
 				record.delete(ignore_permissions=True)
 				removed += 1
 		if len(names) < page_size:

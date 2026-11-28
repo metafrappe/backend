@@ -33,5 +33,5 @@ def remove_mapping(login_manager=None):
 	for names in session_mapping_pages({"identity_link": link}):
 		for name in names:
 			if read_press_session_id(name) == sid:
-				# Frappe has authorized logout of this exact session.
+				# ignore-permissions: Frappe logout deletes only the internal session mapping matching the current user's identity link and exact session ID.
 				frappe.delete_doc(SESSION_MAPPING_DOCTYPE, name, ignore_permissions=True)

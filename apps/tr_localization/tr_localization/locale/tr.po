@@ -1,0 +1,92 @@
+msgid ""
+msgstr ""
+"Language: tr\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "The Turkish chart tax accounts must exist before installing tax templates."
+msgstr "Vergi şablonlarından önce Türkiye hesap planının vergi hesapları bulunmalıdır."
+
+msgid "VAT {0}%"
+msgstr "KDV %{0}"
+
+msgid "Select a province and district from the installed district catalogue."
+msgstr "Yüklü listeden bir il ve ilçe seçin."
+
+msgid "Tax and identity numbers must contain the required number of ASCII digits."
+msgstr "Vergi ve kimlik numaraları gereken uzunlukta olmalıdır. Yalnız 0 ile 9 arasındaki rakamları kullanın."
+
+msgid "The currency bulletin is unavailable."
+msgstr "Kur bülteni alınamadı."
+
+msgid "The currency bulletin is too large."
+msgstr "Kur bülteni boyut sınırını aşıyor."
+
+msgid "The currency bulletin could not be imported."
+msgstr "Kur bülteni aktarılamadı."
+
+msgid "Sign in to import exchange rates."
+msgstr "Kur aktarmak için giriş yapın."
+
+msgid "Currency Exchange create permission is required."
+msgstr "Kur kaydı oluşturma izni gerekir."
+
+msgid "An existing exchange rate conflicts with the bulletin."
+msgstr "Mevcut kur kaydı bültenle uyuşmuyor."
+
+msgid "District"
+msgstr "İlçe"
+
+msgid "Province"
+msgstr "İl"
+
+msgid "Tax Office"
+msgstr "Vergi dairesi"
+
+msgid "Tax Identification Number"
+msgstr "Vergi kimlik numarası"
+
+msgid "Identity Number"
+msgstr "Kimlik numarası"
+
+msgid "TRL Exempt"
+msgstr "İstisna"
+
+msgid "Address permission level one is already granted to another role."
+msgstr "Adres kaydının 1. izin düzeyi başka bir role verilmiş."
+
+msgid "Address permission level one is already used by another field."
+msgstr "Adres kaydının 1. izin düzeyini başka bir alan kullanıyor."
+
+msgid "Source URL"
+msgstr "Kaynak adresi"
+
+msgid "Source Date"
+msgstr "Kaynak tarihi"
+
+msgid "District in the installed Turkish province catalogue."
+msgstr "Yüklü Türkiye listesindeki ilçe."
+
+msgid "Turkish tax office for this address."
+msgstr "Bu adresin bağlı olduğu vergi dairesi."
+
+msgid "Ten ASCII digits. Not an identity verification."
+msgstr "10 rakam gerekir. Bu alan kimlik doğrulaması yapmaz."
+
+msgid "Optional eleven ASCII digits. Not an identity verification."
+msgstr "11 rakam yazabilirsiniz. Bu alan kimlik doğrulaması yapmaz."
+
+msgid "Province name from the reviewed official address catalogue."
+msgstr "Doğrulanmış resmî listedeki il adı."
+
+msgid "District name within the province."
+msgstr "İlin içindeki ilçe adı."
+
+msgid "Only enabled province and district pairs are accepted."
+msgstr "Yalnız etkin il ve ilçe eşleşmeleri kabul edilir."
+
+msgid "Official public source used to verify the record."
+msgstr "Kaydı doğrulayan resmî kaynak adresi."
+
+msgid "Date when the operator verified the official source."
+msgstr "Yöneticinin resmî kaynağı doğruladığı tarih."

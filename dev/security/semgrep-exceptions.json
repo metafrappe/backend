@@ -31,7 +31,8 @@
     "backend/libs/oidc_verify/src/oidc_verify/jwks.py",
     "backend/libs/oidc_verify/src/oidc_verify/verification.py"
   ],
-  "sha256": "6f2f2ccdd6e22545b78abbf947b9b4c41b6b1f6c1f6fe62abfc28379282735a8",
+  "sha256": "1114c53c158198da8d17563aecf327019f312795b9c11f512f36de312f61e377",
+  "reviewNote": "Digest refreshed on 28 November 2026 (AJA-2476). Only apps/press_tr/press_tr/hooks.py changed: after_migrate now also lists press_tr.localization.register_localization (G-65). The hook is a dotted path string, not a whitelisted endpoint. Semgrep 1.186.0 with fixtures/rules.yaml reports 0 findings on hooks.py before and after the change. The other 28 listed files did not change, so all 22 findings keep their path, line and reason.",
   "findings": [
     {
       "rule": "frappe-guest-without-limit",

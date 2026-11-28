@@ -1,0 +1,73 @@
+{
+  "doctype": "DocType",
+  "name": "TRL District",
+  "module": "Turkey Localization",
+  "autoname": "format:{province}-{district}",
+  "allow_import": 1,
+  "track_changes": 1,
+  "field_order": [
+    "province",
+    "district",
+    "enabled",
+    "source_url",
+    "source_date"
+  ],
+  "fields": [
+    {
+      "fieldname": "province",
+      "label": "Province",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "Province name from the reviewed official address catalogue.",
+      "set_only_once": 1
+    },
+    {
+      "fieldname": "district",
+      "label": "District",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "District name within the province.",
+      "set_only_once": 1
+    },
+    {
+      "fieldname": "enabled",
+      "label": "Enabled",
+      "fieldtype": "Check",
+      "default": "1",
+      "description": "Only enabled province and district pairs are accepted."
+    },
+    {
+      "fieldname": "source_url",
+      "label": "Source URL",
+      "fieldtype": "Data",
+      "options": "URL",
+      "reqd": 1,
+      "description": "Official public source used to verify the record."
+    },
+    {
+      "fieldname": "source_date",
+      "label": "Source Date",
+      "fieldtype": "Date",
+      "reqd": 1,
+      "description": "Date when the operator verified the official source."
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "import": 1,
+      "export": 1
+    },
+    {
+      "role": "Accounts Manager",
+      "read": 1
+    }
+  ],
+  "description": "Reviewed province and district pairs for Turkish address validation."
+}

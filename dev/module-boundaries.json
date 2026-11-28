@@ -27,7 +27,9 @@
     ],
     "oidc_verify": [],
     "atonota_login": [],
-    "platform_core.reseller": []
+    "platform_core.reseller": [],
+    "tr_localization": [],
+    "press_tr.localization": []
   },
   "public_paths": {
     "platform_core.identity": [

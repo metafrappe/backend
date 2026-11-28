@@ -4,6 +4,8 @@
 !apps/platform_core/**
 !apps/hrms_tr/
 !apps/hrms_tr/**
+!apps/tr_localization/
+!apps/tr_localization/**
 !dev/
 !dev/**
 !libs/

@@ -17,8 +17,11 @@ class SemgrepExceptionsTests(unittest.TestCase):
     def run_cli(self, root, *arguments):
         script = CONFIG.with_name("semgrep_exceptions.py")
         return subprocess.run(
-            [sys.executable, "-B", str(script), *arguments], cwd=root,
-            capture_output=True, text=True, check=False,
+            [sys.executable, "-B", str(script), *arguments],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=False,
         )
 
     def test_cli_snapshot_prints_the_current_digest(self):
@@ -94,19 +97,30 @@ class SemgrepExceptionsTests(unittest.TestCase):
                 path = f"{scope}/api.py"
                 (root / scope).mkdir()
                 (root / path).write_text("pass\n")
-                reviews.append({
-                    "scope": scope, "sha256": source_digest(root, scope),
-                    "findings": [{"rule": "frappe-missing-permission", "path": path,
-                                  "line": 1, "reason": "Reviewed permission check."}],
-                })
-                findings.append({"check_id": "rules.frappe-missing-permission", "path": path,
-                                 "start": {"line": 1}})
+                reviews.append(
+                    {
+                        "scope": scope,
+                        "sha256": source_digest(root, scope),
+                        "findings": [
+                            {
+                                "rule": "frappe-missing-permission",
+                                "path": path,
+                                "line": 1,
+                                "reason": "Reviewed permission check.",
+                            }
+                        ],
+                    }
+                )
+                findings.append(
+                    {"check_id": "rules.frappe-missing-permission", "path": path, "start": {"line": 1}}
+                )
             config = root / "exceptions.json"
             config.write_text(json.dumps({**reviews[0], "additionalReviews": reviews[1:]}))
             before = {entry["scope"]: entry["sha256"] for entry in reviews}
             self.assertEqual(reviewed_findings(root, config, findings, before), [])
-            self.assertEqual(reviewed_findings(root, config, findings, {"press": before["press"]}),
-                             [findings[1]])
+            self.assertEqual(
+                reviewed_findings(root, config, findings, {"press": before["press"]}), [findings[1]]
+            )
             (root / "access/api.py").write_text("changed = True\n")
             self.assertEqual(reviewed_findings(root, config, findings, before), [findings[1]])
 
@@ -117,7 +131,10 @@ class SemgrepExceptionsTests(unittest.TestCase):
             config = Path(directory) / "exceptions.json"
             for extra in (
                 [{"scope": "backend/apps", "findings": []}],
-                [access, {"scope": "backend/apps", "files": ["backend/apps/core/allowed.py"], "findings": []}],
+                [
+                    access,
+                    {"scope": "backend/apps", "files": ["backend/apps/core/allowed.py"], "findings": []},
+                ],
             ):
                 with self.subTest(extra=extra):
                     config.write_text(json.dumps({**press, "additionalReviews": extra}))
@@ -139,19 +156,30 @@ class SemgrepExceptionsTests(unittest.TestCase):
             self.git(root, "add", "core")
             before = source_digest(root, "core", files)
             config = root / "exceptions.json"
-            entry = {"rule": "frappe-missing-permission", "path": files[0], "line": 1,
-                     "reason": "Reviewed permission check."}
-            config.write_text(json.dumps({
-                "scope": "core", "files": files, "sha256": before,
-                "findings": [entry, {**entry, "path": "core/unrelated.py"}],
-            }))
-            finding = {"check_id": "rules.frappe-missing-permission",
-                       "path": files[0], "start": {"line": 1}}
+            entry = {
+                "rule": "frappe-missing-permission",
+                "path": files[0],
+                "line": 1,
+                "reason": "Reviewed permission check.",
+            }
+            config.write_text(
+                json.dumps(
+                    {
+                        "scope": "core",
+                        "files": files,
+                        "sha256": before,
+                        "findings": [entry, {**entry, "path": "core/unrelated.py"}],
+                    }
+                )
+            )
+            finding = {"check_id": "rules.frappe-missing-permission", "path": files[0], "start": {"line": 1}}
             other = {**finding, "path": "core/unrelated.py"}
             unrelated.write_text("changed = True\n")
             self.assertEqual(reviewed_findings(root, config, [finding, other], {"core": before}), [other])
             (root / files[1]).write_text("changed = True\n")
-            self.assertEqual(reviewed_findings(root, config, [finding, other], {"core": before}), [finding, other])
+            self.assertEqual(
+                reviewed_findings(root, config, [finding, other], {"core": before}), [finding, other]
+            )
             (root / files[1]).unlink()
             self.assertIsNone(source_digest(root, "core", files))
 
@@ -235,14 +263,27 @@ class SemgrepExceptionsTests(unittest.TestCase):
             self.git(root, "init", "-q")
             before = {"press": source_digest(root, "press")}
             config = root / "exceptions.json"
-            config.write_text(json.dumps({
-                "scope": "press",
-                "sha256": before["press"],
-                "findings": [{"rule": "frappe-missing-permission", "path": "press/api.py",
-                              "line": 1, "reason": "Reviewed permission check."}],
-            }))
-            finding = {"check_id": "rules.frappe-missing-permission", "path": "press/api.py",
-                       "start": {"line": 1}}
+            config.write_text(
+                json.dumps(
+                    {
+                        "scope": "press",
+                        "sha256": before["press"],
+                        "findings": [
+                            {
+                                "rule": "frappe-missing-permission",
+                                "path": "press/api.py",
+                                "line": 1,
+                                "reason": "Reviewed permission check.",
+                            }
+                        ],
+                    }
+                )
+            )
+            finding = {
+                "check_id": "rules.frappe-missing-permission",
+                "path": "press/api.py",
+                "start": {"line": 1},
+            }
             other = {**finding, "start": {"line": 2}}
             self.assertEqual(reviewed_findings(root, config, [finding, other], before), [other])
             self.assertEqual(reviewed_findings(root, config, [finding], {"press": "different"}), [finding])
@@ -252,3 +293,40 @@ class SemgrepExceptionsTests(unittest.TestCase):
             rule_file.write_text("rules: []")
             (source / "guard.py").write_text("guard = False\n")
             self.assertEqual(reviewed_findings(root, config, [finding, other], before), [finding, other])
+
+    def test_recorded_digests_match_the_current_sources(self):
+        repo = CONFIG.parents[2]
+        git = shutil.which("git")
+        if git is None:
+            self.skipTest("git is not installed")
+        listing = subprocess.run(
+            [git, "-C", str(repo), "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+            capture_output=True,
+            check=False,
+        )
+        if listing.returncode:
+            self.skipTest("the sources are not in a Git work tree")
+        tracked = {name for name in listing.stdout.decode("utf-8").split("\0") if name}
+        prefix = Path(RULES.parts[0])
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            targets = [RULES]
+            for review in review_scopes(CONFIG):
+                targets.extend(map(Path, review.get("files") or [review["scope"]]))
+            for name in tracked:
+                path = Path(name)
+                if not any((prefix / path).is_relative_to(target) for target in targets):
+                    continue
+                self.assertFalse((repo / path).is_symlink(), f"{name} must not be a symlink.")
+                target = root / prefix / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(repo / path, target)
+            self.git(root, "init", "-q")
+            self.git(root, "add", "-A", "-f", str(prefix))
+            for review in review_scopes(CONFIG):
+                with self.subTest(scope=review["scope"]):
+                    self.assertEqual(
+                        source_digest(root, review["scope"], review.get("files")),
+                        review["sha256"],
+                        "Re-review the changed files, then record the new digest.",
+                    )

@@ -85,6 +85,36 @@ class TestSessionPolicy(FrappeAPITestCase):
 		data = frappe.cache.hget("session", sid)
 		self.assertEqual(data["data"]["session_expiry"], "01:00:00")
 
+	def test_shorter_tenant_idle_timeout_is_preserved_and_enforced(self):
+		# G-97 / AJA-2551 finding 1 & 2: a shorter tenant timeout applies to cookie sessions and survives migrate.
+		previous = frappe.db.get_single_value("System Settings", "session_expiry")
+
+		def restore():
+			frappe.db.set_single_value("System Settings", "session_expiry", previous)
+			frappe.db.commit()  # nosemgrep: frappe-test-commit
+
+		self.addCleanup(restore)
+		frappe.db.set_single_value("System Settings", "session_expiry", "00:15")
+		frappe.db.commit()  # nosemgrep: frappe-test-commit
+		frappe.clear_cache()
+
+		session_policy.apply()
+		self.assertEqual(frappe.db.get_single_value("System Settings", "session_expiry"), "00:15")
+
+		response = h.login_with_keycloak(self.client, h.userinfo("sub-ayse", h.AYSE))
+		self.assertEqual(response.status_code, 302)
+		sid = self.client.get_cookie("sid").value
+		data = frappe.cache.hget("session", sid)
+		self.assertEqual(data["data"]["session_expiry"], "00:15:00")
+
+		frappe.cache.set_value(session_policy._session_key(sid), int(time.time()) - 901, expires_in_sec=900)
+		frappe.clear_cache()
+		answer = h.request(
+			self.client.post, "/api/method/platform_core.api.auth.logout", headers=h.csrf_headers(self.client)
+		)
+		self.assertEqual(answer.status_code, 401)
+		self.assertEqual(answer.json.get("exc_type"), "SessionExpired")
+
 	def test_clearing_site_cache_keeps_an_active_session(self):
 		response = h.login_with_keycloak(self.client, h.userinfo("sub-ayse", h.AYSE))
 		self.assertEqual(response.status_code, 302, response.data[:300])

@@ -24,6 +24,7 @@ from frappe.utils import now_datetime, time_diff_in_seconds
 SYSTEM_SETTINGS_IDLE_TIMEOUT = "01:00"
 IDLE_TIMEOUT = f"{SYSTEM_SETTINGS_IDLE_TIMEOUT}:00"
 IDLE_SECONDS = 3600
+SESSION_EXPIRY_PATTERN = re.compile(r"[0-9]{1,3}:[0-9]{2}")
 ACTIVITY_PREFIX = "kimlik_activity"
 AUTH_TIME_LEEWAY = 30
 BACKGROUND_HEADER = "X-Platform-Background"
@@ -37,9 +38,35 @@ BACKGROUND_METHOD_PREFIXES = (
 )
 
 
+def parse_idle_seconds(value: object) -> int | None:
+	"""Parse an ASCII hh:mm timeout within the O-25 ceiling (1..60 minutes) into seconds."""
+	if not isinstance(value, str) or not SESSION_EXPIRY_PATTERN.fullmatch(value):
+		return None
+	hours_str, minutes_str = value.split(":")
+	hours, minutes = int(hours_str), int(minutes_str)
+	total_seconds = (hours * 60 + minutes) * 60
+	if minutes >= 60 or total_seconds < 60 or total_seconds > IDLE_SECONDS:
+		return None
+	return total_seconds
+
+
+def effective_idle_seconds() -> int:
+	"""Return the tenant's configured idle limit capped at the O-25 ceiling (3600 seconds)."""
+	configured = frappe.db.get_single_value("System Settings", "session_expiry")
+	return parse_idle_seconds(configured) or IDLE_SECONDS
+
+
+def effective_idle_timeout() -> str:
+	"""Format the effective idle limit as hh:mm:ss for Frappe session records."""
+	total_minutes = effective_idle_seconds() // 60
+	hours, minutes = divmod(total_minutes, 60)
+	return f"{hours:02d}:{minutes:02d}:00"
+
+
 def apply() -> None:
-	"""Writes the idle limit into System Settings. Called by `after_install` and `after_migrate`."""
-	if frappe.db.get_single_value("System Settings", "session_expiry") != SYSTEM_SETTINGS_IDLE_TIMEOUT:
+	"""Enforce the O-25 ceiling in System Settings without loosening a stricter tenant timeout."""
+	current = frappe.db.get_single_value("System Settings", "session_expiry")
+	if parse_idle_seconds(current) is None:
 		# V-1 exception: a single field of a single DocType, no validation side effects are wanted here.
 		frappe.db.set_single_value("System Settings", "session_expiry", SYSTEM_SETTINGS_IDLE_TIMEOUT)
 		frappe.clear_cache()
@@ -55,9 +82,10 @@ def _user_key(user: str) -> str:
 
 def mark_activity(sid: str | None, user: str) -> None:
 	"""Records real user activity. Each key lives for the idle limit and is renewed by real requests."""
+	limit = effective_idle_seconds()
 	if sid and sid != "Guest":
-		frappe.cache.set_value(_session_key(sid), int(time.time()), expires_in_sec=IDLE_SECONDS)
-	frappe.cache.set_value(_user_key(user), int(time.time()), expires_in_sec=IDLE_SECONDS)
+		frappe.cache.set_value(_session_key(sid), int(time.time()), expires_in_sec=limit)
+	frappe.cache.set_value(_user_key(user), int(time.time()), expires_in_sec=limit)
 
 
 def recently_active(user: str) -> bool:
@@ -93,14 +121,15 @@ def requested_method(request) -> str:
 
 
 def _idle_limit_reached(sid: str) -> bool:
+	limit = effective_idle_seconds()
 	last_activity = frappe.cache.get_value(_session_key(sid), expires=True, use_local_cache=False)
 	if last_activity is not None:
-		return time.time() - last_activity >= IDLE_SECONDS
+		return time.time() - last_activity >= limit
 
 	# An expired or missing key may belong to a session from before this hook ran.
 	# Creation is a safe baseline: Frappe updates last_updated even on background requests.
 	created_at = frappe.session.data.get("creation")
-	return not created_at or time_diff_in_seconds(now_datetime(), created_at) >= IDLE_SECONDS
+	return not created_at or time_diff_in_seconds(now_datetime(), created_at) >= limit
 
 
 def before_request() -> None:

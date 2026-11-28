@@ -70,6 +70,8 @@ after_install = [
 	"platform_core.access.tenant_admin.ensure_permissions",
 	# G-53: Desk notices off, the panel is the home page.
 	"platform_core.config.desk_policy.apply",
+	# G-97: initial single records for Tenant Settings and Tenant Branding.
+	"platform_core.shell.tenant_settings_setup.ensure",
 ]
 after_migrate = [
 	"platform_core.identity.session_policy.apply",
@@ -80,6 +82,7 @@ after_migrate = [
 	"platform_core.setup.panel_roles.ensure",
 	"platform_core.access.tenant_admin.ensure_permissions",
 	"platform_core.config.desk_policy.apply",
+	"platform_core.shell.tenant_settings_setup.ensure",
 ]
 
 # G-41: the setup wizard overwrites some defaults, so the Türkiye defaults run after it.
@@ -109,6 +112,9 @@ ai_write_closed_doctypes = [
 	# G-169: only the Platform Operator changes reseller links, never a generic AI write.
 	"Reseller Customer Link",
 	"Reseller Customer Request",
+	# G-97: tenant settings sync to System Settings and branding holds CSS/logo tokens.
+	"Tenant Settings",
+	"Tenant Branding",
 ]
 # Website User method allow list (docs/sozlesmeler.md). Identity adds only the method a portal user calls.
 website_user_allowed_methods = [

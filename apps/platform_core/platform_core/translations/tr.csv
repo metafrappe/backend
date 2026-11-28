@@ -1012,3 +1012,47 @@ Support URL,Destek bağlantısı,PLT Help Topic
 Optional HTTPS URL or same-site relative path. Leave blank when unavailable.,HTTPS adresini veya site içindeki yolu yazın. Bağlantı yoksa alanı boş bırakın.,PLT Help Topic
 Help links must use HTTPS or a same-site relative path.,Yardım bağlantılarında HTTPS adresi veya site içindeki yol kullanılmalıdır.,
 A valid component identifier is required.,Geçerli bir bileşen kimliği yazın.,
+Tenant Settings,Kiracı Ayarları,Tenant Settings
+Language and Region,Dil ve bölge,Tenant Settings
+Language,Dil,Tenant Settings
+Default interface language for this tenant site.,Bu kiracı sitesinin varsayılan arayüz dili.,Tenant Settings
+tr,Türkçe,Tenant Settings
+en-GB,English (UK),Tenant Settings
+en,English,Tenant Settings
+Time Zone,Saat dilimi,Tenant Settings
+Default IANA time zone for this tenant site.,Bu kiracı sitesinin varsayılan saat dilimi.,Tenant Settings
+Formats,Biçimler,Tenant Settings
+Date Format,Tarih biçimi,Tenant Settings
+Default date display pattern for this tenant site.,Bu kiracı sitesinin varsayılan tarih biçimi.,Tenant Settings
+Time Format,Saat biçimi,Tenant Settings
+Default time display pattern for this tenant site.,Bu kiracı sitesinin varsayılan saat biçimi.,Tenant Settings
+Number Format,Sayı biçimi,Tenant Settings
+Default number formatting pattern for this tenant site.,Bu kiracı sitesinin varsayılan sayı biçimi.,Tenant Settings
+Session,Oturum,Tenant Settings
+Session Expiry (hours:minutes),Oturum süresi (saat:dakika),Tenant Settings
+Users are signed out after this idle period in hours:minutes format.,Kullanıcı bu süre boyunca işlem yapmazsa oturum kapanır.,Tenant Settings
+Email,E-posta,Tenant Settings
+Email Domain,E-posta alan adı,Tenant Settings
+Configured mail domain for this tenant site. Managed by the platform and read-only here.,Bu kiracı sitesinin e-posta alan adı. Platform tarafından yönetilir ve burada salt okunurdur.,Tenant Settings
+Outgoing Email Account,Giden e-posta hesabı,Tenant Settings
+Configured outgoing mail account address for this tenant site. Managed by the platform and read-only here.,Bu kiracı sitesinin giden e-posta hesabı. Platform tarafından yönetilir ve burada salt okunurdur.,Tenant Settings
+Email Domain and Outgoing Email Account are read-only.,E-posta alan adı ve giden e-posta hesabı salt okunurdur.,
+Session Expiry must use hours:minutes format such as 00:30.,Oturum süresi 00:30 gibi saat:dakika biçiminde olmalıdır.,
+Session Expiry must be between 00:01 and 01:00.,Oturum süresi 00:01 ile 01:00 arasında olmalıdır.,
+Select a supported time zone.,Desteklenen bir saat dilimi seçin.,
+Select a supported language.,Desteklenen bir dil seçin.,
+Select a supported date format.,Desteklenen bir tarih biçimi seçin.,
+Select a supported time format.,Desteklenen bir saat biçimi seçin.,
+Select a supported number format.,Desteklenen bir sayı biçimi seçin.,
+Tenant Branding,Kiracı Markası,Tenant Branding
+Logo,Logo,Tenant Branding
+Uploaded raster logo image path for this tenant site.,Bu kiracı sitesi için yüklenen logo görselinin yolu.,Tenant Branding
+Colors,Renkler,Tenant Branding
+Primary Color,Ana renk,Tenant Branding
+Primary brand color as a six-digit hex code such as #1F6F5C.,#1F6F5C gibi altı haneli onaltılık ana marka rengi.,Tenant Branding
+Accent Color,Vurgu rengi,Tenant Branding
+Optional accent brand color as a six-digit hex code such as #B35C1E.,#B35C1E gibi isteğe bağlı altı haneli onaltılık vurgu rengi.,Tenant Branding
+{0} must be a six-digit hex color such as #12ab34.,{0} değeri #12ab34 gibi altı haneli onaltılık renk kodu olmalıdır.,
+Logo must be a public uploaded raster image path.,Logo siteye herkese açık yüklenmiş bir görsel dosyası yolu olmalıdır.,
+Logo file does not exist on this site.,Logo dosyası bu sitede bulunamadı.,
+"Logo must be a PNG, JPEG, WebP or GIF image.","Logo PNG, JPEG, WebP veya GIF görseli olmalıdır.",

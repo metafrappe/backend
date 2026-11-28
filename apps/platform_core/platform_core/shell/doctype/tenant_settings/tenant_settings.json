@@ -1,0 +1,121 @@
+{
+ "actions": [],
+ "creation": "2026-11-28 08:00:00.000000",
+ "description": "Safe tenant-level regional, format and session settings managed by the Tenant Admin role. Changes sync only the allow-listed fields to System Settings.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "regional_section",
+  "language",
+  "time_zone",
+  "formats_section",
+  "date_format",
+  "time_format",
+  "number_format",
+  "session_section",
+  "session_expiry",
+  "email_section",
+  "email_domain",
+  "email_account"
+ ],
+ "fields": [
+  {
+   "fieldname": "regional_section",
+   "fieldtype": "Section Break",
+   "label": "Language and Region"
+  },
+  {
+   "default": "tr",
+   "description": "Default interface language for this tenant site.",
+   "fieldname": "language",
+   "fieldtype": "Select",
+   "label": "Language",
+   "options": "tr\nen-GB\nen",
+   "reqd": 1
+  },
+  {
+   "default": "Europe/Istanbul",
+   "description": "Default IANA time zone for this tenant site.",
+   "fieldname": "time_zone",
+   "fieldtype": "Select",
+   "label": "Time Zone",
+   "options": "Europe/Istanbul\nEurope/London\nUTC\nEurope/Berlin\nEurope/Paris\nEurope/Amsterdam\nAmerica/New_York\nAsia/Dubai",
+   "reqd": 1
+  },
+  {
+   "fieldname": "formats_section",
+   "fieldtype": "Section Break",
+   "label": "Formats"
+  },
+  {
+   "default": "dd.mm.yyyy",
+   "description": "Default date display pattern for this tenant site.",
+   "fieldname": "date_format",
+   "fieldtype": "Select",
+   "label": "Date Format",
+   "options": "dd.mm.yyyy\ndd/mm/yyyy\ndd-mm-yyyy\nyyyy-mm-dd\nmm/dd/yyyy\nmm-dd-yyyy",
+   "reqd": 1
+  },
+  {
+   "default": "HH:mm",
+   "description": "Default time display pattern for this tenant site.",
+   "fieldname": "time_format",
+   "fieldtype": "Select",
+   "label": "Time Format",
+   "options": "HH:mm\nHH:mm:ss",
+   "reqd": 1
+  },
+  {
+   "default": "#.###,##",
+   "description": "Default number formatting pattern for this tenant site.",
+   "fieldname": "number_format",
+   "fieldtype": "Select",
+   "label": "Number Format",
+   "options": "#.###,##\n#,###.##\n# ###.##\n# ###,##\n#'###.##\n#, ###.##\n#,##,###.##\n#,###.###\n#.###\n#,###",
+   "reqd": 1
+  },
+  {
+   "fieldname": "session_section",
+   "fieldtype": "Section Break",
+   "label": "Session"
+  },
+  {
+   "default": "01:00",
+   "description": "Users are signed out after this idle period in hours:minutes format.",
+   "fieldname": "session_expiry",
+   "fieldtype": "Data",
+   "label": "Session Expiry (hours:minutes)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "email_section",
+   "fieldtype": "Section Break",
+   "label": "Email"
+  },
+  {
+   "description": "Configured mail domain for this tenant site. Managed by the platform and read-only here.",
+   "fieldname": "email_domain",
+   "fieldtype": "Data",
+   "label": "Email Domain",
+   "read_only": 1
+  },
+  {
+   "description": "Configured outgoing mail account address for this tenant site. Managed by the platform and read-only here.",
+   "fieldname": "email_account",
+   "fieldtype": "Data",
+   "label": "Outgoing Email Account",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-11-28 08:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Shell",
+ "name": "Tenant Settings",
+ "owner": "Administrator",
+ "permissions": [],
+ "states": [],
+ "track_changes": 1
+}

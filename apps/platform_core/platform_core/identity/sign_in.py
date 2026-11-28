@@ -229,7 +229,7 @@ def complete_callback(code: str | None, state: str | None, error: str | None = N
 		raise
 	adopt_token_locale(user, claims)
 	frappe.local.session.data.update(helpers.session_claims(claims, settings.issuer))
-	frappe.local.session.data["session_expiry"] = session_policy.IDLE_TIMEOUT
+	frappe.local.session.data["session_expiry"] = session_policy.effective_idle_timeout()
 	remember_keycloak_session(claims.get("sid"), frappe.session.sid)
 	# Frappe skips the CSRF check while the session has no token (frappe/auth.py:92). Create it now,
 	# so the first write after sign-in already needs the X-Frappe-CSRF-Token header.

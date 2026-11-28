@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { focusDiff } from './focus-diff';
 import { BRAND, openLogin, screen, submitPassword } from './helpers';
 
 // G-80, G-132 and G-145: real Keycloak pages, with made-up inputs only.
@@ -86,11 +87,19 @@ test('G-80: keyboard opens and leaves the Turkish recovery screen without a focu
   await expect(page.locator('#kc-page-title')).toHaveText('Parolanızı sıfırlayın');
   await expect(page.getByRole('button', { name: 'Gönderin', exact: true })).toBeVisible();
   await expectReadablePage(page);
-  const back = page.getByRole('link', { name: 'Oturum açma ekranına dönün', exact: true });
+  const back = page.getByRole('link', { name: 'Giriş ekranına dönün', exact: true });
   await tabTo(page, back, browserName);
+  await back.evaluate((element) => element.scrollIntoView({ block: 'center' }));
+  await expect(page.locator('html')).toHaveAttribute('data-at-focus', 'keyboard');
   await expect(back).toHaveCSS('outline-width', '0px');
-  await expect(back).toHaveCSS('box-shadow', 'none');
-  await expect(back).toHaveCSS('text-decoration-line', 'underline');
+  // The back link is styled as a secondary button (.pf-v5-c-button), so keyboard focus draws the bottom bar.
+  const { diff, rect } = await focusDiff(page, back);
+  expect(diff.count, 'visible keyboard focus bar').toBeGreaterThanOrEqual(24);
+  expect(diff.contrast, 'focus bar contrast').toBeGreaterThanOrEqual(3);
+  expect(diff.minY, 'no focus line on the top edge').toBeGreaterThanOrEqual(rect.top + rect.height / 2);
+  expect(diff.minX, 'no focus line on the left edge').toBeGreaterThanOrEqual(Math.floor(rect.left));
+  expect(diff.maxX, 'no focus line on the right edge').toBeLessThanOrEqual(Math.ceil(rect.left + rect.width));
+  expect(diff.maxY - diff.minY, 'focus indicator is a flat bottom bar').toBeLessThanOrEqual(6);
   await testInfo.attach('password-reset-keyboard', { body: await page.screenshot(), contentType: 'image/png' });
   await page.keyboard.press('Enter');
   await expect(page.locator('#kc-form-login')).toBeVisible();

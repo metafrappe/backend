@@ -1,0 +1,277 @@
+openapi: 3.1.0
+info:
+  title: platform_core customization
+  version: 0.1.0
+  summary: Endpoints that change the label and the hidden flag of a field (G-97).
+  description: |
+    This contract describes the endpoints of the `platform_core.access.customization` module (G-97).
+    The decision is AJA-2516, document “karar”.
+
+    A “Property Setter” record changes one property of a field. The same type also sets the
+    permission level of a field. For example hrms_tr keeps `Employee.date_of_birth` at level 1.
+    So no panel role gets a general permission on the type. The REST API, data import and AI
+    writes of the type are refused. Only these three endpoints write it, and only two properties:
+    `label` and `hidden`. The endpoint writes every other value of the record itself.
+
+    A tenant is its own Frappe site. The endpoints change only the site that serves them.
+
+    Hiding a field is not a security setting. The server still reads a hidden field.
+
+    Roles: only “System Manager” and “Tenant Admin” call the endpoints. “Tenant Admin Assistant”
+    and every other role get 403. The endpoints are on the shell's Website User allow-list
+    (`website_user_allowed_methods`).
+
+    A “Tenant Admin” changes only business types. A type of the `frappe` or `platform_core`
+    application, a single-record type, a child table and a type with a password field get 403.
+
+    A system field gets 403. These fields are system fields:
+
+    - Frappe's own columns: `name`, `owner`, `creation`, `modified`, `modified_by`, `docstatus`,
+      `idx`, `parent`, `parentfield`, `parenttype`, `amended_from`, `naming_series`.
+    - A required field of the type. Hidden, the record could not be saved.
+    - A field an application added (`Custom Field.is_system_generated` is 1).
+    - The hidden flag of a field above permission level 0. Its label may change.
+    - A record an application fixture file names. The record stays as the application wrote it.
+
+    Two related rules use Frappe's built-in endpoints (`/api/resource/...`):
+
+    - “Custom Field”: “Tenant Admin” reads, adds, changes and deletes. The server refuses with 403
+      a field on a closed type, a name without the `custom_` prefix, a type outside `Data`,
+      `Small Text`, `Text`, `Long Text`, `Int`, `Float`, `Currency`, `Percent`, `Check`, `Date`,
+      `Datetime`, `Time`, `Select` and `Link`, a `Link` to a closed type, a filled `fetch_from`,
+      `depends_on`, `mandatory_depends_on` or `read_only_depends_on`, a permission level above 0,
+      and the flags `is_system_generated`, `is_virtual` and `ignore_xss_filter`.
+      A field an application added is neither changed nor deleted.
+    - “Workspace”: “Tenant Admin” reads and changes. Only `is_hidden` and `sequence_id` of a shared
+      workspace (`public` is 1) change. A new workspace, a deletion and every other field get 403.
+      While developer mode is on, every write gets 403.
+
+    Identity: the Frappe session cookie. A POST request needs the `X-Frappe-CSRF-Token` header.
+    A guest without a session receives 403. A missing or expired session referenced by a cookie
+    receives 401 with `exc_type: SessionExpired` (shared contract SZ-8).
+
+    The error response has Frappe's usual format. A permission error returns 403.
+    Invalid input returns 417. A type or a field that is not found returns 404.
+servers:
+  - url: /api/method
+    description: Frappe endpoint root of the tenant site
+tags:
+  - name: field-properties
+    description: The label and the hidden flag of a field.
+paths:
+  /platform_core.api.customization.list_field_properties:
+    get:
+      tags: [field-properties]
+      operationId: listFieldProperties
+      summary: Returns the label and hidden records of a type and which fields stay as they are.
+      description: |
+        The endpoint does not change records. It returns only `label` and `hidden` records.
+        A record of another property, such as `permlevel`, is never returned.
+      security:
+        - frappeSession: []
+      parameters:
+        - name: doctype
+          in: query
+          required: true
+          description: The document type. For example `Employee`.
+          schema: {type: string, maxLength: 140}
+      responses:
+        "200":
+          description: The records and the fields of the type.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: object
+                    required: [doctype, properties, fields]
+                    properties:
+                      doctype: {type: string}
+                      properties:
+                        type: array
+                        items: {$ref: "#/components/schemas/FieldPropertyRecord"}
+                      fields:
+                        type: array
+                        items: {$ref: "#/components/schemas/FieldState"}
+              examples:
+                employee:
+                  value:
+                    message:
+                      doctype: Employee
+                      properties:
+                        - {fieldname: middle_name, property: label, value: İkinci ad, locked: false}
+                      fields:
+                        - {fieldname: first_name, label: First Name, fieldtype: Data, system: true, hidden_locked: true}
+                        - {fieldname: middle_name, label: Middle Name, fieldtype: Data, system: false, hidden_locked: false}
+        "401":
+          $ref: "#/components/responses/SessionExpired"
+        "403":
+          description: A guest request, a caller without a manager role, or a closed type.
+        "404":
+          description: The type is not found.
+
+  /platform_core.api.customization.set_field_property:
+    post:
+      tags: [field-properties]
+      operationId: setFieldProperty
+      summary: Adds or changes the label or the hidden flag of a field.
+      description: |
+        **This endpoint changes the site settings.** The effect starts at once.
+        The endpoint replaces the earlier record of the same field and property.
+        The record gets `doctype_or_field: DocField` and `is_system_generated: 0`.
+
+        The operation can be undone with `remove_field_property`.
+        The endpoint does not start a paid job.
+      security:
+        - frappeSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [doctype, fieldname, property, value]
+              additionalProperties: false
+              properties:
+                doctype: {type: string, maxLength: 140}
+                fieldname: {type: string, maxLength: 140}
+                property: {$ref: "#/components/schemas/Property"}
+                value:
+                  description: |
+                    For `label` a text of 1 to 140 characters. Spaces at the ends are removed.
+                    For `hidden` one of `0`, `1`, `"0"`, `"1"`, `true` and `false`.
+                  oneOf:
+                    - {type: string, minLength: 1, maxLength: 140}
+                    - {type: integer, enum: [0, 1]}
+                    - {type: boolean}
+            examples:
+              label:
+                value: {doctype: Employee, fieldname: middle_name, property: label, value: İkinci ad}
+              hidden:
+                value: {doctype: Employee, fieldname: custom_shoe_size, property: hidden, value: 1}
+      responses:
+        "200":
+          description: The stored value. `hidden` is returned as the text `"0"` or `"1"`.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: object
+                    required: [doctype, fieldname, property, value]
+                    properties:
+                      doctype: {type: string}
+                      fieldname: {type: string}
+                      property: {$ref: "#/components/schemas/Property"}
+                      value: {type: string}
+        "401":
+          $ref: "#/components/responses/SessionExpired"
+        "403":
+          description: |
+            A guest request, a caller without a manager role, a closed type, a property other
+            than `label` and `hidden`, or a system field.
+        "404":
+          description: The type or the field is not found.
+        "417":
+          description: The value is not valid for the property.
+
+  /platform_core.api.customization.remove_field_property:
+    post:
+      tags: [field-properties]
+      operationId: removeFieldProperty
+      summary: Deletes the label or hidden record of a field.
+      description: |
+        **This endpoint changes the site settings.** The field shows its standard value again.
+        The callers and the 403 cases are the same as in `set_field_property`.
+        The operation can be undone with `set_field_property`.
+      security:
+        - frappeSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [doctype, fieldname, property]
+              additionalProperties: false
+              properties:
+                doctype: {type: string, maxLength: 140}
+                fieldname: {type: string, maxLength: 140}
+                property: {$ref: "#/components/schemas/Property"}
+      responses:
+        "200":
+          description: The record was deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: object
+                    required: [doctype, fieldname, property]
+                    properties:
+                      doctype: {type: string}
+                      fieldname: {type: string}
+                      property: {$ref: "#/components/schemas/Property"}
+        "401":
+          $ref: "#/components/responses/SessionExpired"
+        "403":
+          description: The same cases as in `set_field_property`.
+        "404":
+          description: The type, the field or the record is not found.
+
+components:
+  responses:
+    SessionExpired:
+      description: The session cookie refers to a missing or expired session. Sign in again.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [exc_type]
+            properties:
+              session_expired:
+                type: integer
+                const: 1
+                description: Present when Frappe cannot restore the session. Absent for the identity idle timeout.
+              exc_type:
+                type: string
+                const: SessionExpired
+  securitySchemes:
+    frappeSession:
+      type: apiKey
+      in: cookie
+      name: sid
+      description: The Frappe session cookie. A POST request also needs the `X-Frappe-CSRF-Token` header.
+  schemas:
+    Property:
+      type: string
+      enum: [label, hidden]
+    FieldPropertyRecord:
+      type: object
+      required: [fieldname, property, value, locked]
+      properties:
+        fieldname: {type: string}
+        property: {$ref: "#/components/schemas/Property"}
+        value: {type: string}
+        locked:
+          type: boolean
+          description: An application fixture file names this record. It does not change.
+    FieldState:
+      type: object
+      required: [fieldname, label, fieldtype, system, hidden_locked]
+      properties:
+        fieldname: {type: string}
+        label: {type: [string, "null"]}
+        fieldtype: {type: string}
+        system:
+          type: boolean
+          description: A required field or a field an application added. No property changes.
+        hidden_locked:
+          type: boolean
+          description: The hidden flag does not change. True for a system field and above level 0.

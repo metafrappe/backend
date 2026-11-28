@@ -213,9 +213,11 @@ class TestTenantAdmin(IntegrationTestCase):
 			for ptype in ptypes:
 				self.assertEqual(rows[0][ptype], 1, (doctype, ptype))
 			# The standard rows of the type were copied, so the other roles keep their permission.
-			self.assertTrue(
-				frappe.db.exists("Custom DocPerm", {"parent": doctype, "role": "System Manager"}), doctype
-			)
+			# Not every type has a System Manager row: “Workspace” has “Workspace Manager” and “Desk User”.
+			standard = set(frappe.get_all("DocPerm", filters={"parent": doctype}, pluck="role"))
+			copied = set(frappe.get_all("Custom DocPerm", filters={"parent": doctype}, pluck="role"))
+			self.assertTrue(standard, doctype)
+			self.assertLessEqual(standard, copied, doctype)
 		for (doctype, level), ptypes in tenant_admin.LEVEL_GRANTS.items():
 			row = {"parent": doctype, "role": tenant_admin.ROLE, "permlevel": level, "if_owner": 0}
 			for ptype in ptypes:

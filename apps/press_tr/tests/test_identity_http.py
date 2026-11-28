@@ -17,6 +17,7 @@ from uuid import uuid4
 import frappe
 import jwt
 from cryptography.hazmat.primitives.asymmetric import rsa
+from team_membership_tests import TeamMembershipTests
 from test_auth_http import PressHttpClient
 
 from press_tr.api.test___init__ import LogoutAccessTests
@@ -40,6 +41,7 @@ class IdentityHttpTest(
 	AuthAccessTests,
 	IdentityAccessTests,
 	MaintenanceAccessTests,
+	TeamMembershipTests,
 	PressHttpClient,
 	unittest.TestCase,
 ):

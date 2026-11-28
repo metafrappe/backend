@@ -39,6 +39,7 @@ def ensure() -> None:
 	"""Inserts every missing panel role, then every missing profile. Runs after install and migrate."""
 	for record in load_roles():
 		if not frappe.db.exists("Role", record["name"]):
+			# ignore-permissions: install and migrate setup inserts missing bundled panel roles from role.json; not a request path.
 			frappe.get_doc(
 				doctype="Role",
 				role_name=record["role_name"],
@@ -70,6 +71,7 @@ def insert_profile_now(record: dict, app: str = "platform_core") -> None:
 	if not before:
 		flags.in_install = app
 	try:
+		# ignore-permissions: install and migrate setup inserts missing bundled Role Profiles from role_profile.json; not a request path.
 		doc.insert(ignore_permissions=True)
 	finally:
 		flags.in_install = before

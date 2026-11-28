@@ -30,6 +30,7 @@ def _as_system(doc: Document) -> Iterator[Document]:
 	It is put back in `finally`, also when the write fails.
 	"""
 	previous = doc.flags.ignore_permissions
+	# ignore-permissions: AI Action Log and AI Action Proposal are internal system records not chosen or writable by end users.
 	doc.flags.ignore_permissions = True  # nosemgrep: frappe-ignore-permissions
 	try:
 		yield doc

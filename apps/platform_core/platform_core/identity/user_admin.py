@@ -119,9 +119,13 @@ def set_user_role_profiles(user: object, role_profiles: object) -> dict:
 		_deny(_("Only a System Manager can give the role {0}.").format(desk[0]))
 	doc = frappe.get_doc("User", user)
 	doc.set("role_profiles", [{"role_profile": name} for name in names])
-	# The caller's right was checked above. `guard_user` of the access module still runs on save.
+	previous = doc.flags.ignore_permissions
+	# ignore-permissions: Tenant Admin lacks User write permission; require_manager, tenant_user, role checks, and guard_user enforce scope.
 	doc.flags.ignore_permissions = True
-	doc.save()
+	try:
+		doc.save()
+	finally:
+		doc.flags.ignore_permissions = previous
 	return {
 		"user": doc.name,
 		"role_profiles": [row.role_profile for row in doc.role_profiles],

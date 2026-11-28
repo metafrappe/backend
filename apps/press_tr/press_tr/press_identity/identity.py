@@ -48,6 +48,7 @@ def remember_press_session(identity_link: str, keycloak_sid: str) -> None:
 	for names in session_mapping_pages({"identity_link": identity_link, "keycloak_sid": keycloak_sid}):
 		if any(read_press_session_id(name) == sid for name in names):
 			return
+	# ignore-permissions: current non-guest user owns the verified identity link; PTR Keycloak Session has no DocType permissions.
 	frappe.get_doc(
 		{
 			"doctype": SESSION_MAPPING_DOCTYPE,
@@ -91,7 +92,7 @@ def bind_identity(claims):
 		validate_local_user(user)
 
 	link = frappe.get_doc({"doctype": IDENTITY_LINK, "issuer": issuer, "subject": subject, "user": user})
-	# Only a verified identity flow can write this internal binding.
+	# ignore-permissions: only verified OIDC login callback or authorized service provisioning creates internal PTR Identity Link records.
 	link.insert(ignore_permissions=True)
 	return frappe._dict(name=link.name, user=user)
 
@@ -144,6 +145,6 @@ def create_team(user: str, title: str, organization_id: str | None = None) -> st
 		}
 	)
 	with as_press_user(user):
-		# Only authorized provisioning creates this team and its initial owner.
+		# ignore-permissions: verified login and authorized service provisioning create a Team under its validated local Website User owner.
 		doc.insert(ignore_permissions=True)
 	return doc.name

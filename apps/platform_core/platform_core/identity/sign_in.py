@@ -355,6 +355,7 @@ def create_link(issuer: str, subject: str, user: str) -> str:
 
 	inserted = False
 	with savepoint(catch=(frappe.UniqueValidationError, frappe.DuplicateEntryError)):
+		# ignore-permissions: login callback runs as Guest; target user comes from the verified identity provider token, not client input.
 		doc.insert(ignore_permissions=True)  # nosemgrep: frappe-ignore-permissions
 		inserted = True
 	if inserted:

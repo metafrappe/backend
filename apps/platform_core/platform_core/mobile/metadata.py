@@ -21,7 +21,7 @@ def insert_metadata(doctype, *, ignore_duplicate=False, **fields):
 	doc = frappe.get_doc({"doctype": doctype, **fields})
 	previous = doc.flags.ignore_permissions
 	try:
-		# The approved operation creates server-owned metadata, never a business record.
+		# ignore-permissions: inserts only server-owned mobile metadata types from INTERNAL_TYPES after caller authorization.
 		return doc.insert(  # nosemgrep: frappe-ignore-permissions
 			ignore_permissions=True, ignore_if_duplicate=ignore_duplicate
 		)

@@ -181,6 +181,7 @@ def redact_profile(profile, placeholder: str) -> None:
 	redact_record_ownership(user, placeholder)
 	# File hooks unlink local data immediately. Run the table scan before them.
 	for name in sorted(personal_files):
+		# ignore-permissions: authorized anonymization permanently deletes personal File records owned by or attached to the linked account.
 		frappe.delete_doc("File", name, ignore_permissions=True, delete_permanently=True)
 	frappe.db.after_commit.add(lambda: clear_session_cache(user, ()))
 
@@ -325,6 +326,7 @@ def clean_press_ownership(user: str) -> None:
 			)
 	if frappe.db.exists("DocType", "User SSH Key"):
 		for row in iter_named_rows("User SSH Key", {"user": user}):
+			# ignore-permissions: authorized anonymization deletes User SSH Key records belonging to the linked account.
 			frappe.delete_doc("User SSH Key", row.name, ignore_permissions=True)
 
 	teams = {

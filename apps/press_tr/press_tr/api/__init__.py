@@ -89,5 +89,5 @@ def _revoke_matching_sessions(filters: dict) -> None:
 		for name, sid in mappings.items():
 			if user := users.pop(sid, None):
 				delete_session(sid=sid, user=user, reason="Keycloak logout")
-			# A verified logout notification may revoke only its matched internal mappings.
+			# ignore-permissions: verified Keycloak logout notification runs as Guest and revokes only its matched internal session mappings.
 			frappe.delete_doc(SESSION_MAPPING_DOCTYPE, name, ignore_permissions=True)

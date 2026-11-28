@@ -85,6 +85,7 @@ class FrappeNoticeStore:
 		if row:
 			frappe.db.set_value(CASE, row.name, "latest_attempt", attempt)
 			return
+		# ignore-permissions: internal server-side open_attempt writes PLT Verification Case; no endpoint whitelists it and AI writes are closed.
 		frappe.get_doc({"doctype": CASE, "case_id": case_id, "latest_attempt": attempt}).insert(
 			ignore_permissions=True
 		)
@@ -106,6 +107,7 @@ class FrappeNoticeStore:
 		# The unique index refuses the second insert; the savepoint keeps the rest of the request.
 		frappe.db.savepoint("atonota_notice")
 		try:
+			# ignore-permissions: external provider webhook has no Frappe user session; HMAC signature over raw body is verified before inserting PLT Verification Notice.
 			doc.insert(ignore_permissions=True)
 		except (frappe.UniqueValidationError, frappe.DuplicateEntryError):
 			frappe.db.rollback(save_point="atonota_notice")

@@ -105,6 +105,7 @@ def open_owner_tasks(result: decision.Result) -> None:
 		text = _task_text(task)
 		if frappe.db.exists("ToDo", {"status": "Open", "description": text}):
 			continue
+		# ignore-permissions: server opens one System Manager ToDo per empty policy rule; caller has no ToDo write permission and does not choose the record.
 		frappe.get_doc({"doctype": "ToDo", "status": "Open", "description": text, "role": TASK_ROLE}).insert(
 			ignore_permissions=True
 		)

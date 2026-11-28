@@ -68,7 +68,7 @@ def _workspace(name: str, public: int) -> None:
 		title=name,
 		public=public,
 		for_user="" if public else "Administrator",
-		module="Setup" if public else None,
+		module="Setup",
 		content="[]",
 		sequence_id=1,
 	).insert(ignore_permissions=True)
@@ -106,11 +106,19 @@ class TestCustomization(IntegrationTestCase):
 			"Custom Field", filters={"dt": TARGET, "fieldname": ("like", FIELD_PREFIX + "%")}, pluck="name"
 		):
 			frappe.delete_doc("Custom Field", name, ignore_permissions=True, force=True)
-		frappe.db.delete("Workspace", {"name": ("in", [WORKSPACE, WORKSPACE_PRIVATE])})
+		names = [WORKSPACE, WORKSPACE_PRIVATE]
+		frappe.db.delete("Workspace", {"name": ("in", names)})
+		# The child rows too: a row left behind would load into the next workspace of the same name.
+		for child in ("Has Role", "Workspace Link"):
+			frappe.db.delete(child, {"parenttype": "Workspace", "parent": ("in", names)})
 		frappe.clear_cache()
 
 	def setUp(self):
 		super().setUp()
+		# The test site runs in developer mode. Only the developer mode test turns it on here.
+		self.developer_mode = patch.object(tenant_admin, "developer_mode", return_value=False)
+		self.developer_mode.start()
+		self.addCleanup(self.developer_mode.stop)
 		frappe.set_user("Administrator")
 		self.clean()
 		_workspace(WORKSPACE, 1)
@@ -165,7 +173,7 @@ class TestCustomization(IntegrationTestCase):
 		return self.send(client, "POST", API + endpoint, body=params)
 
 	def field_body(self, **values) -> dict:
-		body = {"dt": TARGET, "label": "CZ Not", "fieldname": "cz_not", "fieldtype": "Data"}
+		body = {"dt": TARGET, "label": "CZ Not", "fieldname": "custom_cz_not", "fieldtype": "Data"}
 		body.update(values)
 		return body
 
@@ -212,9 +220,16 @@ class TestCustomization(IntegrationTestCase):
 		self.assertTrue(frappe.db.get_value("Custom Field", name, "fieldname").startswith("custom_"))
 		response = self.resource(client, "PUT", "Custom Field", name, body={"label": "CZ Yeni Not"})
 		self.assertEqual(response.status_code, 200, response.json)
+		fieldname = frappe.db.get_value("Custom Field", name, "fieldname")
+		response = self.call(
+			client, "set_field_property", doctype=TARGET, fieldname=fieldname, property="hidden", value=1
+		)
+		self.assertEqual(response.status_code, 200, response.json)
+		# Frappe deletes the field's own settings with the field. The guard lets that step pass.
 		response = self.resource(client, "DELETE", "Custom Field", name)
 		self.assertIn(response.status_code, (200, 202), response.json)
 		self.assertFalse(frappe.db.exists("Custom Field", name))
+		self.assertFalse(frappe.db.exists("Property Setter", {"doc_type": TARGET, "field_name": fieldname}))
 
 	# --- acceptance 2: closed types ---
 
@@ -246,6 +261,10 @@ class TestCustomization(IntegrationTestCase):
 			"attach": {"fieldtype": "Attach"},
 			"link to a closed type": {"fieldtype": "Link", "options": "User"},
 			"system generated": {"is_system_generated": 1},
+			"virtual": {"is_virtual": 1},
+			"no xss filter": {"ignore_xss_filter": 1},
+			# Frappe adds the prefix only to a name it makes from the label.
+			"name without prefix": {"fieldname": "cz_not"},
 		}
 		for case, values in cases.items():
 			with self.subTest(case=case):
@@ -280,6 +299,9 @@ class TestCustomization(IntegrationTestCase):
 			fieldtype="Data",
 			is_system_generated=1,
 		).insert(ignore_permissions=True)
+		# Frappe refuses a field the Administrator owns with its own rule (417). Another owner
+		# shows that the application flag alone gives 403.
+		frappe.db.set_value("Custom Field", doc.name, "owner", HOLDER)
 		client = self.login()
 		response = self.resource(client, "PUT", "Custom Field", doc.name, body={"label": "CZ Degisti"})
 		self.assertEqual(response.status_code, 403, response.json)
@@ -599,7 +621,16 @@ class TestCustomization(IntegrationTestCase):
 		frappe.set_user(HOLDER)
 		doc = frappe.get_doc("Workspace", WORKSPACE)
 		doc.is_hidden = 1
-		with patch.dict(frappe.conf, {"developer_mode": 1}), self.assertRaises(frappe.PermissionError):
+		with (
+			patch.object(tenant_admin, "developer_mode", return_value=True),
+			self.assertRaises(frappe.PermissionError),
+		):
 			doc.save()
 		frappe.set_user("Administrator")
 		self.assertEqual(frappe.db.get_value("Workspace", WORKSPACE, "is_hidden"), 0)
+
+	def test_developer_mode_is_read_from_the_site_config(self):
+		read = self.developer_mode.temp_original
+		for value, expected in ((1, True), ("1", True), (0, False), (None, False)):
+			with self.subTest(value=value), patch.dict(frappe.conf, {"developer_mode": value}):
+				self.assertIs(read(), expected)

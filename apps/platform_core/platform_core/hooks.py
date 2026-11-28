@@ -109,6 +109,10 @@ ai_write_closed_doctypes = [
 	# G-169: only the Platform Operator changes reseller links, never a generic AI write.
 	"Reseller Customer Link",
 	"Reseller Customer Request",
+	# G-97: the customization types change only through the panel's guarded paths.
+	"Custom Field",
+	"Property Setter",
+	"Workspace",
 ]
 # Website User method allow list (docs/sozlesmeler.md). Identity adds only the method a portal user calls.
 website_user_allowed_methods = [
@@ -172,6 +176,10 @@ website_user_allowed_methods = [
 	"platform_core.api.reseller.list_customers",
 	"platform_core.api.reseller.customer_status",
 	"platform_core.api.reseller.request_customer",
+	# G-97: field labels and hidden flags. The endpoints refuse everyone but the two manager roles.
+	"platform_core.api.customization.list_field_properties",
+	"platform_core.api.customization.set_field_property",
+	"platform_core.api.customization.remove_field_property",
 ]
 
 
@@ -242,12 +250,24 @@ doc_events = {
 		"after_rename": ["platform_core.access.rules.clear_cache"],
 	},
 	"Custom Field": {
+		# G-97: a tenant field stays on a business type, at level 0 and without code.
+		"before_insert": ["platform_core.access.tenant_admin.guard_custom_field"],
+		"validate": ["platform_core.access.tenant_admin.guard_custom_field"],
 		"on_update": ["platform_core.shell.cache.invalidate_permissions"],
-		"on_trash": ["platform_core.shell.cache.invalidate_permissions"],
+		"on_trash": [
+			"platform_core.access.tenant_admin.guard_custom_field",
+			"platform_core.shell.cache.invalidate_permissions",
+		],
 	},
 	"Property Setter": {
+		# G-97: only the customization endpoints write the type.
+		"before_insert": ["platform_core.access.customization.guard_property_setter"],
+		"validate": ["platform_core.access.customization.guard_property_setter"],
 		"on_update": ["platform_core.shell.cache.invalidate_permissions"],
-		"on_trash": ["platform_core.shell.cache.invalidate_permissions"],
+		"on_trash": [
+			"platform_core.access.customization.guard_property_setter",
+			"platform_core.shell.cache.invalidate_permissions",
+		],
 	},
 	# This DocType is installed with the access-rule module. Keep shell validators fresh after rule changes.
 	"PLT Access Rule": {
@@ -267,8 +287,13 @@ doc_events = {
 		"on_trash": ["platform_core.shell.cache.invalidate_permissions"],
 	},
 	"Workspace": {
+		# G-97: the holder changes only the hidden flag and the order of a shared workspace.
+		"validate": ["platform_core.access.tenant_admin.guard_workspace"],
 		"on_change": ["platform_core.shell.cache.invalidate_permissions"],
-		"on_trash": ["platform_core.shell.cache.invalidate_permissions"],
+		"on_trash": [
+			"platform_core.access.tenant_admin.guard_workspace",
+			"platform_core.shell.cache.invalidate_permissions",
+		],
 	},
 	"Custom Workspace": {
 		"on_change": ["platform_core.shell.cache.invalidate_permissions"],

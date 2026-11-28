@@ -46,6 +46,11 @@ GRANTS = {
 	"PLT AI Provider": ("read", "write", "create"),
 	"PLT AI Account": ("read", "write", "create"),
 	"PLT AI API": ("read", "write", "create"),
+	# G-97 (AJA-2516): the panel's customization page. `guard_custom_field` and `guard_workspace`
+	# narrow these rights. “Property Setter” gets no right: only `platform_core.access.customization`
+	# writes it.
+	"Custom Field": ("read", "write", "create", "delete", "report"),
+	"Workspace": ("read", "write"),
 }
 # Higher level permissions. The role list of a profile is at level 1.
 # The credential of an API is at level 1. The admin writes it and never reads it back.
@@ -269,6 +274,132 @@ def guard_user(doc, method=None, *args, **kwargs) -> None:
 		_deny(_role_message(role))
 	if before is not None and doc.name == "Administrator":
 		_deny(_protected_message())
+
+
+# --- customization (G-97) ---
+
+# Field types a tenant adds. A type that holds a secret, runs code or markup, opens a child table,
+# points to any type or holds a file is not on the list.
+CUSTOM_FIELD_TYPES = frozenset(
+	{
+		"Data",
+		"Small Text",
+		"Text",
+		"Long Text",
+		"Int",
+		"Float",
+		"Currency",
+		"Percent",
+		"Check",
+		"Date",
+		"Datetime",
+		"Time",
+		"Select",
+		"Link",
+	}
+)
+# These settings stay empty. `fetch_from` copies a value from another record without the field's
+# permission check: a new field could copy a level 1 field such as a birth date.
+CUSTOM_FIELD_EMPTY = ("fetch_from", "depends_on", "mandatory_depends_on", "read_only_depends_on")
+# These settings stay off. An application sets `is_system_generated`. A virtual field runs code.
+# `ignore_xss_filter` turns off the markup filter of the field.
+CUSTOM_FIELD_OFF = ("is_system_generated", "is_virtual", "ignore_xss_filter")
+# The only workspace fields the holder changes.
+WORKSPACE_FIELDS = frozenset({"is_hidden", "sequence_id"})
+# Derived from the link target on every save, so a stale stored value is not a change.
+WORKSPACE_DERIVED = frozenset({"report_ref_doctype"})
+
+
+def _field_message(fieldname: str) -> str:
+	return _("Only a System Manager can change the field {0}.").format(fieldname)
+
+
+def guard_custom_field(doc, method=None, *args, **kwargs) -> None:
+	"""A tenant field: on a business type, named `custom_`, of a plain type and at level 0.
+
+	A field an application installed (`is_system_generated`) is neither changed nor deleted.
+	"""
+	if _trusted():
+		return
+	before = _before(doc)
+	for row in (doc, before):
+		if row is not None and not grantable_type(row.dt):
+			_deny(_("Only a System Manager can add fields to {0}.").format(row.dt))
+	if before is not None and before.is_system_generated:
+		_deny(_field_message(before.fieldname))
+	if method == "on_trash":
+		return
+	# The name gets its prefix only after `before_insert` (`CustomField.autoname`).
+	if method == "validate" and not (doc.fieldname or "").startswith("custom_"):
+		_deny(_field_message(doc.fieldname))
+	if doc.fieldtype not in CUSTOM_FIELD_TYPES:
+		_deny(_("A tenant cannot add a field of type {0}.").format(doc.fieldtype))
+	if doc.fieldtype == "Link" and not grantable_type(doc.options):
+		_deny(_("A tenant field cannot link to {0}.").format(doc.options))
+	for key in (*CUSTOM_FIELD_EMPTY, *CUSTOM_FIELD_OFF):
+		if doc.get(key):
+			_deny(_("Only a System Manager can set {0} on a field.").format(key))
+	if cint(doc.permlevel):
+		_deny(_("Only a System Manager can set {0} on a field.").format("permlevel"))
+
+
+def _workspace_value(doc, df):
+	"""The stored meaning of one field. A child table is compared by its rows' values."""
+	if df.fieldtype in frappe.model.table_fields:
+		child = frappe.get_meta(df.options)
+		return [
+			{
+				field.fieldname: _plain(row.get(field.fieldname))
+				for field in child.fields
+				if field.fieldname not in WORKSPACE_DERIVED and _stored(field)
+			}
+			for row in doc.get(df.fieldname) or []
+		]
+	return _plain(doc.get(df.fieldname))
+
+
+def _stored(df) -> bool:
+	"""A field that keeps a value. Frappe's `no_value_fields` also names the child tables."""
+	return df.fieldtype in frappe.model.table_fields or df.fieldtype not in frappe.model.no_value_fields
+
+
+def _plain(value):
+	"""An empty text, a missing value and 0 are the same stored value."""
+	return value if value not in (None, "", 0) else None
+
+
+def developer_mode() -> bool:
+	return bool(cint(frappe.conf.get("developer_mode")))
+
+
+def guard_workspace(doc, method=None, *args, **kwargs) -> None:
+	"""Only the hidden flag and the order of a shared workspace change. No workspace is made or deleted.
+
+	In developer mode Frappe writes a standard workspace to the application folder, which every
+	tenant shares, so every write is refused.
+	"""
+	if _trusted():
+		return
+	if developer_mode():
+		_deny(_("Workspaces cannot be changed while developer mode is on."))
+	before = _before(doc)
+	if method == "on_trash" or before is None:
+		_deny(_("Only a System Manager can add or delete a workspace."))
+	if not (before.public and doc.public):
+		_deny(_("Only a System Manager can change the workspace {0}.").format(before.name))
+	from frappe.desk.doctype.workspace.workspace import sanitize_content
+
+	for df in doc.meta.fields:
+		if df.fieldname in WORKSPACE_FIELDS or not _stored(df):
+			continue
+		old = _workspace_value(before, df)
+		# `Workspace.before_validate` cleans the content before this check runs.
+		if df.fieldname == "content" and before.content:
+			old = (old, _plain(sanitize_content(before.content)))
+		else:
+			old = (old,)
+		if _workspace_value(doc, df) not in old:
+			_deny(_("Only a System Manager can change {0} of a workspace.").format(df.fieldname))
 
 
 # --- permission rows (G-62) ---

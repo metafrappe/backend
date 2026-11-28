@@ -616,7 +616,8 @@ def _load_enterprise_membership(doc: _FakeExceptionDoc):
     }
     module_path = APPS / "platform_core/platform_core/identity/enterprise_membership.py"
     spec = importlib.util.spec_from_file_location("_test_enterprise_membership", module_path)
-    assert spec is not None and spec.loader is not None
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Could not load enterprise_membership module.")
     with mock.patch.dict(sys.modules, stubs):
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)

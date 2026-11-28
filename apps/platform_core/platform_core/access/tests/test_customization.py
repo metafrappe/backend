@@ -35,6 +35,8 @@ TARGET_REQUIRED = "sales_partner_type"
 PERSONAL_TYPE = "Employee"
 PERSONAL_FIELD = "date_of_birth"
 PERSONAL_SETTER = f"{PERSONAL_TYPE}-{PERSONAL_FIELD}-permlevel"
+# A plain field of the same type: not required and at level 0.
+PLAIN_FIELD = "middle_name"
 WORKSPACE = "CZ Ortak Alan"
 WORKSPACE_PRIVATE = "CZ Ozel Alan"
 FIELD_PREFIX = "custom_cz_"
@@ -356,6 +358,7 @@ class TestCustomization(IntegrationTestCase):
 			(PERSONAL_TYPE, "naming_series", "label", "Seri"),
 			# A required field of the type. Hidden, the record could not be saved.
 			(TARGET, TARGET_REQUIRED, "hidden", 1),
+			(TARGET, TARGET_REQUIRED, "label", "CZ"),
 			# A field above level 0 keeps its hidden flag.
 			(PERSONAL_TYPE, PERSONAL_FIELD, "hidden", 1),
 		]
@@ -398,20 +401,24 @@ class TestCustomization(IntegrationTestCase):
 
 	def test_application_record_is_not_changed(self):
 		# A setter named in an application fixture file stays as the application wrote it.
-		key = (TARGET, TARGET_REQUIRED, "label")
+		key = (PERSONAL_TYPE, PLAIN_FIELD, "label")
 		client = self.login()
 		with patch.object(customization, "fixture_keys", return_value=frozenset({key})):
 			response = self.call(
 				client,
 				"set_field_property",
-				doctype=TARGET,
-				fieldname=TARGET_REQUIRED,
+				doctype=PERSONAL_TYPE,
+				fieldname=PLAIN_FIELD,
 				property="label",
 				value="CZ",
 			)
 			self.assertEqual(response.status_code, 403, response.json)
 			response = self.call(
-				client, "remove_field_property", doctype=TARGET, fieldname=TARGET_REQUIRED, property="label"
+				client,
+				"remove_field_property",
+				doctype=PERSONAL_TYPE,
+				fieldname=PLAIN_FIELD,
+				property="label",
 			)
 			self.assertEqual(response.status_code, 403, response.json)
 
@@ -422,8 +429,8 @@ class TestCustomization(IntegrationTestCase):
 				response = self.call(
 					client,
 					"set_field_property",
-					doctype=TARGET,
-					fieldname=TARGET_REQUIRED,
+					doctype=PERSONAL_TYPE,
+					fieldname=PLAIN_FIELD,
 					property=prop,
 					value="1",
 				)
@@ -451,7 +458,7 @@ class TestCustomization(IntegrationTestCase):
 			client,
 			"set_field_property",
 			doctype=TARGET,
-			fieldname=TARGET_REQUIRED,
+			fieldname=field.fieldname,
 			property="label",
 			value="CZ Tur",
 		)
@@ -487,26 +494,39 @@ class TestCustomization(IntegrationTestCase):
 			(row["fieldname"], row["property"], row["value"])
 			for row in response.json["message"]["properties"]
 		}
-		self.assertEqual(listed, {(TARGET_REQUIRED, "label", "CZ Tur"), (field.fieldname, "hidden", "1")})
+		self.assertEqual(listed, {(field.fieldname, "label", "CZ Tur"), (field.fieldname, "hidden", "1")})
 		fields = {row["fieldname"]: row for row in response.json["message"]["fields"]}
+		self.assertTrue(fields[TARGET_REQUIRED]["system"])
 		self.assertTrue(fields[TARGET_REQUIRED]["hidden_locked"])
 		self.assertFalse(fields[field.fieldname]["system"])
+		self.assertFalse(fields[field.fieldname]["hidden_locked"])
 
 		response = self.call(
-			client, "remove_field_property", doctype=TARGET, fieldname=TARGET_REQUIRED, property="label"
+			client, "remove_field_property", doctype=TARGET, fieldname=field.fieldname, property="label"
 		)
 		self.assertEqual(response.status_code, 200, response.json)
 		self.assertFalse(
 			frappe.db.exists(
-				"Property Setter", {"doc_type": TARGET, "field_name": TARGET_REQUIRED, "property": "label"}
+				"Property Setter", {"doc_type": TARGET, "field_name": field.fieldname, "property": "label"}
 			)
 		)
 
-	def test_list_does_not_show_other_properties(self):
+	def test_standard_field_label_changes_and_list_hides_other_properties(self):
 		client = self.login()
+		response = self.call(
+			client,
+			"set_field_property",
+			doctype=PERSONAL_TYPE,
+			fieldname=PLAIN_FIELD,
+			property="label",
+			value="CZ",
+		)
+		self.assertEqual(response.status_code, 200, response.json)
 		response = self.call(client, "list_field_properties", doctype=PERSONAL_TYPE)
 		self.assertEqual(response.status_code, 200, response.json)
-		self.assertNotIn("permlevel", {row["property"] for row in response.json["message"]["properties"]})
+		properties = {(row["fieldname"], row["property"]) for row in response.json["message"]["properties"]}
+		self.assertIn((PLAIN_FIELD, "label"), properties)
+		self.assertNotIn("permlevel", {prop for _, prop in properties})
 
 	# --- acceptance 6: the assistant role ---
 

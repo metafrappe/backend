@@ -20,8 +20,8 @@ class DriverReadmeTests(unittest.TestCase):
         readme = NAMING / "README.md"
         self.assertTrue(readme.is_file(), "The CP2 operator README is missing.")
         instructions = readme.read_text(encoding="utf-8")
-        dry_run = "python3.14 -B backend/dev/naming/run_cp2.py >"
-        apply = "python3.14 -B backend/dev/naming/run_cp2.py --apply >"
+        dry_run = "python3.14 -B dev/naming/run_cp2.py >"
+        apply = "python3.14 -B dev/naming/run_cp2.py --apply >"
         fetch = 'git fetch --no-tags "$cp2_copy" "$cp2_commit"'
         pick = 'env -u GIT_COMMITTER_NAME -u GIT_COMMITTER_EMAIL git cherry-pick "$cp2_commit"'
         rollback = 'env -u GIT_COMMITTER_NAME -u GIT_COMMITTER_EMAIL git revert "$cp2_target_commit"'
@@ -60,9 +60,8 @@ class DriverTests(unittest.TestCase):
         self.git(self.repo, "init", "-qb", "backend")
         self.git(self.repo, "config", "user.name", "karacaismail")
         self.git(self.repo, "config", "user.email", "35493655+karacaismail@users.noreply.github.com")
-        (self.repo / "backend").mkdir()
-        (self.repo / "backend/example.py").write_text("old_name = True\n")
-        self.git(self.repo, "add", "backend")
+        (self.repo / "example.py").write_text("old_name = True\n")
+        self.git(self.repo, "add", ".")
         self.git(self.repo, "commit", "-qm", "Deneme tabanı")
         self.git(self.repo, "worktree", "add", "-qb", "stale", str(self.stale))
         self.git(self.repo, "commit", "--allow-empty", "-qm", "Tabanı ilerlet")
@@ -70,7 +69,7 @@ class DriverTests(unittest.TestCase):
         source = self.tools / "apply_renames.py"
         source.write_text(
             "import sys\nfrom pathlib import Path\n"
-            "file = Path('backend/example.py')\n"
+            "file = Path('example.py')\n"
             "if '--check-modules' not in sys.argv:\n"
             "    file.write_text(file.read_text().replace('old_name', 'new_name'))\n"
         )
@@ -98,7 +97,7 @@ class DriverTests(unittest.TestCase):
                 sys.executable,
                 "-B",
                 "-c",
-                "from pathlib import Path; assert 'new_name' in Path('backend/example.py').read_text()",
+                "from pathlib import Path; assert 'new_name' in Path('example.py').read_text()",
             ],
             cwd=self.repo,
             env=self.env,
@@ -108,7 +107,7 @@ class DriverTests(unittest.TestCase):
 
     def test_default_reports_every_worktree_without_writing_worker_refs(self):
         initial = self.git(self.repo, "show-ref", "--heads")
-        dirty = self.worker / "backend/example.py"
+        dirty = self.worker / "example.py"
         dirty.write_text("uncommitted = True\n")
         result = self.run_driver()
         self.assertEqual(result.returncode, 1, result.stderr)

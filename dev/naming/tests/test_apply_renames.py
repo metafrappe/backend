@@ -59,8 +59,8 @@ class RenameTests(unittest.TestCase):
 
     def test_real_map_renames_module_gate_literals(self):
         paths = {
-            "backend/dev/ai_readiness/gate.py": ('module == "yapay_zeka"\n', 'module == "ai"\n'),
-            "backend/apps/press_tr/tests/test_module_boundaries.py": (
+            "dev/ai_readiness/gate.py": ('module == "yapay_zeka"\n', 'module == "ai"\n'),
+            "apps/press_tr/tests/test_module_boundaries.py": (
                 'layer = APP / "kimlik"\n',
                 'layer = APP / "press_identity"\n',
             ),
@@ -76,8 +76,8 @@ class RenameTests(unittest.TestCase):
         self.assertEqual(self.rename(None, "--check-modules").returncode, 0)
 
     def test_real_map_preserves_fstring_copy_and_renames_expressions(self):
-        errors = "backend/libs/oidc_verify/src/oidc_verify"
-        keycloak = "backend/identity/keycloak/tests"
+        errors = "libs/oidc_verify/src/oidc_verify"
+        keycloak = "identity/keycloak/tests"
         self.write(
             f"{errors}/hatalar.py",
             'def reject(code):\n    raise ValueError(f"Bilinmeyen hata kodu: {code}")\n',
@@ -98,60 +98,60 @@ class RenameTests(unittest.TestCase):
 
     def test_real_map_finds_unscoped_module_literals_and_raw_embedded_imports(self):
         ref = self.write(
-            "backend/apps/platform_core/platform_core/erisim/tests/test_translations.py",
+            "apps/platform_core/platform_core/erisim/tests/test_translations.py",
             'layer = ROOT / "erisim"\nasset = "/assets/platform_core/kimlik/logo.svg"\n',
         )
-        self.write("backend/dev/unlisted.py", 'snippet = "from platform_core.kimlik.api import x"\n')
+        self.write("dev/unlisted.py", 'snippet = "from platform_core.kimlik.api import x"\n')
         self.git("add", ".")
         outcome = self.rename(None, "--check-modules")
         self.assertEqual(outcome.returncode, 1, outcome.stdout)
-        self.assertIn("backend/dev/unlisted.py:1", outcome.stdout)
+        self.assertIn("dev/unlisted.py:1", outcome.stdout)
         outcome = self.rename(None)
         self.assertEqual(outcome.returncode, 0, outcome.stderr)
         self.assertFalse(ref.exists())
-        target = self.root / "backend/apps/platform_core/platform_core/access/tests/test_translations.py"
+        target = self.root / "apps/platform_core/platform_core/access/tests/test_translations.py"
         self.assertIn('ROOT / "access"', target.read_text())
 
     def test_redirect_is_restored_if_interrupted_after_git_mv(self):
-        self.write("backend/PROJE-KAYDI.md", "Record\n")
+        self.write("PROJE-KAYDI.md", "Record\n")
         self.git("add", ".")
-        self.git("mv", "backend/PROJE-KAYDI.md", "backend/PROJECT-RECORD.md")
-        rules = [{"old": "backend/PROJE-KAYDI.md", "new": "backend/PROJECT-RECORD.md", "type": "path"}]
+        self.git("mv", "PROJE-KAYDI.md", "PROJECT-RECORD.md")
+        rules = [{"old": "PROJE-KAYDI.md", "new": "PROJECT-RECORD.md", "type": "path"}]
         outcome = self.rename(rules)
         self.assertEqual(outcome.returncode, 0, outcome.stderr)
-        self.assertIn("PROJECT-RECORD.md", (self.root / "backend/PROJE-KAYDI.md").read_text())
+        self.assertIn("PROJECT-RECORD.md", (self.root / "PROJE-KAYDI.md").read_text())
 
     def test_module_allowlist_accepts_only_exact_file_and_line(self):
         note = '# Keep the legacy example "platform_core.kimlik".\n'
-        source = self.write("backend/example.py", note)
+        source = self.write("example.py", note)
         self.git("add", ".")
         allowlist = self.workspace / "allowed.json"
-        allowlist.write_text(json.dumps([{"path": "backend/example.py", "line_text": note.strip()}]))
+        allowlist.write_text(json.dumps([{"path": "example.py", "line_text": note.strip()}]))
         flags = ("--check-modules", "--module-allowlist", str(allowlist))
         self.assertEqual(self.rename(None, *flags).returncode, 0)
         source.write_text(note + 'example = "platform_core.kimlik"\n')
         report = self.rename(None, *flags)
         self.assertEqual(report.returncode, 1)
-        self.assertIn("backend/example.py:2", report.stdout)
+        self.assertIn("example.py:2", report.stdout)
 
     def test_reports_markdown_code_and_links_without_mutating_content(self):
         content = "Kimlik hakkında. `platform_core.kimlik`. [Görev](docs/isler/kimlik-realm.md).\n"
-        source = self.write("backend/README.md", content)
+        source = self.write("README.md", content)
         self.git("add", ".")
         report = self.rename(None, "--report-docs")
         self.assertEqual(report.returncode, 0, report.stderr)
-        self.assertIn("backend/README.md:1: platform_core.kimlik", report.stdout)
+        self.assertIn("README.md:1: platform_core.kimlik", report.stdout)
         self.assertIn("kimlik-realm.md", report.stdout)
         self.assertEqual(source.read_text(), content)
 
     def test_module_allowlist_covers_english_ai_copy(self):
         self.write(
-            "backend/apps/platform_core/platform_core/api/ai.py",
+            "apps/platform_core/platform_core/api/ai.py",
             '"""Endpoints of the AI access layer. The business rules live in the '
             '`platform_core.yapay_zeka` module.\n"""\n',
         )
         self.write(
-            "backend/contracts/platform_core-ai.openapi.yaml",
+            "contracts/platform_core-ai.openapi.yaml",
             "description: |\n"
             "  This contract describes the endpoints of the `platform_core.yapay_zeka` module.\n",
         )
@@ -160,7 +160,7 @@ class RenameTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_mobile_client_inline_module_reference_is_renamed(self):
-        path = "backend/identity/identity_sync/tests/test_mobile_client.py"
+        path = "identity/identity_sync/tests/test_mobile_client.py"
         original = (
             '"""The client lives in another job\'s folder '
             "(`apps/platform_core/.../mobil/identity_sync_client.py`).\n"
@@ -169,7 +169,7 @@ class RenameTests(unittest.TestCase):
         )
         source = self.write(path, original)
         unrelated = self.write(
-            "backend/unrelated.py", '"""See `apps/platform_core/.../mobil/identity_sync_client.py`. """\n'
+            "unrelated.py", '"""See `apps/platform_core/.../mobil/identity_sync_client.py`. """\n'
         )
         self.git("add", ".")
         baseline = self.rename(None, "--check-modules")
@@ -182,13 +182,13 @@ class RenameTests(unittest.TestCase):
         self.assertIn("/mobil/", unrelated.read_text())
         check = self.rename(None, "--check-modules")
         self.assertNotIn(path, check.stdout)
-        self.assertIn("backend/unrelated.py", check.stdout)
+        self.assertIn("unrelated.py", check.stdout)
 
     def test_gateway_decision_assertion_renames_its_inline_module_reference(self):
-        path = "backend/dev/tests/test_gateway_decision.py"
+        path = "dev/tests/test_gateway_decision.py"
         text = 'assert "`platform_core.model_gecidi.api.complete`" in interface\n'
         source = self.write(path, text)
-        other = self.write("backend/dev/tests/test_unrelated.py", text)
+        other = self.write("dev/tests/test_unrelated.py", text)
         self.git("add", ".")
         before = self.rename(None, "--check-modules")
         self.assertIn(f"{path}:1:", before.stdout)
@@ -201,26 +201,26 @@ class RenameTests(unittest.TestCase):
         self.assertIn("test_unrelated.py", after.stdout)
 
     def test_non_utf8_source_stops_before_any_changes(self):
-        source = self.write("backend/sample.txt", "legacy\n")
-        invalid = self.write("backend/unreadable.txt", "")
+        source = self.write("sample.txt", "legacy\n")
+        invalid = self.write("unreadable.txt", "")
         invalid.write_bytes(b"legacy\xff\n")
         self.git("add", ".")
         rules = [{"old": "legacy", "new": "updated", "type": "identifier"}]
         result = self.rename(rules)
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("backend/unreadable.txt", result.stderr)
+        self.assertIn("unreadable.txt", result.stderr)
         self.assertEqual(source.read_text(), "legacy\n")
         self.assertEqual(invalid.read_bytes(), b"legacy\xff\n")
 
     def test_real_map_uses_specific_keycloak_test_names(self):
-        source = self.write("backend/identity/keycloak/tests/example.py", "deger = 'x'\nveri = {}\n")
+        source = self.write("identity/keycloak/tests/example.py", "deger = 'x'\nveri = {}\n")
         self.git("add", ".")
         outcome = self.rename(None)
         self.assertEqual(outcome.returncode, 0, outcome.stderr)
         self.assertEqual(source.read_text(), "environment_value = 'x'\nrequest_body = {}\n")
 
     def test_email_diagnostics_name_the_current_settings(self):
-        base = "backend/identity/keycloak/themes/atonota/test/tests"
+        base = "identity/keycloak/themes/atonota/test/tests"
         self.write(
             f"{base}/eposta.spec.ts",
             "const magicKc = process.env.SIHIRLI_KC_URL;\n"
@@ -238,7 +238,7 @@ class RenameTests(unittest.TestCase):
         self.assertNotIn("SIHIRLI_", output)
 
     def test_real_map_distinguishes_email_properties_slugs_and_copy(self):
-        directory = "backend/identity/keycloak/themes/atonota/test/tests"
+        directory = "identity/keycloak/themes/atonota/test/tests"
         pattern = "const pattern = /https?:\\/\\/[^\\s\"'<>]+/g;\n"
         self.write(
             f"{directory}/eposta.spec.ts",
@@ -261,22 +261,22 @@ class RenameTests(unittest.TestCase):
 
     def test_preserves_copy_and_changes_only_translation_source_keys(self):
         script = self.write(
-            "backend/app/feature.py",
+            "app/feature.py",
             'ad = "Dağıtım adı"  # ad değişkeni\nkind = "AI Provider"\nmessage = "AI Provider kaydı"\n',
         )
-        document = self.write("backend/PROJE-KAYDI.md", "AI Provider adı bu kayıtta kalır.\n")
-        metadata = self.write("backend/app/record.json", '{"name":"AI Provider","label":"AI Provider"}\n')
+        document = self.write("PROJE-KAYDI.md", "AI Provider adı bu kayıtta kalır.\n")
+        metadata = self.write("app/record.json", '{"name":"AI Provider","label":"AI Provider"}\n')
         csv_path = self.write(
-            "backend/app/translations/tr.csv", 'AI Provider,"AI Provider, sağlayıcı",AI Provider\n'
+            "app/translations/tr.csv", 'AI Provider,"AI Provider, sağlayıcı",AI Provider\n'
         )
         po_path = self.write(
-            "backend/app/locale/tr.po", 'msgid ""\n"AI "\n"Provider"\nmsgstr "AI Provider sağlayıcı"\n'
+            "app/locale/tr.po", 'msgid ""\n"AI "\n"Provider"\nmsgstr "AI Provider sağlayıcı"\n'
         )
         self.git("add", ".")
         entries = [
             {"old": "ad", "new": "name", "type": "identifier"},
             {"old": "AI Provider", "new": "PLT AI Provider", "type": "doctype"},
-            {"old": "backend/PROJE-KAYDI.md", "new": "backend/PROJECT-RECORD.md", "type": "path"},
+            {"old": "PROJE-KAYDI.md", "new": "PROJECT-RECORD.md", "type": "path"},
         ]
         result = self.rename(entries)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -295,7 +295,7 @@ class RenameTests(unittest.TestCase):
 
     def test_rejects_a_python_binding_collision(self):
         source = self.write(
-            "backend/app/feature.py", "def some_function(name):\n    ad = name\n    return ad\n"
+            "app/feature.py", "def some_function(name):\n    ad = name\n    return ad\n"
         )
         self.git("add", ".")
         result = self.rename([{"old": "ad", "new": "name", "type": "identifier"}])
@@ -304,9 +304,9 @@ class RenameTests(unittest.TestCase):
         self.assertIn("ad = name", source.read_text())
 
     def test_translation_rename_cannot_merge_two_sources_in_one_context(self):
-        source = self.write("backend/app/record.json", '{"name":"Old Label"}\n')
+        source = self.write("app/record.json", '{"name":"Old Label"}\n')
         translations = self.write(
-            "backend/app/translations/tr.csv",
+            "app/translations/tr.csv",
             "Old Label,Eski çeviri,Shared context\nNew Label,Yeni çeviri,Shared context\n",
         )
         before = translations.read_bytes()
@@ -314,7 +314,7 @@ class RenameTests(unittest.TestCase):
         rules = [{"old": "Old Label", "new": "New Label", "type": "doctype"}]
         result = self.rename(rules)
         self.assertEqual(result.returncode, 1, result.stdout)
-        self.assertIn("backend/app/translations/tr.csv:2", result.stderr)
+        self.assertIn("app/translations/tr.csv:2", result.stderr)
         self.assertEqual(translations.read_bytes(), before)
         self.assertEqual(source.read_text(), '{"name":"Old Label"}\n')
 
@@ -327,7 +327,7 @@ class RenameTests(unittest.TestCase):
         )
 
     def test_settings_check_only_prints_legacy_keys(self):
-        config = self.write("backend/config.env", "export LEGACY_KEY=never-print-this\n")
+        config = self.write("config.env", "export LEGACY_KEY=never-print-this\n")
         self.git("add", ".")
         entries = [{"old": "LEGACY_KEY", "new": "NEW_KEY", "type": "setting"}]
         result = self.rename(entries, "--check-settings", str(config))
@@ -336,11 +336,11 @@ class RenameTests(unittest.TestCase):
         self.assertNotIn("never-print-this", result.stdout)
 
     def test_preserves_template_copy_html_yaml_and_properties(self):
-        template = self.write("backend/view.ts", "const label = `Durum: ${durum}`;\n")
-        markup = self.write("backend/view.ftl", '<div class="durum">Son durum</div>\n')
-        contract = self.write("backend/contracts/example.yaml", "summary: >-\n  Son durum\n")
-        properties = self.write("backend/view.properties", "caption=Son durum\n")
-        binary = self.write("backend/sample.bin", "")
+        template = self.write("view.ts", "const label = `Durum: ${durum}`;\n")
+        markup = self.write("view.ftl", '<div class="durum">Son durum</div>\n')
+        contract = self.write("contracts/example.yaml", "summary: >-\n  Son durum\n")
+        properties = self.write("view.properties", "caption=Son durum\n")
+        binary = self.write("sample.bin", "")
         binary.write_bytes(b"\0durum\xff")
         self.git("add", ".")
         entries = [{"old": "durum", "new": "status", "type": "identifier"}]
@@ -355,12 +355,12 @@ class RenameTests(unittest.TestCase):
     def test_preserves_openapi_copy_after_blank_lines_and_its_translation_key(self):
         content = "First paragraph.\n\nSee `docs/sozlesmeler.md` and `site-kiraci1`.\n"
         contract = self.write(
-            "backend/contracts/identity_sync.openapi.yaml",
+            "contracts/identity_sync.openapi.yaml",
             "description: |\n  First paragraph.\n\n  See `docs/sozlesmeler.md` and `site-kiraci1`.\n"
             "technical: site-kiraci1\n",
         )
         translation = self.write(
-            "backend/identity/identity_sync/translations/tr.csv",
+            "identity/identity_sync/translations/tr.csv",
             f'"{content}",Türkçe karşılık,identity_sync.openapi.yaml: info.description\n',
         )
         translation_before = translation.read_bytes()
@@ -382,7 +382,7 @@ class RenameTests(unittest.TestCase):
             ("'description': |2- # Copy", "\r\n"),
         ):
             with self.subTest(header=header, ending=ending):
-                target = self.write("backend/contracts/example.yaml", "")
+                target = self.write("contracts/example.yaml", "")
                 original_copy = ending.join([header, "  First paragraph.", "", "  See old_name."])
                 target.write_bytes((original_copy + ending + "technical: old_name" + ending).encode())
                 self.git("add", ".")
@@ -393,7 +393,7 @@ class RenameTests(unittest.TestCase):
                 )
 
     def test_rejects_a_module_binding_collision(self):
-        source = self.write("backend/collision.py", "name = 1\nad = 2\n")
+        source = self.write("collision.py", "name = 1\nad = 2\n")
         self.git("add", ".")
         result = self.rename([{"old": "ad", "new": "name", "type": "identifier"}])
         self.assertEqual(result.returncode, 1, result.stderr)
@@ -401,16 +401,16 @@ class RenameTests(unittest.TestCase):
         self.assertIn("ad = 2", source.read_text())
 
     def test_prefixed_doctype_and_path_moves_are_repeatable(self):
-        original = "backend/app/legacy/ai_provider.json"
-        destination = "backend/app/current/plt_ai_provider.json"
+        original = "app/legacy/ai_provider.json"
+        destination = "app/current/plt_ai_provider.json"
         document = self.write(original, '{"name":"AI Provider","table":"tabAI Provider"}\n')
-        use = self.write("backend/app/reference.py", 'provider = "AI Provider"\n')
+        use = self.write("app/reference.py", 'provider = "AI Provider"\n')
         self.git("add", ".")
         before = self.git("status", "--porcelain")
         index = self.root / ".git/index"
         before_index = index.read_bytes()
         entries = [
-            {"old": "backend/app/legacy", "new": "backend/app/current", "type": "path"},
+            {"old": "app/legacy", "new": "app/current", "type": "path"},
             {"old": original, "new": destination, "type": "path"},
             {"old": "AI Provider", "new": "PLT AI Provider", "type": "doctype"},
             {"old": "tabAI Provider", "new": "tabPLT AI Provider", "type": "reference"},
@@ -440,14 +440,14 @@ class RenameTests(unittest.TestCase):
         self.assertEqual((self.git("status", "--porcelain"), self.git("diff")), before_repeat)
 
     def test_cp2_tree_is_unchanged_on_repeat(self):
-        ai = "backend/apps/platform_core/platform_core/ai"
+        ai = "apps/platform_core/platform_core/ai"
         samples = {
             f"{ai}/tests/base.py": 'response = self.human(client, "GET", "get_proposal")\n',
             f"{ai}/tests/test_approval.py": (
                 'tool = self.call_tool(client, "plt_get_proposal", {})\n'
                 'response = self.human(client, "GET", "get_proposal")\n'
             ),
-            "backend/identity/keycloak/tests/test_standards_audit.py": (
+            "identity/keycloak/tests/test_standards_audit.py": (
                 'words = ("sihirli", "yontem", "duzey", "baglanti")\n'
             ),
         }
@@ -466,7 +466,7 @@ class RenameTests(unittest.TestCase):
 
     def test_proposal_tool_rename_preserves_http_endpoint(self):
         path = self.write(
-            "backend/apps/platform_core/platform_core/yapay_zeka/tests/test_approval.py",
+            "apps/platform_core/platform_core/yapay_zeka/tests/test_approval.py",
             'tool = self.call_tool(client, "get_proposal", {})\n'
             'response = self.human(client, "GET", "get_proposal")\n',
         )
@@ -481,31 +481,31 @@ class RenameTests(unittest.TestCase):
             'response = self.human(client, "GET", "get_proposal")\n',
         )
 
-    def test_only_matching_tracked_backend_references_change(self):
+    def test_only_matching_tracked_references_change(self):
         tracked = self.write(
-            "backend/app/hooks.py",
+            "app/hooks.py",
             'from app.kimlik import resolve\nidentities = ("kimlik_api", "other_kimlik")\n',
         )
         fixtures = {
-            "backend/other/hooks.py": "from app.kimlik import resolve\n",
+            "other/hooks.py": "from app.kimlik import resolve\n",
             "docs/standartlar/guide.md": "`app.kimlik`\n",
-            "backend/docs/standartlar/fixture.py": "from app.kimlik import resolve\n",
-            "backend/app/translations/tr.csv": "app.kimlik,Identity\n",
-            "backend/app/locale/tr.po": 'msgid "app.kimlik"\n',
+            "docs/standartlar/fixture.py": "from app.kimlik import resolve\n",
+            "app/translations/tr.csv": "app.kimlik,Identity\n",
+            "app/locale/tr.po": 'msgid "app.kimlik"\n',
             "src/docs.md": "`app.kimlik`\n",
         }
         for filename, content in fixtures.items():
             self.write(filename, content)
         self.git("add", ".")
-        fixtures["backend/app/untracked.py"] = "from app.kimlik import resolve\n"
-        self.write("backend/app/untracked.py", fixtures["backend/app/untracked.py"])
+        fixtures["app/untracked.py"] = "from app.kimlik import resolve\n"
+        self.write("app/untracked.py", fixtures["app/untracked.py"])
         entries = [
-            {"old": "kimlik", "new": "identity", "type": "identifier", "paths": ["backend/app/*"]},
+            {"old": "kimlik", "new": "identity", "type": "identifier", "paths": ["app/*"]},
             {
                 "old": "app.kimlik",
                 "new": "app.identity",
                 "type": "reference",
-                "paths": ["docs/standartlar/*", "backend/docs/standartlar/*"],
+                "paths": ["docs/standartlar/*", "docs/standartlar/*"],
             },
         ]
 
@@ -520,15 +520,15 @@ class RenameTests(unittest.TestCase):
                 self.assertEqual((self.root / filename).read_text(), content)
 
     def test_collision_fails_before_any_changes(self):
-        source = self.write("backend/old.py", "value = 'old'\n")
-        destination = self.write("backend/new.py", "value = 'existing'\n")
-        unrelated = self.write("backend/unrelated.py", "value = 'old'\n")
-        movable = self.write("backend/first.py", "value = 'first'\n")
+        source = self.write("old.py", "value = 'old'\n")
+        destination = self.write("new.py", "value = 'existing'\n")
+        unrelated = self.write("unrelated.py", "value = 'old'\n")
+        movable = self.write("first.py", "value = 'first'\n")
         self.git("add", ".")
         before = self.git("status", "--porcelain")
         entries = [
-            {"old": "backend/first.py", "new": "backend/first_moved.py", "type": "path"},
-            {"old": "backend/old.py", "new": "backend/new.py", "type": "path"},
+            {"old": "first.py", "new": "first_moved.py", "type": "path"},
+            {"old": "old.py", "new": "new.py", "type": "path"},
             {"old": "old", "new": "new", "type": "identifier"},
         ]
 
@@ -536,7 +536,7 @@ class RenameTests(unittest.TestCase):
             with self.subTest(options=options):
                 result = self.rename(entries, *options)
                 self.assertNotEqual(result.returncode, 0, result.stdout)
-                self.assertIn("backend/new.py", result.stderr + result.stdout)
+                self.assertIn("new.py", result.stderr + result.stdout)
                 self.assertEqual(self.git("status", "--porcelain"), before)
                 self.assertEqual(self.git("diff"), "")
                 self.assertTrue(movable.is_file())
@@ -547,8 +547,7 @@ class RenameTests(unittest.TestCase):
     def test_tracked_symlink_is_not_read_as_text(self):
         outside = self.workspace / "external.txt"
         outside.write_text("old_name\n", encoding="utf-8")
-        link = self.root / "backend/link.txt"
-        link.parent.mkdir()
+        link = self.root / "link.txt"
         link.symlink_to(outside)
         self.git("add", ".")
 
@@ -557,68 +556,68 @@ class RenameTests(unittest.TestCase):
         self.assertTrue(link.is_symlink())
         self.assertEqual(outside.read_text(), "old_name\n")
 
-        move = self.rename([{"old": "backend/link.txt", "new": "backend/moved.txt", "type": "path"}])
+        move = self.rename([{"old": "link.txt", "new": "moved.txt", "type": "path"}])
         self.assertNotEqual(move.returncode, 0, move.stdout)
-        self.assertIn("backend/link.txt", move.stderr)
+        self.assertIn("link.txt", move.stderr)
         self.assertTrue(link.is_symlink())
 
     def test_planned_file_cannot_be_a_destination_directory(self):
-        first = self.write("backend/first.py", "")
-        second = self.write("backend/second.py", "")
+        first = self.write("first.py", "")
+        second = self.write("second.py", "")
         self.git("add", ".")
         result = self.rename(
             [
-                {"old": "backend/first.py", "new": "backend/group", "type": "path"},
-                {"old": "backend/second.py", "new": "backend/group/second.py", "type": "path"},
+                {"old": "first.py", "new": "group", "type": "path"},
+                {"old": "second.py", "new": "group/second.py", "type": "path"},
             ]
         )
         self.assertNotEqual(result.returncode, 0, result.stdout)
-        self.assertIn("backend/group", result.stderr)
+        self.assertIn("group", result.stderr)
         self.assertTrue(first.is_file())
         self.assertTrue(second.is_file())
 
     def test_old_path_scope_still_protects_new_names_after_move(self):
-        self.write("backend/legacy/entry.py", '"Provider"\n')
+        self.write("legacy/entry.py", '"Provider"\n')
         self.git("add", ".")
         entries = [
-            {"old": "backend/legacy", "new": "backend/current", "type": "path"},
+            {"old": "legacy", "new": "current", "type": "path"},
             {
                 "old": "Provider",
                 "new": "Provider Record",
                 "type": "doctype",
-                "paths": ["backend/legacy/*"],
+                "paths": ["legacy/*"],
             },
             {
                 "old": "Record",
                 "new": "Entry",
                 "type": "identifier",
-                "paths": ["backend/current/*"],
+                "paths": ["current/*"],
             },
         ]
         result = self.rename(entries)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual((self.root / "backend/current/entry.py").read_text(), '"Provider Record"\n')
+        self.assertEqual((self.root / "current/entry.py").read_text(), '"Provider Record"\n')
         rerun = self.rename(entries, "--dry-run")
         self.assertEqual(rerun.returncode, 0, rerun.stderr)
         self.assertIn("0 tracked file(s)", rerun.stdout)
 
     def test_keycloak_proposals_use_specific_code_scopes(self):
         sources = {
-            "backend/identity/keycloak/tests/test_realm_dosyalari.py": (
+            "identity/keycloak/tests/test_realm_dosyalari.py": (
                 "anahtarlar = ()\nornek = 'sample.ornek@example.test'\n"
                 "for satir in ornek.splitlines():\n    pass\n",
                 "keys = ()\nexample = 'sample.ornek@example.test'\n"
                 "for line in example.splitlines():\n    pass\n",
             ),
-            "backend/identity/keycloak/tests/test_eklentiler.py": (
+            "identity/keycloak/tests/test_eklentiler.py": (
                 "def _cerezli_acici():\n    return yonetici\n",
                 "def _cookie_opener():\n    return admin_token\n",
             ),
-            "backend/libs/oidc_verify/tests/test_oidc_verify.py": (
+            "libs/oidc_verify/tests/test_oidc_verify.py": (
                 "def erisim():\n    return saglayici\n",
                 "def access():\n    return provider\n",
             ),
-            "backend/other/sample.py": ("ornek = True\n", "ornek = True\n"),
+            "other/sample.py": ("ornek = True\n", "ornek = True\n"),
         }
         for path, (source, _) in sources.items():
             self.write(path, source)
@@ -636,7 +635,7 @@ class RenameTests(unittest.TestCase):
                 self.assertEqual((self.root / target).read_text(), expected)
 
     def test_access_contract_renames_code_examples_and_preserves_copy(self):
-        old_contract = "backend/contracts/platform_core-erisim.openapi.yaml"
+        old_contract = "contracts/platform_core-erisim.openapi.yaml"
         self.write(
             old_contract,
             "tags:\n  - name: arama\n"
@@ -649,11 +648,11 @@ class RenameTests(unittest.TestCase):
             "        maas:\n          value: {fieldname: salary_amount}\n"
             "        ik:\n          value: {role: ER IK}\n",
         )
-        other = self.write("backend/contracts/other.yaml", "tags: [arama]\n")
+        other = self.write("contracts/other.yaml", "tags: [arama]\n")
         self.git("add", ".")
         result = self.rename(None)
         self.assertEqual(result.returncode, 0, result.stderr)
-        output = (self.root / "backend/contracts/platform_core-access.openapi.yaml").read_text()
+        output = (self.root / "contracts/platform_core-access.openapi.yaml").read_text()
         for item in (
             "- name: search",
             "tags: [search]",
@@ -671,7 +670,7 @@ class RenameTests(unittest.TestCase):
         self.assertEqual(other.read_text(), "tags: [arama]\n")
 
     def test_scoped_module_paths_in_access_and_ai_text(self):
-        access = "backend/apps/platform_core/platform_core"
+        access = "apps/platform_core/platform_core"
         paths = (
             (
                 f"{access}/erisim/tests/test_static_files.py",
@@ -694,8 +693,8 @@ class RenameTests(unittest.TestCase):
                 "execute platform_core.ai.retention.purge",
             ),
             (
-                "backend/contracts/platform_core-yapay-zeka.openapi.yaml",
-                "backend/contracts/platform_core-ai.openapi.yaml",
+                "contracts/platform_core-yapay-zeka.openapi.yaml",
+                "contracts/platform_core-ai.openapi.yaml",
                 "description: |\n  Call `platform_core.model_gecidi.api.purge_usage`.\n"
                 "  Run `bench --site <site> execute platform_core.yapay_zeka.retention.purge`.\n"
                 "  Keep this example `platform_core.erisim`.\n",
@@ -716,18 +715,18 @@ class RenameTests(unittest.TestCase):
                     self.assertIn(part, output)
 
     def test_move_removes_only_empty_old_directories(self):
-        self.write("backend/stale/empty/app.py", "pass\n")
-        self.write("backend/stale/keep/app.py", "pass\n")
+        self.write("stale/empty/app.py", "pass\n")
+        self.write("stale/keep/app.py", "pass\n")
         self.git("add", ".")
-        helper = self.write("backend/stale/keep/local.txt", "keep\n")
-        rules = [{"old": "backend/stale", "new": "backend/current", "type": "path"}]
+        helper = self.write("stale/keep/local.txt", "keep\n")
+        rules = [{"old": "stale", "new": "current", "type": "path"}]
         outcome = self.rename(rules)
         self.assertEqual(outcome.returncode, 0, outcome.stderr)
-        self.assertFalse((self.root / "backend/stale/empty").exists())
+        self.assertFalse((self.root / "stale/empty").exists())
         self.assertEqual(helper.read_text(), "keep\n")
 
     def test_revoked_session_record_hook_and_controller_rename_together(self):
-        app = "backend/apps/platform_core/platform_core"
+        app = "apps/platform_core/platform_core"
         directory = f"{app}/mobil/doctype/mobile_revoked_session"
         self.write(f"{directory}/mobile_revoked_session.json", '{"name":"Mobile Revoked Session"}\n')
         self.write(f"{directory}/mobile_revoked_session.py", "class MobileRevokedSession:\n    pass\n")

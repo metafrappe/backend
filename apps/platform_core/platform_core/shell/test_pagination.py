@@ -138,6 +138,36 @@ class TestServerPagination(ShellHTTPFixture):
 		)
 		self.assertEqual(status, 403)
 
+	def test_collection_denies_a_private_table_field(self):
+		from frappe.custom.doctype.custom_field.custom_field import create_custom_field
+
+		create_custom_field(
+			DOCTYPE,
+			{
+				"fieldname": "private_test_entries",
+				"fieldtype": "Table",
+				"options": CHILD_DOCTYPE,
+				"label": "Private entries",
+				"permlevel": 1,
+				"description": "Entries only a privileged reader may see.",
+			},
+		)
+		self.addCleanup(self.remove_custom_field, "private_test_entries")
+		record = self.make_record("Paging parent")
+		record.append("private_test_entries", {"entry": "Hidden"})
+		record.save()
+		frappe.db.commit()
+		filters = {"parent": record.name, "parenttype": DOCTYPE, "parentfield": "private_test_entries"}
+
+		status, _body = self.request_collection(CHILD_DOCTYPE, filters, ["entry"], parent=DOCTYPE)
+		self.assertEqual(status, 403)
+
+	@staticmethod
+	def remove_custom_field(fieldname):
+		frappe.delete_doc("Custom Field", f"{DOCTYPE}-{fieldname}", force=True)
+		frappe.clear_cache(doctype=DOCTYPE)
+		frappe.db.commit()
+
 	def test_collection_requires_each_child_scope_filter(self):
 		record = self.make_record("Paging parent", [{"entry": "Public"}])
 		frappe.db.commit()

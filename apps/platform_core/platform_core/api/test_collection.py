@@ -11,6 +11,7 @@ from platform_core.tests.shell_http_fixture import PRIVILEGED, READER, ShellHTTP
 
 SUMMARY_DOCTYPE = "Shell Summary Test"
 SUMMARY_PATH = "/api/method/platform_core.api.collection.group_summary"
+LIST_PATH = "/api/method/platform_core.api.collection.list_records"
 
 
 class TestCollectionSummary(ShellHTTPFixture):
@@ -99,6 +100,24 @@ class TestCollectionSummary(ShellHTTPFixture):
 		)
 		self.assertEqual(status, 200)
 		self.assertEqual(response["message"]["groups"], [{"value": "A", "count": 1, "aggregate": 900}])
+
+	def test_list_hides_records_of_another_web_user(self):
+		params = {
+			"doctype": SUMMARY_DOCTYPE,
+			"filters": json.dumps({"bucket": "A"}),
+			"fields": json.dumps(["assigned_user", "amount"]),
+			"order_by": "amount asc",
+		}
+		for sid, owner, amounts in (
+			(self.reader_sid, READER, [8, 12]),
+			(self.privileged_sid, PRIVILEGED, [900]),
+		):
+			with self.subTest(owner=owner):
+				status, _headers, body = self.request(f"{LIST_PATH}?{urlencode(params)}", sid)
+				self.assertEqual(status, 200)
+				rows = json.loads(body)["message"]
+				self.assertEqual({row["assigned_user"] for row in rows}, {owner})
+				self.assertEqual([row["amount"] for row in rows], amounts)
 
 	def test_collection_error_uses_turkish_catalog_and_accepts_a_longer_message(self):
 		source = "The collection summary parameters are invalid."

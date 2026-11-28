@@ -143,6 +143,12 @@ class TestTourEndpoints(IntegrationTestCase):
 
 	# --- behaviour ---
 
+	def test_website_users_reach_the_tour_endpoints(self):
+		"""Panel users are Website Users. Both endpoints must be on their method allow list."""
+		allowed = frappe.get_hooks("website_user_allowed_methods")
+		for name in ("get_tour_progress", "save_tour_progress"):
+			self.assertIn(f"platform_core.api.tour.{name}", allowed)
+
 	def test_first_visit_has_no_progress(self):
 		response = self.read(self.login(OWNER))
 		self.assertEqual(response.status_code, 200)

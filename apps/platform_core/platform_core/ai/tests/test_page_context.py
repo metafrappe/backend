@@ -7,7 +7,7 @@ import frappe
 from platform_core.ai.tests.base import DOCTYPE, USER_A, USER_B, AiTestCase
 
 
-# The G-88 server code is not written yet (AJA-2436). Remove this skip in that change.
+# The G-88 server code is not written yet (AJA-85). Remove this skip in that change.
 @unittest.skip("G-88 page_context server code is not written yet")
 class TestPageContext(AiTestCase):
 	def contextual_call(self, client, tool, arguments, context):

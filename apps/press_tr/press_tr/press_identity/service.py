@@ -14,6 +14,7 @@ SERVICE_PARAMETERS = {
 		"email_verified",
 		"organization_id",
 		"organization_name",
+		"press_role",
 	},
 	"press_tr.api.identity.remove_team_member": {"issuer", "subject", "organization_id", "all_organizations"},
 }

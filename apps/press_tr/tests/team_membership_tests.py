@@ -49,7 +49,9 @@ class TeamMembershipTests:
 			for _index in range(count):
 				name = f"g16-{uuid4().hex[:12]}.example.test"
 				# A list row is enough here. The Site controller would provision a real site.
-				frappe.get_doc({"doctype": "Site", "name": name, "team": team, "status": "Active"}).db_insert()
+				frappe.get_doc(
+					{"doctype": "Site", "name": name, "team": team, "status": "Active"}
+				).db_insert()
 				names.append(name)
 			return names
 
@@ -145,7 +147,7 @@ class TeamMembershipTests:
 
 	def test_invitation_with_a_role_of_another_team_adds_no_member(self):
 		organization_id, other_organization = uuid4().hex, uuid4().hex
-		_owner, team = self.organization_team(organization_id)
+		self.organization_team(organization_id)
 		_other_owner, other_team = self.organization_team(other_organization)
 		self.add_role(other_team, "Foreign role", all_sites=1)
 		invited = uuid4().hex

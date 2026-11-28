@@ -1,0 +1,195 @@
+openapi: 3.1.0
+info:
+  title: Platform Core tour progress API
+  version: 0.1.0
+  description: |
+    Per-user progress of user interface tours and task lists (G-139).
+    The frontend tour engine owns the tour content. The server stores only progress.
+    Progress is keyed by the session user and the tour identifier, and carries the tour version.
+    A user reads and writes only their own progress. The body never names a user.
+    Seen steps are never forgotten by an ordinary save, so an older browser tab cannot
+    erase progress. Only a save with restart=true clears the seen steps.
+    A save with a lower version than the stored one keeps the stored version, status and step.
+    Progress records are "PLT Tour Progress" documents. They are deleted with their user.
+servers:
+  - url: /api/method
+    description: Frappe endpoint root of the tenant site
+security:
+  - session: []
+paths:
+  /platform_core.api.tour.get_tour_progress:
+    get:
+      operationId: getTourProgress
+      summary: Read the current user's progress of one tour
+      description: Returns null on the first visit. Changes no record.
+      parameters:
+        - name: tour_id
+          in: query
+          required: true
+          description: Stable tour identifier. Lowercase letters, digits, dot, dash and underscore.
+          schema:
+            $ref: '#/components/schemas/Identifier'
+          example: leave-application
+      responses:
+        '200':
+          description: The stored progress, or null when the user has none.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                additionalProperties: false
+                properties:
+                  message:
+                    oneOf:
+                      - $ref: '#/components/schemas/TourProgress'
+                      - type: 'null'
+              examples:
+                first_visit:
+                  value:
+                    message: null
+                resumed:
+                  value:
+                    message:
+                      tour_id: leave-application
+                      version: 2
+                      status: snoozed
+                      current_step: dates
+                      seen_steps: [intro, leave-type]
+        '401':
+          $ref: '#/components/responses/SessionExpired'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '417':
+          $ref: '#/components/responses/Invalid'
+  /platform_core.api.tour.save_tour_progress:
+    post:
+      operationId: saveTourProgress
+      summary: Save the current user's progress of one tour
+      description: |
+        Merges the body into the stored progress and returns the result.
+        Seen steps are the union of the stored and the sent steps, in first-seen order.
+        A higher or equal version replaces the version, status and current step.
+        A lower version changes only the seen steps.
+        restart=true replaces the stored progress with the body.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/TourProgress'
+                - type: object
+                  properties:
+                    restart:
+                      type: boolean
+                      default: false
+                      description: Start the tour again. Clears the stored seen steps.
+            example:
+              tour_id: leave-application
+              version: 2
+              status: active
+              current_step: dates
+              seen_steps: [intro, leave-type]
+      responses:
+        '200':
+          description: The progress after the merge.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                additionalProperties: false
+                properties:
+                  message:
+                    $ref: '#/components/schemas/TourProgress'
+        '401':
+          $ref: '#/components/responses/SessionExpired'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '417':
+          $ref: '#/components/responses/Invalid'
+        '429':
+          description: Too many saves in a short time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    session:
+      type: apiKey
+      in: cookie
+      name: sid
+      description: Host-bound Frappe browser session cookie.
+  responses:
+    SessionExpired:
+      description: The supplied session has expired or is invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Browser session required. Guests get this answer.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            exc_type: PermissionError
+    Invalid:
+      description: A field is missing, unknown, too long or not supported.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            exc_type: ValidationError
+  schemas:
+    Identifier:
+      type: string
+      pattern: '^[a-z0-9][a-z0-9._-]{0,79}$'
+      maxLength: 80
+    TourProgress:
+      type: object
+      required: [tour_id, version, status, current_step, seen_steps]
+      additionalProperties: false
+      properties:
+        tour_id:
+          $ref: '#/components/schemas/Identifier'
+        version:
+          type: integer
+          minimum: 1
+          maximum: 100000
+          description: Version of the tour content the user last saw.
+        status:
+          type: string
+          enum: [active, snoozed, skipped, completed]
+          description: |
+            active: the tour is open or will open again. snoozed: the user postponed it; it opens
+            again on the next visit at current_step. skipped: the user closed it for this version.
+            completed: the user finished it for this version.
+        current_step:
+          oneOf:
+            - $ref: '#/components/schemas/Identifier'
+            - type: 'null'
+          description: Step to resume from. Null when there is none.
+        seen_steps:
+          type: array
+          maxItems: 200
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/Identifier'
+          description: Steps the user has seen, in first-seen order. A new tour version shows only the other steps.
+    Error:
+      type: object
+      description: Native Frappe error envelope. Developer mode may add diagnostics.
+      properties:
+        exc_type:
+          type: string
+        _server_messages:
+          type: string
+        session_expired:
+          type: integer
+          const: 1
+      additionalProperties: true

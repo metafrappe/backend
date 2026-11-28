@@ -123,6 +123,9 @@ website_user_allowed_methods = [
 	# G-138: field help reuses the shell metadata check. The coverage report is for the System Manager.
 	"platform_core.api.help.get_field_help",
 	"platform_core.api.help.get_component_help",
+	# G-139: each user reads and writes only their own tour progress.
+	"platform_core.api.tour.get_tour_progress",
+	"platform_core.api.tour.save_tour_progress",
 	"frappe.auth.get_logged_user",
 	"logout",
 	"frappe.desk.search.search_link",
@@ -193,6 +196,8 @@ doc_events = {
 		"on_trash": [
 			"platform_core.shell.cache.invalidate_permissions",
 			"platform_core.mobile.store.delete_user_state",
+			# G-139: tour progress is personal data of the user.
+			"platform_core.shell.tour.delete_user_progress",
 		],
 	},
 	"Role": {

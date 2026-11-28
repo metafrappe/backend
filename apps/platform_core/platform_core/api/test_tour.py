@@ -214,6 +214,8 @@ class TestTourEndpoints(IntegrationTestCase):
 
 	def test_deleting_the_user_deletes_their_progress(self):
 		leaver = "tour-leaver@example.test"
+		if frappe.db.exists("User", leaver):
+			frappe.delete_doc("User", leaver, force=True, ignore_permissions=True)
 		if not frappe.db.exists("User", leaver):
 			frappe.get_doc(
 				{
@@ -225,10 +227,13 @@ class TestTourEndpoints(IntegrationTestCase):
 					"new_password": self.password,
 				}
 			).insert(ignore_permissions=True)
+			# The login request uses another connection. It must see the new user.
+			frappe.db.commit()  # nosemgrep: frappe-request-commit
 		self.save(self.login(leaver), seen_steps=["intro"])
 		self.assertTrue(frappe.db.exists(DOCTYPE, {"user": leaver}))
 
 		frappe.set_user("Administrator")
 		frappe.delete_doc("User", leaver, force=True, ignore_permissions=True)
+		frappe.db.commit()  # nosemgrep: frappe-request-commit
 
 		self.assertFalse(frappe.db.exists(DOCTYPE, {"user": leaver}))

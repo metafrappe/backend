@@ -15,6 +15,17 @@ from identity_sync.httpjson import HttpError, TransportError, request_json
 T = TypeVar("T")
 
 _EXPIRY_MARGIN_SECONDS = 30.0
+# The realm issues access tokens for 300 seconds. A token is never kept longer, even if the
+# answer claims a longer lifetime, so no long-lived key stays in memory (G-82).
+MAX_CACHE_SECONDS = 300.0
+_TARGET_PREFIX = "aud-"
+
+
+def _check_single_target(scope: str) -> None:
+    """A service token carries one target (G-82). Refuse a scope that names two."""
+    targets = [part for part in scope.split() if part.startswith(_TARGET_PREFIX)]
+    if len(targets) > 1:
+        raise ValueError("a service token may name only one target scope")
 
 
 class TokenProvider:
@@ -46,6 +57,7 @@ class TokenProvider:
 
     def get(self, scope: str) -> str:
         """Return a valid access token for `scope`."""
+        _check_single_target(scope)
         cached = self._cache.get(scope)
         if cached and cached[1] > self._clock():
             return cached[0]
@@ -61,5 +73,6 @@ class TokenProvider:
             raise TransportError("token response has no access_token")
         expires_in = body.get("expires_in")
         lifetime = float(expires_in) if isinstance(expires_in, (int, float)) else 0.0
+        lifetime = min(lifetime, MAX_CACHE_SECONDS)
         self._cache[scope] = (body["access_token"], self._clock() + lifetime - _EXPIRY_MARGIN_SECONDS)
         return body["access_token"]

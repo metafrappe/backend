@@ -25,6 +25,8 @@ auth_hooks = [
 	"platform_core.identity.service_token.validate",
 	"platform_core.ai.agent_token.authenticate_request",
 	"platform_core.ai.oauth.authenticate_request",
+	# G-18 (O-65): after every credential hook, recheck the support user's consent on Press.
+	"platform_core.identity.support_session.check_request",
 	"platform_core.shell.native_metadata.guard_native_metadata",
 	# G-53: the Desk check again, after API keys and OAuth tokens named the user.
 	"platform_core.config.desk_policy.after_auth",

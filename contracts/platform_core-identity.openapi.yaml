@@ -550,6 +550,59 @@ paths:
             text/html:
               schema: {$ref: "#/components/schemas/HtmlSayfa"}
 
+  /platform_core.api.auth.start_support_session:
+    post:
+      tags: [login]
+      operationId: startSupportSession
+      summary: Opens a customer-approved support session on this tenant site (G-18, O-65).
+      description: |
+        A Press support agent gets a single-use ticket from Press. The ticket lives for 60 seconds.
+        This endpoint sends the ticket and this site's name to Press over the private network.
+        Press checks the customer consent again and returns a session key bound to this site.
+        The endpoint opens a session for the `support_session_user` site setting.
+        That user must exist, be enabled and hold neither `Administrator` nor `System Manager`.
+        An Administrator session needs its own consent and is not opened here.
+        The browser never receives the Press session key.
+
+        Every later request of that user is checked with Press again.
+        Expiry, revocation, a transferred site or an unreachable Press ends the session with 403.
+        The check runs as an auth hook after the credential hooks.
+        The support user may use only its cookie session.
+        A request with an `Authorization` header gets 403. So does `frappe.realtime.get_user_info`.
+        An open realtime socket would keep receiving events after the consent ends.
+        An administrator role given to the user later also ends the session.
+        A signed-in user cannot call this endpoint. At most 20 requests per minute are accepted.
+      x-yikici: false
+      x-site-settings: [support_press_url, support_session_user]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [ticket]
+              properties:
+                ticket: {type: string, minLength: 1, maxLength: 128}
+      responses:
+        "200":
+          description: The session cookie is set. The body names the user and the remaining seconds.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: object
+                    additionalProperties: false
+                    required: [user, expires_in]
+                    properties:
+                      user: {type: string}
+                      expires_in: {type: integer, minimum: 1}
+        "403": {description: Press refused the ticket, the setting is missing or the caller is signed in.}
+        "429": {description: Too many requests.}
   /platform_core.api.auth.logout:
     post:
       tags: [login]

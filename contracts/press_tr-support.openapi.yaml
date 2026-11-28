@@ -1,0 +1,264 @@
+openapi: 3.1.0
+info:
+  title: Press TR customer support consent
+  version: 0.1.0
+  description: >-
+    Local implementation for G-18. All operations require an authenticated Press session.
+    Cookie requests require Frappe's CSRF token. A tenant support session starts only through
+    the three tenant-session routes below (O-65).
+    A separate Administrator request records consent but does not enable native login.
+    The read scope is one site's name and status. Native support routes are closed to
+    identities with the Press Support Agent role, including System Users with that role.
+    A support Website User obtains CSRF through GET /account-deletion using its browser
+    session. The page is private and no-store. Other pages, including /app, remain denied.
+    Native site login remains available to the site's customer team owner and members.
+    Administrator SID issuance requires a server worker job context and no HTTP request.
+    The edge remains private under O-55; public exposure is not part of this change.
+security:
+  - cookieSession: []
+paths:
+  /api/method/press_tr.api.support.request_access:
+    post:
+      operationId: requestSupportAccess
+      summary: Request customer consent for one site and purpose.
+      description: >-
+        Requires Press Support Agent. The server binds the requester and team.
+        Creates a Pending native Support Access record and its audit comment.
+        Ordinary and Administrator requests are separate immutable records.
+        SSH and release-group access are excluded.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [site, reason]
+              properties:
+                site: {type: string, minLength: 1, maxLength: 140}
+                reason: {type: string, minLength: 1, maxLength: 2000}
+                administrator: {type: boolean, default: false}
+      responses:
+        '200':
+          description: Pending request saved. No access or tenant session is issued.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ConsentResponse'}
+        '403': {description: Guest, missing support role or invalid consent scope.}
+        '404': {description: The site does not exist.}
+        '417': {description: Native document validation rejected the request.}
+  /api/method/press_tr.api.support.approve_access:
+    post:
+      operationId: approveSupportAccess
+      summary: Approve one pending request as the customer team owner.
+      description: >-
+        The server reads Team.user. The requester and platform Administrator cannot
+        approve for the customer. Approval and expiry are recorded under a row lock.
+        Ordinary access allows 3, 6, 12 or 24 hours. Administrator consent allows
+        only 3 hours and one site with no other permissions. Ordinary consent can open
+        a tenant support session (O-65). Administrator consent opens no tenant session.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [name]
+              properties:
+                name: {type: string, minLength: 1, maxLength: 140}
+                allowed_for: {type: string, enum: ['3', '6', '12', '24'], default: '3'}
+      responses:
+        '200':
+          description: Customer consent and expiry saved. No tenant session is issued.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ConsentResponse'}
+        '403': {description: Customer authority, state or duration check failed.}
+        '404': {description: The support request does not exist.}
+        '417': {description: Native document validation rejected the update.}
+  /api/method/press_tr.api.support.revoke_access:
+    post:
+      operationId: revokeSupportAccess
+      summary: Revoke customer consent for future support reads.
+      description: >-
+        Only the customer team owner may revoke. This locks the same row as a support read.
+        Reads that start after revocation commits are rejected. An already completed
+        response cannot be recalled. Expired consent is denied even if its stored status
+        remains Accepted. There is no scheduler or periodic cleanup requirement.
+      requestBody:
+        $ref: '#/components/requestBodies/ConsentName'
+      responses:
+        '200':
+          description: Consent revoked.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ConsentResponse'}
+        '403': {description: Caller is not the customer owner or consent is not accepted.}
+        '404': {description: The support request does not exist.}
+        '417': {description: Native validation rejected an already expired request.}
+  /api/method/press_tr.api.support.site_status:
+    post:
+      operationId: readConsentedSiteStatus
+      summary: Read only the approved site's name and status and record the reason.
+      description: >-
+        Requires the exact requester, requester team, customer owner, current site ownership,
+        ordinary consent, server-stamped approval and a future expiry. Old native approvals
+        cannot be reused. Every call locks and reloads consent without a cache. The exact
+        expiry boundary is denied. The same transaction writes an audit comment.
+        An audit failure prevents a response. No configuration, password or SID is returned.
+      requestBody:
+        $ref: '#/components/requestBodies/ConsentName'
+      responses:
+        '200':
+          description: Site name and status returned after audit persistence.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: object
+                    additionalProperties: false
+                    required: [site, status]
+                    properties:
+                      site: {type: string}
+                      status: {type: string}
+        '403': {description: Approval is absent, expired, revoked or out of scope.}
+        '404': {description: The support request or site does not exist.}
+  /api/method/press_tr.api.support.open_tenant_session:
+    post:
+      operationId: openTenantSupportSession
+      summary: Issue a single-use ticket for the consented tenant site.
+      description: >-
+        Requires Press Support Agent and the same checks as site_status. Administrator
+        consent is refused here. The same transaction writes a tenant_session_opened audit
+        comment with the reason. An audit failure issues no ticket. The ticket lives for
+        60 seconds and Press stores only its SHA-256 digest.
+      requestBody:
+        $ref: '#/components/requestBodies/ConsentName'
+      responses:
+        '200':
+          description: Ticket issued for one site.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: object
+                    additionalProperties: false
+                    required: [site, ticket, expires_in]
+                    properties:
+                      site: {type: string}
+                      ticket: {type: string}
+                      expires_in: {type: integer, const: 60}
+        '403': {description: Approval is absent, expired, revoked, administrative or out of scope.}
+  /api/method/press_tr.api.support.redeem_tenant_session:
+    post:
+      operationId: redeemTenantSupportTicket
+      summary: Exchange a ticket once for a session key bound to the same site.
+      description: >-
+        Called by the tenant site over the private network. No Press session is used.
+        The ticket is deleted atomically, so only one caller can use it. The site must
+        match the ticket. Consent, requester role and site ownership are checked again.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [ticket, site]
+              properties:
+                ticket: {type: string, minLength: 40, maxLength: 128}
+                site: {type: string, minLength: 1, maxLength: 140}
+      responses:
+        '200':
+          description: Session key issued. Its lifetime never exceeds the consent.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: object
+                    additionalProperties: false
+                    required: [consent, site, expires_in, session_key]
+                    properties:
+                      consent: {type: string}
+                      site: {type: string}
+                      expires_in: {type: integer, minimum: 1}
+                      session_key: {type: string}
+        '403': {description: Unknown, used or foreign ticket, or consent no longer valid.}
+  /api/method/press_tr.api.support.check_tenant_session:
+    post:
+      operationId: checkTenantSupportSession
+      summary: Recheck the consent behind one tenant support request.
+      description: >-
+        Called by the tenant site for every request of its support user. Consent, expiry,
+        revocation, requester role and current site ownership are read again from committed
+        rows without row locks, so a busy session does not hold the Site row. Any refusal
+        ends the tenant session.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [session_key, site]
+              properties:
+                session_key: {type: string, minLength: 40, maxLength: 128}
+                site: {type: string, minLength: 1, maxLength: 140}
+      responses:
+        '200':
+          description: The consent still holds.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: object
+                    additionalProperties: false
+                    required: [consent, expires_in]
+                    properties:
+                      consent: {type: string}
+                      expires_in: {type: integer, minimum: 1}
+        '403': {description: The session ended or the consent no longer holds.}
+components:
+  securitySchemes:
+    cookieSession:
+      type: apiKey
+      in: cookie
+      name: sid
+  requestBodies:
+    ConsentName:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [name]
+            properties:
+              name: {type: string, minLength: 1, maxLength: 140}
+  schemas:
+    ConsentResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: object
+          required: [name, status]
+          properties:
+            name: {type: string}
+            status: {type: string, enum: [Pending, Accepted, Revoked]}
+            expires_at: {type: string, description: Frappe site-local datetime.}

@@ -1,0 +1,46 @@
+{
+  "doctype": "Support Access",
+  "sync_on_migrate": 1,
+  "custom_fields": [
+    {
+      "doctype": "Custom Field",
+      "name": "Support Access-custom_ptr_approved_by",
+      "dt": "Support Access",
+      "fieldname": "custom_ptr_approved_by",
+      "fieldtype": "Link",
+      "options": "User",
+      "label": "Customer Approver",
+      "description": "Customer team owner who approved this exact support request.",
+      "insert_after": "status",
+      "read_only": 1,
+      "no_copy": 1
+    },
+    {
+      "doctype": "Custom Field",
+      "name": "Support Access-custom_ptr_approved_at",
+      "dt": "Support Access",
+      "fieldname": "custom_ptr_approved_at",
+      "fieldtype": "Datetime",
+      "label": "Customer Approval Time",
+      "description": "Server time when the customer owner approved this request.",
+      "insert_after": "custom_ptr_approved_by",
+      "read_only": 1,
+      "no_copy": 1
+    },
+    {
+      "doctype": "Custom Field",
+      "name": "Support Access-custom_ptr_consent_version",
+      "dt": "Support Access",
+      "fieldname": "custom_ptr_consent_version",
+      "fieldtype": "Int",
+      "label": "Consent Policy Version",
+      "description": "Server-owned consent marker. Legacy approvals must be requested again.",
+      "insert_after": "custom_ptr_approved_at",
+      "read_only": 1,
+      "no_copy": 1,
+      "default": "0"
+    }
+  ],
+  "property_setters": [],
+  "custom_perms": []
+}

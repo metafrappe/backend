@@ -24,6 +24,7 @@ from press_tr.api.test_account import AccountAccessTests
 from press_tr.api.test_auth import AuthAccessTests
 from press_tr.api.test_identity import IdentityAccessTests
 from press_tr.api.test_maintenance import MaintenanceAccessTests
+from press_tr.api.test_support import SupportAccessTests
 
 ISSUER = "http://keycloak.example.test/realms/platform"
 KID = uuid4().hex
@@ -40,6 +41,7 @@ class IdentityHttpTest(
 	AuthAccessTests,
 	IdentityAccessTests,
 	MaintenanceAccessTests,
+	SupportAccessTests,
 	PressHttpClient,
 	unittest.TestCase,
 ):
@@ -243,7 +245,9 @@ class IdentityHttpTest(
 	def test_account_deletion_timeout_refresh_and_retry(self):
 		subject, session, headers, _auth_time = self.reauthenticate_deletion()
 		self.deletion_delays[subject] = 16
-		status, _headers, payload = self.exchange("POST", DELETION_ROUTE, headers, '{"confirm": true}', timeout=25)
+		status, _headers, payload = self.exchange(
+			"POST", DELETION_ROUTE, headers, '{"confirm": true}', timeout=25
+		)
 		self.assertEqual(status, 200)
 		self.assertEqual(json.loads(payload)["message"], {"pending": True})
 
@@ -1262,7 +1266,9 @@ class IdentityHttpTest(
 		frappe.connect()
 		try:
 			link = frappe.db.get_value("PTR Identity Link", {"user": email}, "name")
-			return frappe.get_all("PTR Recovery Review", {"identity_link": link, "status": "Open"}, pluck="name")
+			return frappe.get_all(
+				"PTR Recovery Review", {"identity_link": link, "status": "Open"}, pluck="name"
+			)
 		finally:
 			frappe.destroy()
 

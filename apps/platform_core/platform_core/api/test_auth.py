@@ -1,8 +1,12 @@
 """Negative access checks through Frappe's HTTP dispatch."""
 
 import copy
+import io
+import json
 import secrets
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
+from urllib.error import HTTPError
 
 import frappe
 import redis
@@ -10,7 +14,7 @@ from frappe.tests.test_api import FrappeAPITestCase
 from frappe.utils import add_days, now_datetime
 from frappe.utils.password import update_password
 
-from platform_core.identity import login_accounts, provider_setup, session_policy
+from platform_core.identity import login_accounts, provider_setup, session_policy, support_session
 from platform_core.identity.tests import helpers as h
 
 PREFIX = "/api/method/platform_core.api.auth."
@@ -327,3 +331,55 @@ class TestAuthEndpointAccess(FrappeAPITestCase):
 		self.assertEqual(token, first_tab)
 		generated.assert_not_called()
 		self.assertEqual(self.csrf_token(client), first_tab)
+
+	def _support_press(self, reply):
+		"""Replace only the network call to Press. The tenant endpoint, session and hooks are real."""
+
+		def answer(request, timeout=None):
+			if isinstance(reply, Exception):
+				raise reply
+			return _Response(json.dumps({"message": reply}).encode())
+
+		opener = SimpleNamespace(open=Mock(side_effect=answer))
+		return (
+			patch.object(support_session, "_OPENER", opener),
+			patch.object(support_session, "_press_url", return_value="https://press.internal.test"),
+			patch.object(support_session, "_support_user", return_value=h.MEHMET),
+			opener,
+		)
+
+	def test_start_support_session_guest_denied(self):
+		refusal = HTTPError("https://press.internal.test", 403, "Forbidden", {}, io.BytesIO(b"{}"))
+		*patches, opener = self._support_press(refusal)
+		client = h.new_client()
+		with patches[0], patches[1], patches[2]:
+			response = h.request(client.post, PREFIX + "start_support_session", json={"ticket": "t" * 43})
+		self.assertEqual(response.status_code, 403)
+		self.assertEqual(opener.open.call_count, 1)
+		self.assertEqual(h.logged_user(client), "Guest")
+
+	def test_start_support_session_foreign_data_denied(self):
+		reply = {"consent": "c-1", "site": "other.example.test", "expires_in": 600, "session_key": "k" * 43}
+		*patches, _opener = self._support_press(reply)
+		guest = h.new_client()
+		with patches[0], patches[1], patches[2]:
+			response = h.request(guest.post, PREFIX + "start_support_session", json={"ticket": "t" * 43})
+		self.assertEqual(response.status_code, 403)
+		self.assertEqual(h.logged_user(guest), "Guest")
+		# A signed-in user cannot switch into a support session either.
+		caller = self.login(h.AYSE, "fixture-first")
+		with patches[0], patches[1], patches[2]:
+			response = h.request(
+				caller.post,
+				PREFIX + "start_support_session",
+				json={"ticket": "t" * 43},
+				headers=h.csrf_headers(caller),
+			)
+		self.assertEqual(response.status_code, 403)
+		self.assertEqual(h.logged_user(caller), h.AYSE)
+
+
+class _Response(io.BytesIO):
+	"""A urllib response as `support_session` reads it: a context manager with a status."""
+
+	status = 200

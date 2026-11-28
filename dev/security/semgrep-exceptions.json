@@ -6,10 +6,12 @@
     "backend/apps/press_tr/press_tr/api/auth.py",
     "backend/apps/press_tr/press_tr/api/identity.py",
     "backend/apps/press_tr/press_tr/api/maintenance.py",
+    "backend/apps/press_tr/press_tr/api/support.py",
     "backend/apps/press_tr/press_tr/hooks.py",
     "backend/apps/press_tr/press_tr/press_identity/accounts.py",
     "backend/apps/press_tr/press_tr/press_identity/anonymization.py",
     "backend/apps/press_tr/press_tr/press_identity/custom/team.json",
+    "backend/apps/press_tr/press_tr/press_identity/custom/support_access.json",
     "backend/apps/press_tr/press_tr/press_identity/deletion.py",
     "backend/apps/press_tr/press_tr/press_identity/doctype/ptr_identity_link/ptr_identity_link.json",
     "backend/apps/press_tr/press_tr/press_identity/doctype/ptr_identity_link/ptr_identity_link.py",
@@ -24,6 +26,10 @@
     "backend/apps/press_tr/press_tr/press_identity/request_policy.py",
     "backend/apps/press_tr/press_tr/press_identity/service.py",
     "backend/apps/press_tr/press_tr/press_identity/sessions.py",
+    "backend/apps/press_tr/press_tr/support/__init__.py",
+    "backend/apps/press_tr/press_tr/support/policy.py",
+    "backend/apps/press_tr/press_tr/support/service.py",
+    "backend/apps/press_tr/press_tr/support/tenant_session.py",
     "backend/apps/press_tr/pyproject.toml",
     "backend/libs/oidc_verify/pyproject.toml",
     "backend/libs/oidc_verify/src/oidc_verify/__init__.py",
@@ -31,7 +37,7 @@
     "backend/libs/oidc_verify/src/oidc_verify/jwks.py",
     "backend/libs/oidc_verify/src/oidc_verify/verification.py"
   ],
-  "sha256": "6f2f2ccdd6e22545b78abbf947b9b4c41b6b1f6c1f6fe62abfc28379282735a8",
+  "sha256": "7dbdbfeac2499cb8d506d4f8483939318ccf6031b808586fe8815172ec9ea606",
   "findings": [
     {
       "rule": "frappe-guest-without-limit",
@@ -164,13 +170,25 @@
       "path": "backend/apps/press_tr/press_tr/press_identity/recovery.py",
       "line": 88,
       "reason": "Runs only from the after_install and after_migrate hooks, not from any request. It inserts the fixed Recovery Reviewer role only when the role is missing and never changes an existing role (AJA-421)."
+    },
+    {
+      "rule": "frappe-missing-permission",
+      "path": "backend/apps/press_tr/press_tr/api/support.py",
+      "line": 56,
+      "reason": "Tenant servers call this over the private network. A single-use 256-bit ticket bound to one site is the credential. Consent, requester role and site owner are rechecked under row locks. Rate limited."
+    },
+    {
+      "rule": "frappe-missing-permission",
+      "path": "backend/apps/press_tr/press_tr/api/support.py",
+      "line": 63,
+      "reason": "Tenant servers call this for each support request over the private network. A 256-bit session key bound to one site is the credential. Consent, expiry, revocation, requester role and site owner are rechecked. Rate limited."
     }
   ],
   "additionalReviews": [
     {
       "scope": "backend/apps/platform_core/platform_core",
-      "sha256": "933409f0be2011c370ede12cef029c787c04ed0885557ced1dd5f2ad9ae47cb0",
-      "reviewNote": "Digest refreshed on 27 November 2026 (AJA-1283). Since 92f8c277 four files changed: api/atonota_login.py, hooks.py, identity/atonota/decision_api.py and identity/atonota/verification_api.py. Each change replaces the product name with `atonota_login` in a comment, a docstring or the TASK_MARK text. No code path, permission check or finding line changed. All 36 findings were re-reviewed and stay approved.",
+      "sha256": "752e59ddbcde67354761a3dd00e5296a8087d3d8e89b0d680532de369d5153ab",
+      "reviewNote": "Digest refreshed again on 27 November 2026 (AJA-1620) for the G-18 tenant support session: api/auth.py gains start_support_session, hooks.py rechecks the support user, identity/support_session.py and its tests are new. No existing finding line changed. Digest refreshed on 27 November 2026 (AJA-1283). Since 92f8c277 four files changed: api/atonota_login.py, hooks.py, identity/atonota/decision_api.py and identity/atonota/verification_api.py. Each change replaces the product name with `atonota_login` in a comment, a docstring or the TASK_MARK text. No code path, permission check or finding line changed. All 36 findings were re-reviewed and stay approved.",
       "findings": [
         {
           "rule": "frappe-missing-permission",

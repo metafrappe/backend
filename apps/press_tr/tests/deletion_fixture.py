@@ -11,6 +11,7 @@ SETTINGS = {
 	"press_service_client_secret": "press-test-fixture",
 	"max_file_size": 32768,
 	"press_deletion_request_timeout": 15,
+	"mute_emails": 1,
 }
 SITE_CONFIG = Path("press.localhost/site_config.json")
 

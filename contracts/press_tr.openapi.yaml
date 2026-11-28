@@ -420,8 +420,32 @@ paths:
           description: Number of removed session mappings in the message object.
         "403":
           description: The caller cannot run System Manager maintenance.
+  /api/method/press_tr.mcp.handler:
+    post:
+      operationId: pressTrMcp
+      summary: Commercial MCP server of press_tr.
+      description: Streamable HTTP MCP server with eight tools for apps, plans, invoices and agent jobs. Only the configured service account may call it, and only from an allowed network. A tool that changes a site or billing returns only a preview unless confirm is true. Every call and every refused request is written to the PTR MCP Call history.
+      security:
+        - mcpServiceToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: A JSON-RPC 2.0 MCP request.
+      responses:
+        "200":
+          description: The JSON-RPC result of the MCP request.
+        "401":
+          description: Press MCP is off, the caller is not the service account, or the network is not allowed.
 components:
   securitySchemes:
+    mcpServiceToken:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: The API key and secret of the separate MCP service account, sent as a Frappe token.
     pressSession:
       type: apiKey
       in: cookie
